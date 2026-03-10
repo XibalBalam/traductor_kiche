@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modo Entrenamiento — K'iche'</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3e 50%, #0a1a2e 100%);
+            color: white;
+            min-height: 100vh;
+            padding: 1.5rem 1rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .header h1 {
+            font-size: 1.6rem;
+            font-weight: 700;
+        }
+
+        .header p {
+            color: rgba(255, 255, 255, 0.55);
+            font-size: 0.9rem;
+            margin-top: 0.3rem;
+        }
+
+        .back-link {
+            display: inline-block;
+            color: rgba(255, 255, 255, 0.5);
+            text-decoration: none;
+            font-size: 0.85rem;
+            margin-bottom: 1rem;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover {
+            color: white;
+        }
+
+        /* PROGRESS BAR */
+        .progress-card {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 1.2rem 1.5rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1.2rem;
+        }
+
+        .progress-circle {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: conic-gradient(#667eea 0%, rgba(255, 255, 255, 0.1) 0%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+            position: relative;
+        }
+
+        .progress-circle::before {
+            content: '';
+            position: absolute;
+            inset: 6px;
+            border-radius: 50%;
+            background: #0a1a2e;
+        }
+
+        .progress-circle span {
+            position: relative;
+            z-index: 1;
+        }
+
+        .progress-info h3 {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .progress-info p {
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.5);
+            margin-top: 0.2rem;
+        }
+
+        .progress-bar-wrap {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            height: 8px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #00b09b);
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+
+        /* PHRASE CARD */
+        .phrase-card {
+            background: rgba(102, 126, 234, 0.15);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1.2rem;
+            text-align: center;
+        }
+
+        .phrase-label {
+            font-size: 0.72rem;
+            color: rgba(255, 255, 255, 0.45);
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-bottom: 0.4rem;
+        }
+
+        .phrase-kiche {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #a78bfa;
+            margin-bottom: 0.3rem;
+        }
+
+        .phrase-spanish {
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.65);
+            margin-bottom: 1rem;
+        }
+
+        .phrase-nav {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+        }
+
+        .btn-nav {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: white;
+            border-radius: 8px;
+            padding: 0.4rem 1rem;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-family: 'Inter', sans-serif;
+            transition: background 0.2s;
+        }
+
+        .btn-nav:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        /* RECORD PANEL */
+        .record-panel {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1.2rem;
+        }
+
+        .record-panel h3 {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .btn-mic {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: none;
+            background: linear-gradient(135deg, #ff416c, #ff4b2b);
+            color: white;
+            font-size: 32px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            box-shadow: 0 4px 20px rgba(255, 75, 43, 0.45);
+            transition: transform 0.2s;
+        }
+
+        .btn-mic:hover {
+            transform: scale(1.07);
+        }
+
+        .btn-mic.recording {
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(255, 65, 108, 0.7);
+            }
+
+            70% {
+                box-shadow: 0 0 0 18px rgba(255, 65, 108, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(255, 65, 108, 0);
+            }
+        }
+
+        .mic-status {
+            text-align: center;
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 1rem;
+            min-height: 1.3em;
+        }
+
+        /* ASR RESULT */
+        .asr-box {
+            display: none;
+        }
+
+        .field-label {
+            font-size: 0.72rem;
+            color: rgba(255, 255, 255, 0.45);
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-bottom: 0.3rem;
+            margin-top: 0.8rem;
+        }
+
+        .field-label:first-child {
+            margin-top: 0;
+        }
+
+        .asr-text {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 100, 100, 0.3);
+            border-radius: 8px;
+            padding: 0.6rem 0.8rem;
+            font-size: 1rem;
+            color: rgba(255, 180, 180, 0.9);
+            margin-bottom: 0.3rem;
+        }
+
+        .correct-input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(102, 126, 234, 0.4);
+            border-radius: 8px;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            padding: 0.6rem 0.8rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .correct-input:focus {
+            border-color: #667eea;
+        }
+
+        .btn-save {
+            display: block;
+            width: 100%;
+            margin-top: 1rem;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 0.75rem;
+            font-size: 1rem;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            transition: transform 0.2s, opacity 0.2s;
+        }
+
+        .btn-save:hover {
+            transform: scale(1.02);
+        }
+
+        .btn-save:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* SAVED TOAST */
+        .toast {
+            position: fixed;
+            bottom: 1.5rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #00b09b;
+            color: white;
+            padding: 0.7rem 1.5rem;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+
+        /* SAMPLES LIST */
+        .samples-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.8rem;
+        }
+
+        .samples-header h3 {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .btn-export {
+            background: rgba(0, 176, 155, 0.2);
+            border: 1px solid rgba(0, 176, 155, 0.4);
+            color: #00b09b;
+            border-radius: 8px;
+            padding: 0.3rem 0.8rem;
+            font-size: 0.78rem;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .sample-item {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 0.6rem 0.8rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.85rem;
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .sample-num {
+            color: rgba(255, 255, 255, 0.3);
+            min-width: 2rem;
+        }
+
+        .sample-text {
+            color: #a78bfa;
+            font-weight: 500;
+        }
+
+        .sample-play {
+            margin-left: auto;
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.4);
+            cursor: pointer;
+            font-size: 1.1rem;
+        }
+
+        .sample-play:hover {
+            color: white;
+        }
+
+        .empty-msg {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 0.9rem;
+            padding: 1rem;
+        }
+    </style>
+</head>
+
+<body>
+    <a class="back-link" href="/">← Volver al Traductor</a>
+
+    <div class="header">
+        <h1>🎓 Modo Entrenamiento</h1>
+        <p>Graba frases en K'iche' para mejorar el reconocimiento automático</p>
+    </div>
+
+    <!-- PROGRESS -->
+    <div class="progress-card">
+        <div class="progress-circle" id="progressCircle">
+            <span id="countNum">0</span>
+        </div>
+        <div class="progress-info">
+            <h3 id="progressTitle">Grabaciones guardadas</h3>
+            <p id="progressSubtitle">Meta: 50 grabaciones para entrenar</p>
+        </div>
+        <div class="progress-bar-wrap">
+            <div class="progress-bar-fill" id="progressFill" style="width:0%"></div>
+        </div>
+    </div>
+
+    <!-- PHRASE TO RECORD -->
+    <div class="phrase-card">
+        <div class="phrase-label">Di esta frase en K'iche'</div>
+        <div class="phrase-kiche" id="phraseKiche">k'ax waqan</div>
+        <div class="phrase-spanish" id="phraseSpanish">me duele la pierna / el pie</div>
+        <div class="phrase-nav">
+            <button class="btn-nav" onclick="prevPhrase()">← Anterior</button>
+            <button class="btn-nav" onclick="nextPhrase()">Siguiente →</button>
+            <button class="btn-nav" onclick="randomPhrase()">🎲 Aleatoria</button>
+        </div>
+    </div>
+
+    <!-- RECORD -->
+    <div class="record-panel">
+        <h3>1. Graba tu voz</h3>
+        <button class="btn-mic" id="micBtn">🎤</button>
+        <div class="mic-status" id="micStatus">Presiona para grabar</div>
+
+        <div class="asr-box" id="asrBox">
+            <div class="field-label">Lo que el modelo escuchó (ASR)</div>
+            <div class="asr-text" id="asrText">—</div>
+
+            <div class="field-label">✏️ Transcripción CORRECTA en K'iche' (edita si hay errores)</div>
+            <input class="correct-input" id="correctInput" type="text" placeholder="Escribe lo que dijiste..."
+                autocomplete="off">
+
+            <button class="btn-save" id="saveBtn" onclick="saveSample()" disabled>
+                💾 Guardar grabación
+            </button>
+        </div>
+    </div>
+
+    <!-- SAVED SAMPLES -->
+    <div>
+        <div class="samples-header">
+            <h3>Grabaciones guardadas</h3>
+            <a class="btn-export" href="/export-dataset">⬇ Exportar CSV</a>
+        </div>
+        <div id="samplesList">
+            <div class="empty-msg">Aún no hay grabaciones. ¡Empieza grabando!</div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // ── PHRASES ──────────────────────────────────────────────────────────
+        const phrases = {{ phrases | tojson }};
+        let phraseIdx = 0;
+        let savedSamples = [];
+        let currentAudioBlob = null;
+        let currentAsrRaw = '';
+
+        function updatePhrase() {
+            document.getElementById('phraseKiche').textContent = phrases[phraseIdx][0];
+            document.getElementById('phraseSpanish').textContent = phrases[phraseIdx][1];
+            document.getElementById('correctInput').value = phrases[phraseIdx][0];
+        }
+        function nextPhrase() { phraseIdx = (phraseIdx + 1) % phrases.length; updatePhrase(); resetRecording(); }
+        function prevPhrase() { phraseIdx = (phraseIdx - 1 + phrases.length) % phrases.length; updatePhrase(); resetRecording(); }
+        function randomPhrase() { phraseIdx = Math.floor(Math.random() * phrases.length); updatePhrase(); resetRecording(); }
+
+        // ── RECORDING ─────────────────────────────────────────────────────────
+        let isRecording = false;
+        let audioContext, mediaStream, processor, inputNode, audioData = [];
+
+        const micBtn = document.getElementById('micBtn');
+        const micStatus = document.getElementById('micStatus');
+        const asrBox = document.getElementById('asrBox');
+        const asrText = document.getElementById('asrText');
+        const saveBtn = document.getElementById('saveBtn');
+
+        micBtn.addEventListener('click', async () => {
+            if (!isRecording) await startRecording(); else stopRecording();
+        });
+
+        async function startRecording() {
+            audioData = [];
+            currentAudioBlob = null;
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaStream = stream;
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            inputNode = audioContext.createMediaStreamSource(stream);
+            processor = audioContext.createScriptProcessor(4096, 1, 1);
+            processor.onaudioprocess = e => audioData.push(new Float32Array(e.inputBuffer.getChannelData(0)));
+            inputNode.connect(processor);
+            processor.connect(audioContext.destination);
+            isRecording = true;
+            micBtn.classList.add('recording');
+            micStatus.textContent = '🔴 Grabando... (presiona para detener)';
+            asrBox.style.display = 'none';
+        }
+
+        function stopRecording() {
+            if (!isRecording) return;
+            isRecording = false;
+            micBtn.classList.remove('recording');
+            micStatus.textContent = 'Procesando con el modelo...';
+            if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
+            if (inputNode) inputNode.disconnect();
+            if (processor) processor.disconnect();
+            if (audioContext) audioContext.close();
+            sendForASR();
+        }
+
+        async function sendForASR() {
+            const len = audioData.reduce((a, b) => a + b.length, 0);
+            const samples = new Float32Array(len);
+            let off = 0;
+            for (const b of audioData) { samples.set(b, off); off += b.length; }
+            const wavBlob = new Blob([encodeWAV(samples, audioContext.sampleRate)], { type: 'audio/wav' });
+            currentAudioBlob = wavBlob;
+
+            const fd = new FormData();
+            fd.append('audio', wavBlob);
+
+            try {
+                const res = await fetch('/translate', { method: 'POST', body: fd });
+                const data = await res.json();
+                currentAsrRaw = data.transcription || '';
+                asrText.textContent = currentAsrRaw || '(sin transcripción)';
+                document.getElementById('correctInput').value = phrases[phraseIdx][0]; // preset with suggested
+                asrBox.style.display = 'block';
+                saveBtn.disabled = false;
+                micStatus.textContent = '✅ Listo — revisa y guarda';
+            } catch (e) {
+                micStatus.textContent = 'Error: ' + e.message;
+            }
+        }
+
+        // ── SAVE ─────────────────────────────────────────────────────────────
+        async function saveSample() {
+            const correctText = document.getElementById('correctInput').value.trim();
+            if (!correctText || !currentAudioBlob) return;
+
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Guardando...';
+
+            const fd = new FormData();
+            fd.append('audio', currentAudioBlob, 'sample.wav');
+            fd.append('correct_text', correctText);
+            fd.append('asr_raw', currentAsrRaw);
+
+            try {
+                const res = await fetch('/save-training-sample', { method: 'POST', body: fd });
+                const data = await res.json();
+                if (data.status === 'saved') {
+                    showToast(`✅ Grabación #${data.total} guardada`);
+                    savedSamples.push({ num: data.total, text: correctText, file: data.file });
+                    updateProgress(data.total);
+                    renderSamples();
+                    resetRecording();
+                    // auto-advance to next phrase
+                    setTimeout(() => nextPhrase(), 800);
+                }
+            } catch (e) {
+                showToast('❌ Error al guardar');
+            }
+
+            saveBtn.disabled = false;
+            saveBtn.textContent = '💾 Guardar grabación';
+        }
+
+        function resetRecording() {
+            asrBox.style.display = 'none';
+            currentAudioBlob = null;
+            currentAsrRaw = '';
+            saveBtn.disabled = true;
+            micStatus.textContent = 'Presiona para grabar';
+        }
+
+        // ── PROGRESS ─────────────────────────────────────────────────────────
+        function updateProgress(count) {
+            document.getElementById('countNum').textContent = count;
+            const pct = Math.min(100, Math.round(count / 50 * 100));
+            document.getElementById('progressFill').style.width = pct + '%';
+            const circle = document.getElementById('progressCircle');
+            circle.style.background = `conic-gradient(#667eea ${pct * 3.6}deg, rgba(255,255,255,0.1) 0deg)`;
+            if (count >= 50) {
+                document.getElementById('progressTitle').textContent = '🎉 ¡Listo para entrenar!';
+                document.getElementById('progressSubtitle').textContent = 'Descarga el CSV y envíalo para el fine-tuning';
+            } else {
+                document.getElementById('progressSubtitle').textContent =
+                    `Faltan ${50 - count} grabaciones para entrenar`;
+            }
+        }
+
+        function renderSamples() {
+            const el = document.getElementById('samplesList');
+            if (savedSamples.length === 0) {
+                el.innerHTML = '<div class="empty-msg">Aún no hay grabaciones. ¡Empieza grabando!</div>';
+                return;
+            }
+            el.innerHTML = [...savedSamples].reverse().slice(0, 20).map(s =>
+                `<div class="sample-item">
+                    <span class="sample-num">#${s.num}</span>
+                    <span class="sample-text">${s.text}</span>
+                    <button class="sample-play" onclick="playAudio('${s.file}')">▶</button>
+                </div>`
+            ).join('');
+        }
+
+        function playAudio(file) {
+            new Audio(`/training-audio/${file}`).play();
+        }
+
+        // ── TOAST ─────────────────────────────────────────────────────────────
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2500);
+        }
+
+        // ── WAV ENCODER ───────────────────────────────────────────────────────
+        function encodeWAV(samples, sampleRate) {
+            const buf = new ArrayBuffer(44 + samples.length * 2);
+            const view = new DataView(buf);
+            const ws = (o, s) => { for (let i = 0; i < s.length; i++) view.setUint8(o + i, s.charCodeAt(i)); };
+            ws(0, 'RIFF'); view.setUint32(4, 36 + samples.length * 2, true); ws(8, 'WAVE');
+            ws(12, 'fmt '); view.setUint32(16, 16, true); view.setUint16(20, 1, true);
+            view.setUint16(22, 1, true); view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * 2, true); view.setUint16(32, 2, true);
+            view.setUint16(34, 16, true); ws(36, 'data'); view.setUint32(40, samples.length * 2, true);
+            let off = 44;
+            for (let i = 0; i < samples.length; i++, off += 2) {
+                const s = Math.max(-1, Math.min(1, samples[i]));
+                view.setInt16(off, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+            }
+            return view;
+        }
+
+        // ── INIT ──────────────────────────────────────────────────────────────
+        updatePhrase();
+        // Load initial stats
+        fetch('/training-stats').then(r => r.json()).then(d => updateProgress(d.total_samples));
+    </script>
+</body>
+
+</html>

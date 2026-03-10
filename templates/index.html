@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traductor K'iche' ↔ Español</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.07);
+            backdrop-filter: blur(20px);
+            padding: 2rem;
+            border-radius: 24px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            width: 100%;
+            max-width: 520px;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 1.5rem;
+            letter-spacing: -0.5px;
+        }
+
+        /* MODE TOGGLE */
+        .mode-toggle {
+            display: flex;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 50px;
+            padding: 4px;
+            margin-bottom: 1.8rem;
+            position: relative;
+        }
+
+        .mode-btn {
+            flex: 1;
+            border: none;
+            background: transparent;
+            color: rgba(255, 255, 255, 0.6);
+            padding: 0.6rem 1rem;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            transition: color 0.3s;
+            z-index: 1;
+        }
+
+        .mode-btn.active {
+            color: white;
+        }
+
+        .mode-slider {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            width: calc(50% - 4px);
+            height: calc(100% - 8px);
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 50px;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .mode-slider.right {
+            transform: translateX(100%);
+        }
+
+        /* MIC BUTTON */
+        .btn-mic {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            border: none;
+            background: linear-gradient(135deg, #ff416c, #ff4b2b);
+            color: white;
+            font-size: 36px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            box-shadow: 0 4px 20px rgba(255, 75, 43, 0.5);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn-mic:hover {
+            transform: scale(1.08);
+        }
+
+        .btn-mic.recording {
+            animation: pulse 1.5s infinite;
+            background: linear-gradient(135deg, #ff6b6b, #ff416c);
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(255, 65, 108, 0.7);
+            }
+
+            70% {
+                box-shadow: 0 0 0 20px rgba(255, 65, 108, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(255, 65, 108, 0);
+            }
+        }
+
+        /* STATUS */
+        .status-text {
+            text-align: center;
+            font-size: 1rem;
+            min-height: 1.4em;
+            color: rgba(255, 255, 255, 0.85);
+            margin-bottom: 0.8rem;
+        }
+
+        /* PROGRESS */
+        .progress-container {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            margin: 0.8rem 0;
+            overflow: hidden;
+            display: none;
+        }
+
+        .progress-bar {
+            width: 0%;
+            height: 8px;
+            background: linear-gradient(90deg, #667eea, #00b09b);
+            transition: width 0.3s ease;
+            border-radius: 10px;
+        }
+
+        /* RESULT BOX */
+        .result-box {
+            background: rgba(0, 0, 0, 0.25);
+            padding: 1.2rem;
+            border-radius: 14px;
+            margin-top: 1rem;
+            display: none;
+            text-align: left;
+        }
+
+        .result-label {
+            font-size: 0.72rem;
+            color: rgba(255, 255, 255, 0.5);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 0.3rem;
+            margin-top: 0.8rem;
+        }
+
+        .result-label:first-child {
+            margin-top: 0;
+        }
+
+        /* EDITABLE TRANSCRIPTION */
+        .result-textarea {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 8px;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            padding: 0.6rem 0.8rem;
+            resize: none;
+            min-height: 60px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .result-textarea:focus {
+            border-color: rgba(102, 126, 234, 0.6);
+        }
+
+        .result-text {
+            font-size: 1.05rem;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 0.3rem;
+        }
+
+        /* RE-TRANSLATE BUTTON */
+        .btn-retranslate {
+            display: block;
+            margin: 0.8rem auto 0;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 0.5rem 1.4rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-retranslate:hover {
+            transform: scale(1.05);
+        }
+
+        audio {
+            width: 100%;
+            margin-top: 0.8rem;
+            border-radius: 8px;
+        }
+
+        /* KICHE ONLY NOTE */
+        .note-text {
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.45);
+            text-align: center;
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🎙️ Traductor K'iche' ↔ Español</h1>
+        <div style="text-align:center;margin-bottom:0.5rem">
+            <a href="/train"
+                style="display:inline-block;background:rgba(167,139,250,0.15);border:1px solid rgba(167,139,250,0.35);color:#a78bfa;border-radius:20px;padding:0.3rem 1rem;font-size:0.8rem;text-decoration:none;transition:background 0.2s"
+                onmouseover="this.style.background='rgba(167,139,250,0.3)'"
+                onmouseout="this.style.background='rgba(167,139,250,0.15)'">
+                🎓 Modo Entrenamiento
+            </a>
+        </div>
+
+        <!-- MODE SELECTOR -->
+        <div class="mode-toggle" id="modeToggle">
+            <div class="mode-slider" id="modeSlider"></div>
+            <button class="mode-btn active" id="btnKicheToEs" onclick="setMode('kiche-es')">K'iche' → Español</button>
+            <button class="mode-btn" id="btnEsToKiche" onclick="setMode('es-kiche')">Español → K'iche'</button>
+        </div>
+
+        <button id="micBtn" class="btn-mic">🎤</button>
+
+        <div class="status-text" id="status">Presiona para hablar en K'iche'</div>
+
+        <div class="progress-container" id="progressContainer">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+
+        <!-- RESULT BOX K'iche' → ES -->
+        <div class="result-box" id="resultBox">
+            <div class="result-label" id="labelLang1">K'iche' reconocido</div>
+            <textarea class="result-textarea" id="transcriptionInput" rows="2"
+                placeholder="Texto reconocido..."></textarea>
+            <button class="btn-retranslate" id="retranslateBtn" onclick="retranslate()">🔄 Volver a traducir</button>
+
+            <div class="result-label" id="labelLang2">Español</div>
+            <div class="result-text" id="translationText">...</div>
+
+            <div id="audioSection">
+                <audio id="audioPlayer" controls></audio>
+            </div>
+
+            <div class="note-text" id="noteText"></div>
+        </div>
+    </div>
+
+    <script>
+        // ── STATE ──────────────────────────────────────────────────────────
+        let currentMode = 'kiche-es'; // 'kiche-es' or 'es-kiche'
+        let isRecording = false;
+        let audioContext, mediaStream, processor, inputNode, audioData = [];
+        let recognition = null;
+        let lastSpanishText = '';
+
+        // ── ELEMENTS ───────────────────────────────────────────────────────
+        const micBtn = document.getElementById('micBtn');
+        const statusEl = document.getElementById('status');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressBar = document.getElementById('progressBar');
+        const resultBox = document.getElementById('resultBox');
+        const transcriptionInput = document.getElementById('transcriptionInput');
+        const translationText = document.getElementById('translationText');
+        const audioPlayer = document.getElementById('audioPlayer');
+        const audioSection = document.getElementById('audioSection');
+        const noteText = document.getElementById('noteText');
+        const labelLang1 = document.getElementById('labelLang1');
+        const labelLang2 = document.getElementById('labelLang2');
+        const modeSlider = document.getElementById('modeSlider');
+        const btnKicheToEs = document.getElementById('btnKicheToEs');
+        const btnEsToKiche = document.getElementById('btnEsToKiche');
+
+        // ── MODE TOGGLE ────────────────────────────────────────────────────
+        function setMode(mode) {
+            currentMode = mode;
+            if (mode === 'kiche-es') {
+                modeSlider.classList.remove('right');
+                btnKicheToEs.classList.add('active');
+                btnEsToKiche.classList.remove('active');
+                statusEl.textContent = "Presiona para hablar en K'iche'";
+                labelLang1.textContent = "K'iche' reconocido";
+                labelLang2.textContent = "Español";
+                audioSection.style.display = 'block';
+                noteText.textContent = '';
+            } else {
+                modeSlider.classList.add('right');
+                btnEsToKiche.classList.add('active');
+                btnKicheToEs.classList.remove('active');
+                statusEl.textContent = "Presiona para hablar en Español";
+                labelLang1.textContent = "Español reconocido";
+                labelLang2.textContent = "K'iche'";
+                audioSection.style.display = 'none';
+                noteText.textContent = "ℹ️ Modo K'iche' solo muestra texto (sin audio).";
+            }
+            resultBox.style.display = 'none';
+            transcriptionInput.value = '';
+            translationText.textContent = '...';
+        }
+
+        // ── MIC BUTTON ─────────────────────────────────────────────────────
+        micBtn.addEventListener('click', async () => {
+            if (!isRecording) {
+                if (currentMode === 'kiche-es') {
+                    await startKicheRecording();
+                } else {
+                    startSpanishRecognition();
+                }
+            } else {
+                if (currentMode === 'kiche-es') {
+                    stopKicheRecording();
+                } else {
+                    stopSpanishRecognition();
+                }
+            }
+        });
+
+        // ── MODE: K'ICHE' → ES (WAV via MMS server) ───────────────────────
+        async function startKicheRecording() {
+            try {
+                audioData = [];
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaStream = stream;
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                inputNode = audioContext.createMediaStreamSource(stream);
+                processor = audioContext.createScriptProcessor(4096, 1, 1);
+                processor.onaudioprocess = e => {
+                    audioData.push(new Float32Array(e.inputBuffer.getChannelData(0)));
+                };
+                inputNode.connect(processor);
+                processor.connect(audioContext.destination);
+
+                isRecording = true;
+                micBtn.classList.add('recording');
+                statusEl.textContent = "Grabando K'iche'... (Presiona para detener)";
+                resultBox.style.display = 'none';
+            } catch (err) {
+                statusEl.textContent = "Error: No se pudo acceder al micrófono.";
+            }
+        }
+
+        function stopKicheRecording() {
+            if (!isRecording) return;
+            isRecording = false;
+            micBtn.classList.remove('recording');
+            statusEl.textContent = "Procesando con modelo MMS...";
+            if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
+            if (inputNode) inputNode.disconnect();
+            if (processor) processor.disconnect();
+            if (audioContext) audioContext.close();
+            sendKicheAudio();
+        }
+
+        async function sendKicheAudio() {
+            const len = audioData.reduce((a, b) => a + b.length, 0);
+            const samples = new Float32Array(len);
+            let offset = 0;
+            for (const buf of audioData) { samples.set(buf, offset); offset += buf.length; }
+
+            const wavBlob = new Blob([encodeWAV(samples, audioContext ? audioContext.sampleRate : 44100)], { type: 'audio/wav' });
+            const formData = new FormData();
+            formData.append("audio", wavBlob);
+
+            progressContainer.style.display = 'block';
+            simulateProgress();
+
+            try {
+                const res = await fetch('/translate', { method: 'POST', body: formData });
+                if (!res.ok) { const e = await res.json(); throw new Error(e.error); }
+                const data = await res.json();
+
+                progressBar.style.width = '100%';
+                setTimeout(() => { progressContainer.style.display = 'none'; progressBar.style.width = '0%'; }, 500);
+
+                statusEl.textContent = "¡Completado!";
+                transcriptionInput.value = data.transcription;
+                translationText.textContent = data.translation;
+                audioPlayer.src = data.audio_url + "?t=" + Date.now();
+                audioPlayer.play();
+                resultBox.style.display = 'block';
+            } catch (err) {
+                statusEl.textContent = "Error: " + err.message;
+                progressContainer.style.display = 'none';
+            }
+        }
+
+        // ── RE-TRANSLATE (editable transcription) ──────────────────────────
+        async function retranslate() {
+            const text = transcriptionInput.value.trim();
+            if (!text) return;
+
+            statusEl.textContent = "Traduciendo...";
+
+            if (currentMode === 'kiche-es') {
+                // Send corrected K'iche' text to /translate-text
+                try {
+                    const res = await fetch('/translate-text', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ text: text, source: 'kiche' })
+                    });
+                    const data = await res.json();
+                    if (data.error) throw new Error(data.error);
+                    translationText.textContent = data.translation;
+                    if (data.audio_url) {
+                        audioPlayer.src = data.audio_url + "?t=" + Date.now();
+                        audioPlayer.play();
+                    }
+                    statusEl.textContent = "¡Retradución completada!";
+                } catch (err) {
+                    statusEl.textContent = "Error: " + err.message;
+                }
+            } else {
+                // Already in es-kiche, retranslate to kiche
+                await translateToKiche(text);
+            }
+        }
+
+        // ── MODE: ES → K'ICHE' (Web Speech API) ───────────────────────────
+        function startSpanishRecognition() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                statusEl.textContent = "Tu navegador no soporta reconocimiento de voz. Usa Chrome o Edge.";
+                return;
+            }
+
+            recognition = new SpeechRecognition();
+            recognition.lang = 'es-GT';
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
+            recognition.continuous = false;
+
+            recognition.onstart = () => {
+                isRecording = true;
+                micBtn.classList.add('recording');
+                statusEl.textContent = "Escuchando en Español... (Presiona para detener)";
+                resultBox.style.display = 'none';
+            };
+
+            recognition.onresult = async (event) => {
+                const spokenText = event.results[0][0].transcript;
+                lastSpanishText = spokenText;
+                transcriptionInput.value = spokenText;
+                statusEl.textContent = "Traduciendo al K'iche'...";
+                await translateToKiche(spokenText);
+            };
+
+            recognition.onerror = (e) => {
+                statusEl.textContent = "Error de reconocimiento: " + e.error;
+                micBtn.classList.remove('recording');
+                isRecording = false;
+            };
+
+            recognition.onend = () => {
+                micBtn.classList.remove('recording');
+                isRecording = false;
+            };
+
+            recognition.start();
+        }
+
+        function stopSpanishRecognition() {
+            if (recognition) recognition.stop();
+        }
+
+        async function translateToKiche(text) {
+            try {
+                const res = await fetch('/translate-to-kiche', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: text })
+                });
+                const data = await res.json();
+                if (data.error) throw new Error(data.error);
+                translationText.textContent = data.translation;
+                resultBox.style.display = 'block';
+                statusEl.textContent = "¡Traducción completada!";
+            } catch (err) {
+                statusEl.textContent = "Error: " + err.message;
+            }
+        }
+
+        // ── WAV ENCODING UTILS ─────────────────────────────────────────────
+        function encodeWAV(samples, sampleRate) {
+            const buf = new ArrayBuffer(44 + samples.length * 2);
+            const view = new DataView(buf);
+            const ws = (off, str) => { for (let i = 0; i < str.length; i++) view.setUint8(off + i, str.charCodeAt(i)); };
+            ws(0, 'RIFF'); view.setUint32(4, 36 + samples.length * 2, true); ws(8, 'WAVE');
+            ws(12, 'fmt '); view.setUint32(16, 16, true); view.setUint16(20, 1, true);
+            view.setUint16(22, 1, true); view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * 2, true); view.setUint16(32, 2, true);
+            view.setUint16(34, 16, true); ws(36, 'data'); view.setUint32(40, samples.length * 2, true);
+            let off = 44;
+            for (let i = 0; i < samples.length; i++, off += 2) {
+                const s = Math.max(-1, Math.min(1, samples[i]));
+                view.setInt16(off, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+            }
+            return view;
+        }
+
+        function simulateProgress() {
+            let w = 0;
+            const iv = setInterval(() => {
+                if (w >= 90) { clearInterval(iv); } else { w++; progressBar.style.width = w + '%'; }
+            }, 60);
+        }
+    </script>
+</body>
+
+</html>

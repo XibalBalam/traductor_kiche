@@ -1,0 +1,10 @@
+torch
+transformers
+soundfile
+librosa
+deep-translator
+gTTS
+scipy
+numpy
+Flask
+requests
