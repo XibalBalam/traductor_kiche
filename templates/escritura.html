@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Entrenamiento de Escritura K'iche'</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 2em; }
+        .card { background: #f9f9f9; border-radius: 8px; padding: 2em; max-width: 500px; margin: auto; box-shadow: 0 2px 8px #0001; }
+        label { font-weight: bold; }
+        input[type=text], textarea { width: 100%; padding: 0.5em; margin-top: 0.5em; margin-bottom: 1em; border-radius: 4px; border: 1px solid #ccc; }
+        button { background: #007bff; color: white; border: none; padding: 0.7em 2em; border-radius: 4px; cursor: pointer; }
+        .success { color: green; margin-top: 1em; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>Entrenamiento de Escritura K'iche'</h2>
+        <a href="/revisar" style="display:inline-block; margin-bottom:1em; color:#007bff; text-decoration:none;">→ Ir al panel de Revisión y Aprobación</a>
+        
+        <div style="margin-bottom: 1.5em; display: flex; flex-direction: column; gap: 10px; align-items: flex-start;">
+            <div style="width: 100%; margin-bottom: 5px;">
+                <label style="font-size: 0.9em; color: #555;">🚀 Plan de Entrenamiento (Botones Rápidos):</label>
+                <div style="display: flex; gap: 8px; margin-top: 5px; flex-wrap: wrap;">
+                    <button type="button" onclick="document.getElementById('instruccion-ia').value='Genera 10 pronombres personales y posesivos básicos (yo, tú, mi, tu, etc). En SINGULAR.'; return false;" style="background: #eef; color: #333; padding: 0.4em 0.8em; font-size: 0.85em; border: 1px solid #ccc;">Fase 1: Pronombres</button>
+                    <button type="button" onclick="document.getElementById('instruccion-ia').value='Genera 20 partes anatómicas del cuerpo humano, estrictamente en SINGULAR y sin determinantes (ej. ojo, mano, nariz).'; return false;" style="background: #eef; color: #333; padding: 0.4em 0.8em; font-size: 0.85em; border: 1px solid #ccc;">Fase 2: Partes del Cuerpo (Singulares)</button>
+                    <button type="button" onclick="document.getElementById('instruccion-ia').value='Genera 15 verbos médicos o de acción comunes en consulta (ej. doler, respirar, tragar) en infinitivo.'; return false;" style="background: #eef; color: #333; padding: 0.4em 0.8em; font-size: 0.85em; border: 1px solid #ccc;">Fase 3: Verbos Comunes</button>
+                </div>
+            </div>
+            <div style="display: flex; gap: 10px; align-items: center; width: 100%;">
+                <input type="text" id="instruccion-ia" placeholder="Ej: Genera 5 partes del cuerpo, o 10 síntomas..." style="padding: 0.6em; border-radius: 6px; border: 1px solid #ccc; font-size: 1em; flex: 1;">
+                <button type="button" id="btn-ia" onclick="generarIA()" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 0.7em 1.5em; border: none; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 15px rgba(102,126,234,0.4); transition: transform 0.2s; white-space: nowrap;">✨ Generar con IA</button>
+            </div>
+            <div id="ia-status" style="margin-top: 5px; font-size: 0.9em; color: #555; min-height: 1.2em;"></div>
+        </div>
+        
+        <form method="POST">
+            <label for="espanol">Palabra o frase en español:</label>
+            <div style="font-size:1.2em; margin-bottom:0.5em;">
+                {{ palabra_espanol }}
+                {% if aclaracion %}
+                    <span style="font-size:0.9em; color:#555;">{{ aclaracion }}</span>
+                {% endif %}
+            </div>
+            <input type="hidden" name="espanol" value="{{ palabra_espanol }}">
+            <label for="kiche">Traducción en K'iche':</label>
+            <input type="text" id="kiche" name="kiche" required autocomplete="off">
+            <div style="display: flex; gap: 10px;">
+                <button type="submit">Guardar</button>
+                <button type="button" onclick="window.location.href='/escritura'" style="background: #6c757d;">Saltar</button>
+                <button type="button" onclick="eliminarPendiente('{{ palabra_espanol }}')" style="background: transparent; border: 1px solid rgba(255,100,100,0.5); color: #ff6b6b; padding: 0.7em 1em; border-radius: 4px; cursor: pointer;">🗑️ Eliminar frase (basura)</button>
+            </div>
+        </form>
+
+        <hr style="margin: 2em 0; border: 0; border-top: 1px solid #ddd;">
+        
+        <div style="background: #f1f8ff; padding: 1.5em; border-radius: 8px; border: 1px solid #c8e1ff;">
+            <h3 style="margin-top: 0; color: #0366d6;">➕ Agregar Frase Personalizada</h3>
+            <p style="font-size: 0.9em; color: #586069; margin-bottom: 1em;">Si deseas agregar una frase que no está en la lista generada por la IA, puedes hacerlo aquí.</p>
+            <form method="POST">
+                <label for="custom_espanol">Frase en español:</label>
+                <input type="text" id="custom_espanol" name="espanol" required autocomplete="off" placeholder="Ej: Me duele la garganta">
+                
+                <label for="custom_kiche" style="margin-top: 10px; display: block;">Traducción en K'iche':</label>
+                <input type="text" id="custom_kiche" name="kiche" required autocomplete="off" placeholder="Ej: K'ax nu qul">
+                
+                <button type="submit" style="background: #28a745; margin-top: 15px;">Guardar Frase Personalizada</button>
+            </form>
+        </div>
+        {% if variantes_aprobadas and variantes_aprobadas|length > 0 %}
+        <div style="margin-top:1em; background:#d4edda; padding:0.7em 1em; border-radius:6px; color:#155724; border: 1px solid #c3e6cb;">
+            <b>✅ Ya aprobaste esta palabra antes. Traducciones guardadas en tu diccionario:</b>
+            <ul style="margin:0.5em 0 0 1em;">
+                {% for v in variantes_aprobadas %}
+                <li>{{ v }}</li>
+                {% endfor %}
+            </ul>
+            <small style="display:block; margin-top:5px;">(Puedes saltarla usando el botón gris, o ingresar una nueva variante abajo si existe)</small>
+        </div>
+        {% endif %}
+
+        {% if variantes_pendientes and variantes_pendientes|length > 0 %}
+        <div style="margin-top:1em; background:#eef; padding:0.7em 1em; border-radius:6px;">
+            <b>⏳ Variantes que ingresaste recién y están esperando revisión:</b>
+            <ul style="margin:0.5em 0 0 1em;">
+                {% for v in variantes_pendientes %}
+                <li>{{ v }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+        {% if success %}
+        <div class="success">¡Guardado! Nueva palabra/frase registrada.</div>
+        {% endif %}
+    </div>
+
+    <script>
+        async function eliminarPendiente(palabra) {
+            if (!confirm("¿Seguro que quieres eliminar esta palabra permanentemente de la lista de pendientes?")) return;
+            try {
+                const res = await fetch('/eliminar-pendiente-escritura', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({espanol: palabra})
+                });
+                if (res.ok) {
+                    window.location.reload();
+                } else {
+                    const data = await res.json();
+                    alert("No se pudo eliminar: " + (data.error || "Error desconocido"));
+                }
+            } catch (err) {
+                alert("Error de conexión al eliminar.");
+            }
+        }
+
+        async function generarIA() {
+            const btn = document.getElementById('btn-ia');
+            const status = document.getElementById('ia-status');
+            const instruccion = document.getElementById('instruccion-ia').value;
+            
+            if (!instruccion.trim()) {
+                alert('Por favor, escribe una instrucción para la IA.');
+                return;
+            }
+            
+            btn.disabled = true;
+            status.style.color = '#555';
+            status.textContent = '⏳ Pensando (la IA está generando palabras)...';
+            
+            try {
+                const res = await fetch('/generar-vocabulario-ia', { 
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ instruccion: instruccion })
+                });
+                const data = await res.json();
+                if (data.status === 'ok') {
+                    status.style.color = 'green';
+                    status.innerHTML = `✅ <b>¡Éxito!</b> La IA ha generado <b>${data.palabras.length}</b> frases en español. <br>Actualizando página para que puedas traducirlas...`;
+                    setTimeout(() => window.location.reload(), 1500);
+                } else {
+                    status.style.color = 'red';
+                    status.textContent = '❌ Error de la IA: ' + data.error;
+                }
+            } catch (e) {
+                status.style.color = 'red';
+                status.textContent = '❌ Error de conexión al generar.';
+            }
+            
+            btn.disabled = false;
+        }
+    </script>
+</body>
+</html>

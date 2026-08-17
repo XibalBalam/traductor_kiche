@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reglas de Normalización - Traductor K'iche'</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.07);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+    </style>
+</head>
+<body class="p-6">
+    <div class="max-w-4xl mx-auto">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-2xl font-bold">⚙️ Reglas de Normalización Supervisada</h1>
+            <a href="/" class="text-teal-400 hover:text-teal-300 transition-colors">← Volver al Traductor</a>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Formulario -->
+            <div class="glass-panel p-6 rounded-2xl md:col-span-1 h-fit">
+                <h2 class="text-lg font-semibold mb-4">Añadir Nueva Regla</h2>
+                <form id="ruleForm" class="flex flex-col gap-4">
+                    <div>
+                        <label class="block text-sm text-white/70 mb-1">Texto Erróneo (IA Escucha)</label>
+                        <input type="text" id="badText" required class="w-full bg-white/10 border border-white/20 rounded-lg p-2 text-white outline-none focus:border-teal-400 placeholder-white/30" placeholder="Ej: nukab">
+                    </div>
+                    <div>
+                        <label class="block text-sm text-white/70 mb-1">Texto Correcto (Diccionario)</label>
+                        <input type="text" id="goodText" required class="w-full bg-white/10 border border-white/20 rounded-lg p-2 text-white outline-none focus:border-teal-400 placeholder-white/30" placeholder="Ej: nuq'ab'">
+                    </div>
+                    <button type="submit" class="mt-2 w-full bg-teal-500 hover:bg-teal-600 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                        Guardar Regla
+                    </button>
+                    <p id="msg" class="text-sm text-center hidden mt-2"></p>
+                </form>
+            </div>
+
+            <!-- Lista de Reglas -->
+            <div class="glass-panel p-6 rounded-2xl md:col-span-2">
+                <h2 class="text-lg font-semibold mb-4">Reglas Activas ({{ rules|length }})</h2>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-white/20">
+                                <th class="py-3 px-4 font-semibold text-white/80">IA Escucha (MMS)</th>
+                                <th class="py-3 px-4 font-semibold text-white/80">Reemplazar por</th>
+                                <th class="py-3 px-4 font-semibold text-white/80 text-right">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for bad, good in rules.items() %}
+                            <tr class="border-b border-white/10 hover:bg-white/5 transition-colors">
+                                <td class="py-3 px-4 text-red-300 font-mono">{{ bad }}</td>
+                                <td class="py-3 px-4 text-green-300 font-mono">{{ good }}</td>
+                                <td class="py-3 px-4 text-right">
+                                    <button onclick="deleteRule('{{ bad }}')" class="text-red-400 hover:text-red-300 bg-red-400/10 hover:bg-red-400/20 px-3 py-1 rounded transition-colors text-sm">
+                                        Eliminar
+                                    </button>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="3" class="py-6 text-center text-white/50">No hay reglas registradas.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('ruleForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const badText = document.getElementById('badText').value.trim().toLowerCase();
+            const goodText = document.getElementById('goodText').value.trim();
+            const msg = document.getElementById('msg');
+            
+            if (!badText || !goodText) return;
+
+            try {
+                const res = await fetch('/actualizar-reglas', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'add', bad_text: badText, good_text: goodText })
+                });
+                
+                const data = await res.json();
+                if (data.status === 'ok') {
+                    window.location.reload();
+                } else {
+                    msg.textContent = data.error;
+                    msg.className = "text-sm text-center text-red-400 mt-2 block";
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        });
+
+        async function deleteRule(badText) {
+            if (!confirm(`¿Eliminar la regla para "${badText}"?`)) return;
+            try {
+                const res = await fetch('/actualizar-reglas', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'delete', bad_text: badText })
+                });
+                
+                const data = await res.json();
+                if (data.status === 'ok') {
+                    window.location.reload();
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+    </script>
+</body>
+</html>

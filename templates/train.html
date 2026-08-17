@@ -133,6 +133,19 @@
             margin-bottom: 0.4rem;
         }
 
+        .phrase-count-badge {
+            display: inline-block;
+            font-size: 0.75rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+            color: white;
+        }
+        .badge-red { background-color: rgba(220, 38, 38, 0.8); }
+        .badge-orange { background-color: rgba(217, 119, 6, 0.8); }
+        .badge-green { background-color: rgba(5, 150, 105, 0.8); }
+
         .phrase-kiche {
             font-size: 1.8rem;
             font-weight: 700;
@@ -150,6 +163,46 @@
             display: flex;
             gap: 0.5rem;
             justify-content: center;
+        }
+
+        .category-select-wrapper {
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .category-select {
+            width: 100%;
+            appearance: none;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(102, 126, 234, 0.4);
+            border-radius: 8px;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            padding: 0.7rem 1rem;
+            cursor: pointer;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        
+        .category-select option {
+            background-color: #1a1a3e;
+            color: white;
+        }
+
+        .category-select:focus {
+            border-color: #667eea;
+        }
+
+        .category-select-wrapper::after {
+            content: '▼';
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.6);
+            pointer-events: none;
         }
 
         .btn-nav {
@@ -417,6 +470,12 @@
 
     <!-- PHRASE TO RECORD -->
     <div class="phrase-card">
+        <div class="category-select-wrapper">
+            <select class="category-select" id="categorySelect" onchange="changeCategory()">
+                <!-- Options populated via JS -->
+            </select>
+        </div>
+        <div id="phraseCountBadge" class="phrase-count-badge"></div>
         <div class="phrase-label">Di esta frase en K'iche'</div>
         <div class="phrase-kiche" id="phraseKiche">k'ax waqan</div>
         <div class="phrase-spanish" id="phraseSpanish">me duele la pierna / el pie</div>
@@ -425,13 +484,16 @@
             <button class="btn-nav" onclick="nextPhrase()">Siguiente →</button>
             <button class="btn-nav" onclick="randomPhrase()">🎲 Aleatoria</button>
         </div>
+        <div style="margin-top: 10px; text-align: center;">
+            <button onclick="eliminarFraseActual()" style="background: transparent; border: 1px solid rgba(255,100,100,0.5); color: #ff6b6b; padding: 4px 10px; border-radius: 4px; font-size: 0.8em; cursor: pointer;">🗑️ Eliminar frase (basura)</button>
+        </div>
     </div>
 
     <!-- RECORD -->
     <div class="record-panel">
         <h3>1. Graba tu voz</h3>
         <button class="btn-mic" id="micBtn">🎤</button>
-        <div class="mic-status" id="micStatus">Presiona para grabar</div>
+        <div class="mic-status" id="micStatus">Mantén presionado para grabar</div>
 
         <div class="asr-box" id="asrBox">
             <div class="field-label">Lo que el modelo escuchó (ASR)</div>
@@ -461,21 +523,87 @@
     <div class="toast" id="toast"></div>
 
     <script>
-        // ── PHRASES ──────────────────────────────────────────────────────────
-        const phrases = {{ phrases | tojson }};
+        // ── PHRASES & CATEGORIES ─────────────────────────────────────────────
+        const categories = {{ categories | tojson }};
+        const phraseCounts = {{ phrase_counts | tojson }};
+        let currentCategory = Object.keys(categories)[0];
+        let phrases = categories[currentCategory];
         let phraseIdx = 0;
         let savedSamples = [];
         let currentAudioBlob = null;
         let currentAsrRaw = '';
 
+        function initCategories() {
+            const select = document.getElementById('categorySelect');
+            for (const cat in categories) {
+                const opt = document.createElement('option');
+                opt.value = cat;
+                opt.textContent = `${cat} (${categories[cat].length} frases)`;
+                select.appendChild(opt);
+            }
+        }
+
+        function changeCategory() {
+            const select = document.getElementById('categorySelect');
+            currentCategory = select.value;
+            phrases = categories[currentCategory];
+            phraseIdx = 0;
+            updatePhrase();
+            resetRecording();
+        }
+
         function updatePhrase() {
-            document.getElementById('phraseKiche').textContent = phrases[phraseIdx][0];
+            const currentKiche = phrases[phraseIdx][0];
+            document.getElementById('phraseKiche').textContent = currentKiche;
             document.getElementById('phraseSpanish').textContent = phrases[phraseIdx][1];
-            document.getElementById('correctInput').value = phrases[phraseIdx][0];
+            document.getElementById('correctInput').value = currentKiche;
+
+            // Actualizar contador visual de grabaciones
+            const count = phraseCounts[currentKiche] || 0;
+            const badge = document.getElementById('phraseCountBadge');
+            if (badge) {
+                badge.textContent = `${count} grabaciones`;
+                badge.className = 'phrase-count-badge'; // reset
+                if (count >= 20) {
+                    badge.classList.add('badge-green');
+                } else if (count >= 5) {
+                    badge.classList.add('badge-orange');
+                } else {
+                    badge.classList.add('badge-red');
+                }
+            }
         }
         function nextPhrase() { phraseIdx = (phraseIdx + 1) % phrases.length; updatePhrase(); resetRecording(); }
         function prevPhrase() { phraseIdx = (phraseIdx - 1 + phrases.length) % phrases.length; updatePhrase(); resetRecording(); }
         function randomPhrase() { phraseIdx = Math.floor(Math.random() * phrases.length); updatePhrase(); resetRecording(); }
+
+        async function eliminarFraseActual() {
+            if (!confirm("¿Seguro que quieres eliminar esta frase del diccionario? (Solo borrará las frases generadas por IA que sean basura)")) return;
+            const currentKiche = phrases[phraseIdx][0];
+            try {
+                const res = await fetch('/eliminar-frase-entrenamiento', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({kiche: currentKiche})
+                });
+                if (res.ok) {
+                    showToast("Frase eliminada correctamente");
+                    phrases.splice(phraseIdx, 1);
+                    if (phrases.length === 0) {
+                        alert("No quedan más frases en esta categoría.");
+                    } else {
+                        phraseIdx = phraseIdx % phrases.length;
+                        updatePhrase();
+                        resetRecording();
+                    }
+                } else {
+                    const data = await res.json();
+                    alert("No se pudo eliminar: " + (data.error || "Error desconocido"));
+                }
+            } catch (err) {
+                alert("Error de conexión al eliminar.");
+            }
+        }
 
         // ── RECORDING ─────────────────────────────────────────────────────────
         let isRecording = false;
@@ -487,9 +615,11 @@
         const asrText = document.getElementById('asrText');
         const saveBtn = document.getElementById('saveBtn');
 
-        micBtn.addEventListener('click', async () => {
-            if (!isRecording) await startRecording(); else stopRecording();
-        });
+        micBtn.addEventListener('mousedown', async (e) => { e.preventDefault(); if (!isRecording) await startRecording(); });
+        micBtn.addEventListener('touchstart', async (e) => { e.preventDefault(); if (!isRecording) await startRecording(); }, {passive: false});
+        
+        window.addEventListener('mouseup', () => { if (isRecording) stopRecording(); });
+        window.addEventListener('touchend', () => { if (isRecording) stopRecording(); });
 
         async function startRecording() {
             audioData = [];
@@ -504,7 +634,7 @@
             processor.connect(audioContext.destination);
             isRecording = true;
             micBtn.classList.add('recording');
-            micStatus.textContent = '🔴 Grabando... (presiona para detener)';
+            micStatus.textContent = '🔴 Grabando... (suelta para procesar)';
             asrBox.style.display = 'none';
         }
 
@@ -583,7 +713,7 @@
             currentAudioBlob = null;
             currentAsrRaw = '';
             saveBtn.disabled = true;
-            micStatus.textContent = 'Presiona para grabar';
+            micStatus.textContent = 'Mantén presionado para grabar';
         }
 
         // ── PROGRESS ─────────────────────────────────────────────────────────
@@ -648,6 +778,7 @@
         }
 
         // ── INIT ──────────────────────────────────────────────────────────────
+        initCategories();
         updatePhrase();
         // Load initial stats
         fetch('/training-stats').then(r => r.json()).then(d => updateProgress(d.total_samples));

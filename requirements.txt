@@ -8,3 +8,8 @@ scipy
 numpy
 Flask
 requests
+rapidfuzz
+peft
+boto3
+python-dotenv
+gunicorn

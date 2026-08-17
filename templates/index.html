@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Traductor K'iche' ↔ Español</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -240,19 +241,40 @@
             text-align: center;
             margin-top: 0.5rem;
         }
+
+        /* ANATOMY HIGHLIGHT */
+        .highlight-anatomy {
+            border-color: #ff416c !important;
+            background-color: rgba(255, 65, 108, 0.4) !important;
+            box-shadow: 0 0 15px rgba(255, 65, 108, 0.6);
+        }
     </style>
 </head>
 
 <body>
-    <div class="container">
+    <div class="flex flex-col lg:flex-row gap-6 items-start justify-center w-full max-w-5xl mx-auto">
+        <!-- COLUMNA 1: TRADUCTOR -->
+        <div class="container">
         <h1>🎙️ Traductor K'iche' ↔ Español</h1>
         <div style="text-align:center;margin-bottom:0.5rem">
-            <a href="/train"
-                style="display:inline-block;background:rgba(167,139,250,0.15);border:1px solid rgba(167,139,250,0.35);color:#a78bfa;border-radius:20px;padding:0.3rem 1rem;font-size:0.8rem;text-decoration:none;transition:background 0.2s"
-                onmouseover="this.style.background='rgba(167,139,250,0.3)'"
-                onmouseout="this.style.background='rgba(167,139,250,0.15)'">
-                🎓 Modo Entrenamiento
-            </a>
+                <a href="/train"
+                    style="display:inline-block;background:rgba(167,139,250,0.15);border:1px solid rgba(167,139,250,0.35);color:#a78bfa;border-radius:20px;padding:0.3rem 1rem;font-size:0.8rem;text-decoration:none;transition:background 0.2s;margin-right:0.5rem;"
+                    onmouseover="this.style.background='rgba(167,139,250,0.3)'"
+                    onmouseout="this.style.background='rgba(167,139,250,0.15)'">
+                    🎓 Modo Entrenamiento
+                </a>
+                <a href="/escritura"
+                    style="display:inline-block;background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.35);color:#22c55e;border-radius:20px;padding:0.3rem 1rem;font-size:0.8rem;text-decoration:none;transition:background 0.2s;margin-right:0.5rem;"
+                    onmouseover="this.style.background='rgba(34,197,94,0.3)'"
+                    onmouseout="this.style.background='rgba(34,197,94,0.15)'">
+                    ✍️ Práctica de Escritura
+                </a>
+                <a href="/actualizar-reglas"
+                    style="display:inline-block;background:rgba(56,189,248,0.15);border:1px solid rgba(56,189,248,0.35);color:#38bdf8;border-radius:20px;padding:0.3rem 1rem;font-size:0.8rem;text-decoration:none;transition:background 0.2s;"
+                    onmouseover="this.style.background='rgba(56,189,248,0.3)'"
+                    onmouseout="this.style.background='rgba(56,189,248,0.15)'">
+                    ⚙️ Normalización
+                </a>
         </div>
 
         <!-- MODE SELECTOR -->
@@ -264,7 +286,7 @@
 
         <button id="micBtn" class="btn-mic">🎤</button>
 
-        <div class="status-text" id="status">Presiona para hablar en K'iche'</div>
+        <div class="status-text" id="status">Mantén presionado para hablar en K'iche'</div>
 
         <div class="progress-container" id="progressContainer">
             <div class="progress-bar" id="progressBar"></div>
@@ -286,6 +308,43 @@
 
             <div class="note-text" id="noteText"></div>
         </div>
+        </div> <!-- FIN COLUMNA 1 -->
+
+        <!-- COLUMNA 2: ASISTENCIA Y RESUMEN -->
+        <div class="w-full lg:w-80 flex flex-col gap-6">
+            
+            <!-- ASISTENCIA GRÁFICA -->
+            <div class="container" style="padding: 1.5rem; text-align: center; width: 100%; max-width: none;">
+                <h2 class="text-lg font-bold mb-4">🧍 Asistencia Anatómica</h2>
+                <div class="relative mx-auto w-40 h-56 border border-white/20 rounded-xl bg-white/5 overflow-hidden">
+                    <!-- Cabeza -->
+                    <div id="zona-cabeza" class="absolute top-2 left-1/2 -translate-x-1/2 w-8 h-8 border-2 border-white/30 rounded-full transition-all duration-300"></div>
+                    <!-- Pecho/Torso -->
+                    <div id="zona-pecho" class="absolute top-[44px] left-1/2 -translate-x-1/2 w-12 h-14 border-2 border-white/30 rounded-xl transition-all duration-300"></div>
+                    <!-- Estomago -->
+                    <div id="zona-estomago" class="absolute top-[104px] left-1/2 -translate-x-1/2 w-10 h-8 border-2 border-white/30 rounded-xl transition-all duration-300"></div>
+                    <!-- Brazos -->
+                    <div id="zona-brazos" class="absolute top-[44px] left-1/2 -translate-x-1/2 w-24 h-20 border-t-2 border-white/30 transition-all duration-300 rounded-t-xl" style="pointer-events: none; border-left: 2px solid rgba(255,255,255,0.3); border-right: 2px solid rgba(255,255,255,0.3);"></div>
+                    <!-- Piernas -->
+                    <div id="zona-piernas" class="absolute top-[140px] left-1/2 -translate-x-1/2 w-12 h-16 border-t-2 border-white/30 transition-all duration-300 rounded-b-xl" style="border-left: 2px solid rgba(255,255,255,0.3); border-right: 2px solid rgba(255,255,255,0.3); border-bottom: 2px solid rgba(255,255,255,0.3);"></div>
+                </div>
+                <p class="text-xs text-white/50 mt-4 leading-relaxed">El sistema detectará palabras clave y resaltará la zona afectada.</p>
+            </div>
+
+            <!-- RESUMEN CLÍNICO -->
+            <div class="container" style="padding: 1.5rem; width: 100%; max-width: none;">
+                <h2 class="text-lg font-bold mb-4 text-center">📝 Resumen Clínico</h2>
+                <button onclick="generateSummary()" id="btnGenerateSummary" class="w-full bg-gradient-to-r from-teal-400 to-blue-500 hover:from-teal-500 hover:to-blue-600 text-white font-bold py-2 px-4 rounded-full shadow-lg transition-transform hover:scale-105 mb-4 text-sm">
+                    Generar Resumen de Sesión
+                </button>
+                <textarea id="summaryTextarea" class="w-full bg-white/10 border border-white/20 rounded-lg p-3 text-white text-sm focus:outline-none focus:border-teal-400 min-h-[120px] resize-none mb-3" placeholder="El resumen de triaje generado con IA aparecerá aquí..." readonly></textarea>
+                <button onclick="copySummary()" class="w-full bg-white/20 hover:bg-white/30 text-white font-semibold py-1.5 px-4 rounded-lg transition-colors text-sm">
+                    📋 Copiar al Portapapeles
+                </button>
+            </div>
+
+        </div> <!-- FIN COLUMNA 2 -->
+
     </div>
 
     <script>
@@ -295,6 +354,7 @@
         let audioContext, mediaStream, processor, inputNode, audioData = [];
         let recognition = null;
         let lastSpanishText = '';
+        let sessionTranslations = []; // Almacena el historial de síntomas traducidos
 
         // ── ELEMENTS ───────────────────────────────────────────────────────
         const micBtn = document.getElementById('micBtn');
@@ -320,7 +380,7 @@
                 modeSlider.classList.remove('right');
                 btnKicheToEs.classList.add('active');
                 btnEsToKiche.classList.remove('active');
-                statusEl.textContent = "Presiona para hablar en K'iche'";
+                statusEl.textContent = "Mantén presionado para hablar en K'iche'";
                 labelLang1.textContent = "K'iche' reconocido";
                 labelLang2.textContent = "Español";
                 audioSection.style.display = 'block';
@@ -329,7 +389,7 @@
                 modeSlider.classList.add('right');
                 btnEsToKiche.classList.add('active');
                 btnKicheToEs.classList.remove('active');
-                statusEl.textContent = "Presiona para hablar en Español";
+                statusEl.textContent = "Mantén presionado para hablar en Español";
                 labelLang1.textContent = "Español reconocido";
                 labelLang2.textContent = "K'iche'";
                 audioSection.style.display = 'none';
@@ -341,21 +401,32 @@
         }
 
         // ── MIC BUTTON ─────────────────────────────────────────────────────
-        micBtn.addEventListener('click', async () => {
+        const startAction = async (e) => {
+            e.preventDefault();
             if (!isRecording) {
                 if (currentMode === 'kiche-es') {
                     await startKicheRecording();
                 } else {
                     startSpanishRecognition();
                 }
-            } else {
+            }
+        };
+
+        const stopAction = (e) => {
+            e.preventDefault();
+            if (isRecording) {
                 if (currentMode === 'kiche-es') {
                     stopKicheRecording();
                 } else {
                     stopSpanishRecognition();
                 }
             }
-        });
+        };
+
+        micBtn.addEventListener('mousedown', startAction);
+        micBtn.addEventListener('touchstart', startAction, {passive: false});
+        window.addEventListener('mouseup', stopAction);
+        window.addEventListener('touchend', stopAction);
 
         // ── MODE: K'ICHE' → ES (WAV via MMS server) ───────────────────────
         async function startKicheRecording() {
@@ -374,7 +445,7 @@
 
                 isRecording = true;
                 micBtn.classList.add('recording');
-                statusEl.textContent = "Grabando K'iche'... (Presiona para detener)";
+                statusEl.textContent = "Grabando K'iche'... (Suelta para traducir)";
                 resultBox.style.display = 'none';
             } catch (err) {
                 statusEl.textContent = "Error: No se pudo acceder al micrófono.";
@@ -420,6 +491,13 @@
                 audioPlayer.src = data.audio_url + "?t=" + Date.now();
                 audioPlayer.play();
                 resultBox.style.display = 'block';
+
+                // Guardar en el historial de sesión y analizar contexto visual
+                if (data.translation && !data.translation.startsWith("[Sin traducción")) {
+                    sessionTranslations.push(data.translation);
+                }
+                analyzeMedicalContext(data.translation + " " + data.transcription);
+
             } catch (err) {
                 statusEl.textContent = "Error: " + err.message;
                 progressContainer.style.display = 'none';
@@ -449,6 +527,12 @@
                         audioPlayer.play();
                     }
                     statusEl.textContent = "¡Retradución completada!";
+                    
+                    if (data.translation && !data.translation.startsWith("[Sin traducción")) {
+                        sessionTranslations.push(data.translation);
+                    }
+                    analyzeMedicalContext(data.translation + " " + text);
+
                 } catch (err) {
                     statusEl.textContent = "Error: " + err.message;
                 }
@@ -475,7 +559,7 @@
             recognition.onstart = () => {
                 isRecording = true;
                 micBtn.classList.add('recording');
-                statusEl.textContent = "Escuchando en Español... (Presiona para detener)";
+                statusEl.textContent = "Escuchando en Español... (Suelta para traducir)";
                 resultBox.style.display = 'none';
             };
 
@@ -517,6 +601,16 @@
                 translationText.textContent = data.translation;
                 resultBox.style.display = 'block';
                 statusEl.textContent = "¡Traducción completada!";
+                
+                if (data.audio_url) {
+                    audioPlayer.src = data.audio_url + "?t=" + Date.now();
+                    audioPlayer.play();
+                }
+
+                // Guardar en el historial (español) y analizar
+                sessionTranslations.push(text);
+                analyzeMedicalContext(text + " " + data.translation);
+
             } catch (err) {
                 statusEl.textContent = "Error: " + err.message;
             }
@@ -545,6 +639,85 @@
             const iv = setInterval(() => {
                 if (w >= 90) { clearInterval(iv); } else { w++; progressBar.style.width = w + '%'; }
             }, 60);
+        }
+
+        // ── ASISTENCIA GRÁFICA ANATÓMICA ──────────────────────────────────
+        function analyzeMedicalContext(text) {
+            if (!text) return;
+            const t = text.toLowerCase();
+            
+            // Limpiar clases previas
+            const zones = ['cabeza', 'pecho', 'estomago', 'brazos', 'piernas'];
+            zones.forEach(z => document.getElementById('zona-' + z).classList.remove('highlight-anatomy'));
+
+            // Analizar palabras clave asíncronamente (sin bloquear)
+            setTimeout(() => {
+                if (t.includes('cabeza') || t.includes('jolom') || t.includes('mareo') || t.includes('lemlot') || t.includes('oído') || t.includes('xiq') || t.includes('nariz') || t.includes('ni\'')) {
+                    document.getElementById('zona-cabeza').classList.add('highlight-anatomy');
+                }
+                if (t.includes('pecho') || t.includes('k\'u\'x') || t.includes('respirar') || t.includes('aire') || t.includes('uxlab') || t.includes('corazón')) {
+                    document.getElementById('zona-pecho').classList.add('highlight-anatomy');
+                }
+                if (t.includes('estómago') || t.includes('panza') || t.includes('vomit') || t.includes('xabik') || t.includes('digest')) {
+                    document.getElementById('zona-estomago').classList.add('highlight-anatomy');
+                }
+                if (t.includes('brazo') || t.includes('mano') || t.includes('q\'ab') || t.includes('hombro') || t.includes('molaj')) {
+                    document.getElementById('zona-brazos').classList.add('highlight-anatomy');
+                }
+                if (t.includes('pierna') || t.includes('pie') || t.includes('rodilla') || t.includes('waqan') || t.includes('wakan') || t.includes('koxol')) {
+                    document.getElementById('zona-piernas').classList.add('highlight-anatomy');
+                }
+            }, 50);
+        }
+
+        // ── MOTOR DE RESUMEN CLÍNICO (GROQ) ───────────────────────────────
+        async function generateSummary() {
+            const btn = document.getElementById('btnGenerateSummary');
+            const textarea = document.getElementById('summaryTextarea');
+            
+            if (sessionTranslations.length === 0) {
+                textarea.value = "No hay síntomas registrados en esta sesión para resumir.";
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = "Generando...";
+            textarea.value = "Conectando con IA...";
+
+            try {
+                const res = await fetch('/generate-summary', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ symptoms: sessionTranslations })
+                });
+                
+                const data = await res.json();
+                textarea.value = data.summary || "Error al procesar el resumen.";
+                
+            } catch (err) {
+                textarea.value = "Error al contactar al servidor. Revisa tu conexión.";
+                console.error(err);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = "Generar Resumen de Sesión";
+            }
+        }
+
+        function copySummary() {
+            const textarea = document.getElementById('summaryTextarea');
+            if (textarea.value && !textarea.value.startsWith('El resumen de triaje')) {
+                textarea.select();
+                document.execCommand('copy');
+                // Deseleccionar
+                window.getSelection().removeAllRanges();
+                
+                // Pequeño feedback visual
+                const originalText = textarea.value;
+                textarea.value = "¡Copiado!";
+                setTimeout(() => {
+                    textarea.value = originalText;
+                }, 1000);
+            }
         }
     </script>
 </body>
