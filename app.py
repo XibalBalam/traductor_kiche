@@ -582,9 +582,19 @@ tts_model = None
 tts_tokenizer = None
 device = None
 
+import threading
+
+model_lock = threading.Lock()
+is_loading = False
+
 def load_model():
-    global processor, model, tts_model, tts_tokenizer, device
-    if model is None:
+    global processor, model, tts_model, tts_tokenizer, device, is_loading
+    with model_lock:
+        if model is not None or is_loading:
+            return
+        is_loading = True
+
+    try:
         print("Loading base MMS model...")
         model_id = "facebook/mms-1b-all"
         processor = AutoProcessor.from_pretrained(model_id)
@@ -616,16 +626,8 @@ def load_model():
         print(f"Model loaded on {device}.")
 
         if device == "cpu":
-            print("Optimizing for CPU: limiting threads and applying dynamic 8-bit quantization...")
-            torch.set_num_threads(2)
-            try:
-                # Reduce RAM/Swap usage significantly
-                model = torch.quantization.quantize_dynamic(
-                    model, {torch.nn.Linear}, dtype=torch.qint8
-                )
-                print("✅ 8-bit Quantization applied successfully.")
-            except Exception as e:
-                print(f"❌ Error quantizing model: {e}")
+            print("Optimizing for CPU: limiting threads...")
+            torch.set_num_threads(8)
 
         # Cargar TTS K'iche'
         print("Loading TTS model...")
@@ -641,11 +643,22 @@ def load_model():
                 print(f"❌ Error cargando modelo TTS: {e}")
         else:
             print("❌ No se encontró modelo TTS en models/mms_tts_kiche. Ejecuta download_tts.py")
+    finally:
+        with model_lock:
+            is_loading = False
+
+# Start loading the model in a background thread
+threading.Thread(target=load_model, daemon=True).start()
+
+@app.route('/status')
+def status():
+    return jsonify({
+        'ready': model is not None,
+        'message': 'Modelo listo' if model is not None else 'Cargando modelos en segundo plano...'
+    })
 
 @app.route('/')
 def index():
-    if model is None:
-        load_model()
     return render_template('index.html')
 
 @app.route('/translate', methods=['POST'])
@@ -665,6 +678,15 @@ def translate():
     try:
         # ASR
         audio_input, _ = librosa.load(filepath, sr=16000)
+        
+        # Prevent Wav2Vec2 "Kernel size can't be greater than actual input size" error for short audio
+        if len(audio_input) < 1600:
+            return jsonify({
+                'transcription': "(No se detectó voz - el audio es muy corto)",
+                'translation': "",
+                'audio_url': None
+            })
+            
         inputs = processor(audio_input, sampling_rate=16000, return_tensors="pt").to(device)
         with torch.no_grad():
             outputs = model(**inputs)
