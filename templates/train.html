@@ -27,13 +27,13 @@
         }
 
         .header h1 {
-            font-size: 1.6rem;
+            font-size: clamp(1.2rem, 5vw, 1.6rem);
             font-weight: 700;
         }
 
         .header p {
             color: rgba(255, 255, 255, 0.55);
-            font-size: 0.9rem;
+            font-size: clamp(0.8rem, 3vw, 0.9rem);
             margin-top: 0.3rem;
         }
 
@@ -454,19 +454,7 @@
         <p>Graba frases en K'iche' para mejorar el reconocimiento automático</p>
     </div>
 
-    <!-- PROGRESS -->
-    <div class="progress-card">
-        <div class="progress-circle" id="progressCircle">
-            <span id="countNum">0</span>
-        </div>
-        <div class="progress-info">
-            <h3 id="progressTitle">Grabaciones guardadas</h3>
-            <p id="progressSubtitle">Meta: 50 grabaciones para entrenar</p>
-        </div>
-        <div class="progress-bar-wrap">
-            <div class="progress-bar-fill" id="progressFill" style="width:0%"></div>
-        </div>
-    </div>
+
 
     <!-- PHRASE TO RECORD -->
     <div class="phrase-card">
@@ -494,6 +482,10 @@
         <h3>1. Graba tu voz</h3>
         <button class="btn-mic" id="micBtn">🎤</button>
         <div class="mic-status" id="micStatus">Mantén presionado para grabar</div>
+        
+        <div id="cancelProcessingContainer" style="display: none; text-align: center; margin-bottom: 1rem;">
+            <button class="btn-nav" onclick="cancelProcessing()" style="color: #ff6b6b; border-color: rgba(255,107,107,0.4); background: rgba(255,107,107,0.1);">❌ Cancelar procesamiento</button>
+        </div>
 
         <div class="asr-box" id="asrBox">
             <div class="field-label">Lo que el modelo escuchó (ASR)</div>
@@ -509,14 +501,31 @@
         </div>
     </div>
 
-    <!-- SAVED SAMPLES -->
-    <div>
-        <div class="samples-header">
-            <h3>Grabaciones guardadas</h3>
-            <a class="btn-export" href="/export-dataset">⬇ Exportar CSV</a>
+    </div>
+
+    <!-- PROGRESS & SAVED SAMPLES MOVED TO BOTTOM -->
+    <div style="margin-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1.5rem;">
+        <div class="progress-card">
+            <div class="progress-circle" id="progressCircle">
+                <span id="countNum">0</span>
+            </div>
+            <div class="progress-info">
+                <h3 id="progressTitle">Grabaciones guardadas</h3>
+                <p id="progressSubtitle">Meta: 50 grabaciones para entrenar</p>
+            </div>
+            <div class="progress-bar-wrap">
+                <div class="progress-bar-fill" id="progressFill" style="width:0%"></div>
+            </div>
         </div>
-        <div id="samplesList">
-            <div class="empty-msg">Aún no hay grabaciones. ¡Empieza grabando!</div>
+
+        <div>
+            <div class="samples-header">
+                <h3>Grabaciones guardadas</h3>
+                <a class="btn-export" href="/export-dataset">⬇ Exportar CSV</a>
+            </div>
+            <div id="samplesList">
+                <div class="empty-msg">Aún no hay grabaciones. ¡Empieza grabando!</div>
+            </div>
         </div>
     </div>
 
@@ -609,19 +618,23 @@
         let isRecording = false;
         let audioContext, mediaStream, processor, inputNode, audioData = [];
 
+        let isProcessing = false;
+        let currentAbortController = null;
+
         const micBtn = document.getElementById('micBtn');
         const micStatus = document.getElementById('micStatus');
         const asrBox = document.getElementById('asrBox');
         const asrText = document.getElementById('asrText');
         const saveBtn = document.getElementById('saveBtn');
 
-        micBtn.addEventListener('mousedown', async (e) => { e.preventDefault(); if (!isRecording) await startRecording(); });
-        micBtn.addEventListener('touchstart', async (e) => { e.preventDefault(); if (!isRecording) await startRecording(); }, {passive: false});
+        micBtn.addEventListener('mousedown', async (e) => { e.preventDefault(); if (!isRecording && !isProcessing) await startRecording(); });
+        micBtn.addEventListener('touchstart', async (e) => { e.preventDefault(); if (!isRecording && !isProcessing) await startRecording(); }, {passive: false});
         
         window.addEventListener('mouseup', () => { if (isRecording) stopRecording(); });
         window.addEventListener('touchend', () => { if (isRecording) stopRecording(); });
 
         async function startRecording() {
+            if (isProcessing) return;
             audioData = [];
             currentAudioBlob = null;
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -651,6 +664,11 @@
         }
 
         async function sendForASR() {
+            isProcessing = true;
+            micBtn.style.opacity = '0.5';
+            document.getElementById('cancelProcessingContainer').style.display = 'block';
+            currentAbortController = new AbortController();
+
             const len = audioData.reduce((a, b) => a + b.length, 0);
             const samples = new Float32Array(len);
             let off = 0;
@@ -662,7 +680,12 @@
             fd.append('audio', wavBlob);
 
             try {
-                const res = await fetch('/translate', { method: 'POST', body: fd });
+                const res = await fetch('/translate', { 
+                    method: 'POST', 
+                    body: fd,
+                    signal: currentAbortController.signal
+                });
+                if (!res.ok) throw new Error("Error del servidor");
                 const data = await res.json();
                 currentAsrRaw = data.transcription || '';
                 asrText.textContent = currentAsrRaw || '(sin transcripción)';
@@ -670,8 +693,28 @@
                 asrBox.style.display = 'block';
                 saveBtn.disabled = false;
                 micStatus.textContent = '✅ Listo — revisa y guarda';
+                
+                // Auto-center the recognized text
+                setTimeout(() => {
+                    asrBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 150);
             } catch (e) {
-                micStatus.textContent = 'Error: ' + e.message;
+                if (e.name === 'AbortError') {
+                    micStatus.textContent = 'Procesamiento cancelado.';
+                    resetRecording();
+                } else {
+                    micStatus.textContent = 'Error: ' + e.message;
+                }
+            } finally {
+                isProcessing = false;
+                micBtn.style.opacity = '1';
+                document.getElementById('cancelProcessingContainer').style.display = 'none';
+            }
+        }
+
+        function cancelProcessing() {
+            if (currentAbortController) {
+                currentAbortController.abort();
             }
         }
 
