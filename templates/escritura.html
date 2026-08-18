@@ -173,7 +173,6 @@
             background: rgba(255, 255, 255, 0.03);
             border-radius: 12px;
             padding: 1.2rem;
-            margin-bottom: 1.5rem;
             border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
@@ -215,6 +214,43 @@
             min-width: 200px;
             margin-bottom: 0;
         }
+
+        details.collapsible-section > summary {
+            list-style: none;
+            cursor: pointer;
+            user-select: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        details.collapsible-section > summary::-webkit-details-marker {
+            display: none;
+        }
+
+        details.collapsible-section > summary::after {
+            content: '▼';
+            font-size: 0.7em;
+            transition: transform 0.2s;
+        }
+
+        details.collapsible-section[open] > summary::after {
+            transform: rotate(180deg);
+        }
+        
+        details.collapsible-section[open] > summary {
+            background: rgba(255, 255, 255, 0.15);
+            border-bottom-left-radius: 0;
+            border-bottom-right-radius: 0;
+            border-bottom-color: transparent;
+        }
+
+        details.collapsible-section[open] > .section-box {
+            border-top-left-radius: 0;
+            border-top-right-radius: 0;
+            border-top: none;
+            margin-top: 0;
+        }
     </style>
 </head>
 <body>
@@ -226,21 +262,7 @@
     <div class="card">
         <h2>✏️ Práctica de Escritura</h2>
         
-        <div class="section-box">
-            <label>🚀 Plan de Entrenamiento (Botones Rápidos):</label>
-            <div style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">
-                <button class="btn-small" type="button" onclick="document.getElementById('instruccion-ia').value='Genera 10 pronombres personales y posesivos básicos (yo, tú, mi, tu, etc). En SINGULAR.'; return false;">Fase 1: Pronombres</button>
-                <button class="btn-small" type="button" onclick="document.getElementById('instruccion-ia').value='Genera 20 partes anatómicas del cuerpo humano, estrictamente en SINGULAR y sin determinantes (ej. ojo, mano, nariz).'; return false;">Fase 2: Partes del Cuerpo</button>
-                <button class="btn-small" type="button" onclick="document.getElementById('instruccion-ia').value='Genera 15 verbos médicos o de acción comunes en consulta (ej. doler, respirar, tragar) en infinitivo.'; return false;">Fase 3: Verbos Comunes</button>
-            </div>
-            
-            <div class="ia-input-group">
-                <input type="text" id="instruccion-ia" placeholder="Ej: Genera 5 partes del cuerpo...">
-                <button type="button" id="btn-ia" class="btn-primary" onclick="generarIA()" style="flex: 0 0 auto;">✨ Generar con IA</button>
-            </div>
-            <div id="ia-status" style="font-size: 0.85rem; color: rgba(255,255,255,0.5); min-height: 1.2em;"></div>
-        </div>
-        
+        <!-- 1. MAIN FIELD AND ACTIONS -->
         <form method="POST">
             <label for="espanol">Palabra o frase en español:</label>
             <div class="word-display">
@@ -261,22 +283,7 @@
             </div>
         </form>
 
-        <hr style="margin: 2rem 0; border: 0; border-top: 1px solid rgba(255,255,255,0.1);">
-        
-        <div class="section-box" style="background: rgba(16, 185, 129, 0.05); border-color: rgba(16, 185, 129, 0.2);">
-            <h3 style="color: #34d399; font-size: 1.1rem; margin-top: 0;">➕ Agregar Frase Personalizada</h3>
-            <p style="font-size: 0.85rem; color: rgba(255,255,255,0.6); margin-bottom: 1rem;">Si deseas agregar una frase que no está en la lista de la IA, hazlo aquí.</p>
-            <form method="POST">
-                <label for="custom_espanol">Frase en español:</label>
-                <input type="text" id="custom_espanol" name="espanol" required autocomplete="off" placeholder="Ej: Me duele la garganta">
-                
-                <label for="custom_kiche">Traducción en K'iche':</label>
-                <input type="text" id="custom_kiche" name="kiche" required autocomplete="off" placeholder="Ej: K'ax nu qul">
-                
-                <button type="submit" class="btn-primary" style="width: 100%; background: linear-gradient(135deg, #10b981, #059669);">Guardar Frase Personalizada</button>
-            </form>
-        </div>
-
+        <!-- 2. ALERTS FOR THE CURRENT WORD -->
         {% if variantes_aprobadas and variantes_aprobadas|length > 0 %}
         <div class="alert-box alert-success">
             <b>✅ Ya aprobaste esta palabra antes. Traducciones guardadas en tu diccionario:</b>
@@ -303,6 +310,46 @@
         {% if success %}
         <div class="success">¡Guardado! Nueva palabra/frase registrada.</div>
         {% endif %}
+
+        <hr style="margin: 2rem 0; border: 0; border-top: 1px solid rgba(255,255,255,0.1);">
+        
+        <!-- 3. COLLAPSIBLE ACTIONS (MOVED TO BOTTOM) -->
+        <h3 style="font-size: 1rem; color: rgba(255,255,255,0.6); margin-bottom: 1rem; text-align: center;">Otras Acciones</h3>
+
+        <details class="collapsible-section" style="margin-bottom: 1rem;">
+            <summary class="btn-secondary" style="width: 100%;">🤖 Generar palabras con IA</summary>
+            <div class="section-box">
+                <label>🚀 Plan de Entrenamiento (Botones Rápidos):</label>
+                <div style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">
+                    <button class="btn-small" type="button" onclick="document.getElementById('instruccion-ia').value='Genera 10 pronombres personales y posesivos básicos (yo, tú, mi, tu, etc). En SINGULAR.'; return false;">Fase 1: Pronombres</button>
+                    <button class="btn-small" type="button" onclick="document.getElementById('instruccion-ia').value='Genera 20 partes anatómicas del cuerpo humano, estrictamente en SINGULAR y sin determinantes (ej. ojo, mano, nariz).'; return false;">Fase 2: Partes del Cuerpo</button>
+                    <button class="btn-small" type="button" onclick="document.getElementById('instruccion-ia').value='Genera 15 verbos médicos o de acción comunes en consulta (ej. doler, respirar, tragar) en infinitivo.'; return false;">Fase 3: Verbos Comunes</button>
+                </div>
+                
+                <div class="ia-input-group">
+                    <input type="text" id="instruccion-ia" placeholder="Ej: Genera 5 partes del cuerpo...">
+                    <button type="button" id="btn-ia" class="btn-primary" onclick="generarIA()" style="flex: 0 0 auto;">✨ Generar con IA</button>
+                </div>
+                <div id="ia-status" style="font-size: 0.85rem; color: rgba(255,255,255,0.5); min-height: 1.2em;"></div>
+            </div>
+        </details>
+
+        <details class="collapsible-section">
+            <summary class="btn-secondary" style="width: 100%;">➕ Agregar Frase Personalizada</summary>
+            <div class="section-box" style="background: rgba(16, 185, 129, 0.05); border-color: rgba(16, 185, 129, 0.2);">
+                <p style="font-size: 0.85rem; color: rgba(255,255,255,0.6); margin-bottom: 1rem; margin-top: 0;">Si deseas agregar una frase que no está en la lista de la IA, hazlo aquí.</p>
+                <form method="POST">
+                    <label for="custom_espanol">Frase en español:</label>
+                    <input type="text" id="custom_espanol" name="espanol" required autocomplete="off" placeholder="Ej: Me duele la garganta">
+                    
+                    <label for="custom_kiche">Traducción en K'iche':</label>
+                    <input type="text" id="custom_kiche" name="kiche" required autocomplete="off" placeholder="Ej: K'ax nu qul">
+                    
+                    <button type="submit" class="btn-primary" style="width: 100%; background: linear-gradient(135deg, #10b981, #059669);">Guardar Frase Personalizada</button>
+                </form>
+            </div>
+        </details>
+
     </div>
 
     <script>
