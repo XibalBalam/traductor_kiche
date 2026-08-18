@@ -407,8 +407,8 @@
         };
 
         const stopAction = (e) => {
-            e.preventDefault();
             if (isRecording) {
+                e.preventDefault();
                 if (currentMode === 'kiche-es') {
                     stopKicheRecording();
                 } else {
