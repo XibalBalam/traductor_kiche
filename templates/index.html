@@ -368,6 +368,23 @@
         const btnEsToKiche = document.getElementById('btnEsToKiche');
 
         // ── MODE TOGGLE ────────────────────────────────────────────────────
+        // --- WakeLock API to prevent screen from turning off ---
+        let wakeLock = null;
+        async function requestWakeLock() {
+            try {
+                if ('wakeLock' in navigator) {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                }
+            } catch (err) {
+                console.error(`WakeLock error: ${err.name}, ${err.message}`);
+            }
+        }
+        function releaseWakeLock() {
+            if (wakeLock !== null) {
+                wakeLock.release().then(() => { wakeLock = null; });
+            }
+        }
+
         function setMode(mode) {
             currentMode = mode;
             if (mode === 'kiche-es') {
@@ -398,6 +415,7 @@
         const startAction = async (e) => {
             e.preventDefault();
             if (!isRecording) {
+                await requestWakeLock(); // Prevent screen sleep
                 if (currentMode === 'kiche-es') {
                     await startKicheRecording();
                 } else {
@@ -495,6 +513,8 @@
             } catch (err) {
                 statusEl.textContent = "Error: " + err.message;
                 progressContainer.style.display = 'none';
+            } finally {
+                releaseWakeLock(); // Release screen lock
             }
         }
 
@@ -569,11 +589,13 @@
                 statusEl.textContent = "Error de reconocimiento: " + e.error;
                 micBtn.classList.remove('recording');
                 isRecording = false;
+                releaseWakeLock();
             };
 
             recognition.onend = () => {
                 micBtn.classList.remove('recording');
                 isRecording = false;
+                releaseWakeLock();
             };
 
             recognition.start();
@@ -607,6 +629,8 @@
 
             } catch (err) {
                 statusEl.textContent = "Error: " + err.message;
+            } finally {
+                releaseWakeLock(); // Release screen lock
             }
         }
 

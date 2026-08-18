@@ -2,98 +2,327 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Entrenamiento de Escritura K'iche'</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: Arial, sans-serif; margin: 2em; }
-        .card { background: #f9f9f9; border-radius: 8px; padding: 2em; max-width: 500px; margin: auto; box-shadow: 0 2px 8px #0001; }
-        label { font-weight: bold; }
-        input[type=text], textarea { width: 100%; padding: 0.5em; margin-top: 0.5em; margin-bottom: 1em; border-radius: 4px; border: 1px solid #ccc; }
-        button { background: #007bff; color: white; border: none; padding: 0.7em 2em; border-radius: 4px; cursor: pointer; }
-        .success { color: green; margin-top: 1em; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3e 50%, #0a1a2e 100%);
+            color: white;
+            min-height: 100vh;
+            padding: 1.5rem 1rem;
+        }
+
+        .back-link {
+            display: inline-block;
+            color: rgba(255, 255, 255, 0.5);
+            text-decoration: none;
+            font-size: 0.85rem;
+            margin-bottom: 1rem;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover {
+            color: white;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 1.5rem;
+            max-width: 600px;
+            margin: auto;
+            margin-bottom: 1.5rem;
+        }
+
+        h2, h3 {
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            text-align: center;
+        }
+
+        label {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 0.4rem;
+            display: block;
+        }
+
+        input[type=text] {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(102, 126, 234, 0.4);
+            border-radius: 8px;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            padding: 0.7rem 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+            margin-bottom: 1rem;
+        }
+
+        input[type=text]:focus {
+            border-color: #667eea;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 0.7em 1.5em;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 500;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            transition: transform 0.2s;
+            flex: 1;
+            text-align: center;
+        }
+
+        .btn-primary:hover {
+            transform: scale(1.02);
+        }
+        
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: white;
+            padding: 0.7em 1.5em;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: background 0.2s;
+            flex: 1;
+            text-align: center;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .btn-danger {
+            background: transparent;
+            border: 1px solid rgba(255, 107, 107, 0.5);
+            color: #ff6b6b;
+            padding: 0.7em 1em;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: background 0.2s;
+            text-align: center;
+        }
+
+        .btn-danger:hover {
+            background: rgba(255, 107, 107, 0.1);
+        }
+
+        .btn-small {
+            background: rgba(102, 126, 234, 0.15);
+            color: #a78bfa;
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            padding: 0.4em 0.8em;
+            font-size: 0.8rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-small:hover {
+            background: rgba(102, 126, 234, 0.3);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .success {
+            color: #10b981;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            padding: 0.8rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        .section-box {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            padding: 1.2rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .word-display {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 0.3rem;
+        }
+
+        .alert-box {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+        
+        .alert-success {
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #10b981;
+        }
+
+        .alert-warning {
+            background: rgba(245, 158, 11, 0.15);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            color: #fbbf24;
+        }
+
+        .ia-input-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+        
+        .ia-input-group input {
+            flex: 1;
+            min-width: 200px;
+            margin-bottom: 0;
+        }
     </style>
 </head>
 <body>
+    <div style="max-width: 600px; margin: auto;">
+        <a class="back-link" href="/">← Volver al Inicio</a>
+        <a class="back-link" href="/revisar" style="float: right; color: #a78bfa;">→ Ir a Revisión</a>
+    </div>
+
     <div class="card">
-        <h2>Entrenamiento de Escritura K'iche'</h2>
-        <a href="/revisar" style="display:inline-block; margin-bottom:1em; color:#007bff; text-decoration:none;">→ Ir al panel de Revisión y Aprobación</a>
+        <h2>✏️ Práctica de Escritura</h2>
         
-        <div style="margin-bottom: 1.5em; display: flex; flex-direction: column; gap: 10px; align-items: flex-start;">
-            <div style="width: 100%; margin-bottom: 5px;">
-                <label style="font-size: 0.9em; color: #555;">🚀 Plan de Entrenamiento (Botones Rápidos):</label>
-                <div style="display: flex; gap: 8px; margin-top: 5px; flex-wrap: wrap;">
-                    <button type="button" onclick="document.getElementById('instruccion-ia').value='Genera 10 pronombres personales y posesivos básicos (yo, tú, mi, tu, etc). En SINGULAR.'; return false;" style="background: #eef; color: #333; padding: 0.4em 0.8em; font-size: 0.85em; border: 1px solid #ccc;">Fase 1: Pronombres</button>
-                    <button type="button" onclick="document.getElementById('instruccion-ia').value='Genera 20 partes anatómicas del cuerpo humano, estrictamente en SINGULAR y sin determinantes (ej. ojo, mano, nariz).'; return false;" style="background: #eef; color: #333; padding: 0.4em 0.8em; font-size: 0.85em; border: 1px solid #ccc;">Fase 2: Partes del Cuerpo (Singulares)</button>
-                    <button type="button" onclick="document.getElementById('instruccion-ia').value='Genera 15 verbos médicos o de acción comunes en consulta (ej. doler, respirar, tragar) en infinitivo.'; return false;" style="background: #eef; color: #333; padding: 0.4em 0.8em; font-size: 0.85em; border: 1px solid #ccc;">Fase 3: Verbos Comunes</button>
-                </div>
+        <div class="section-box">
+            <label>🚀 Plan de Entrenamiento (Botones Rápidos):</label>
+            <div style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">
+                <button class="btn-small" type="button" onclick="document.getElementById('instruccion-ia').value='Genera 10 pronombres personales y posesivos básicos (yo, tú, mi, tu, etc). En SINGULAR.'; return false;">Fase 1: Pronombres</button>
+                <button class="btn-small" type="button" onclick="document.getElementById('instruccion-ia').value='Genera 20 partes anatómicas del cuerpo humano, estrictamente en SINGULAR y sin determinantes (ej. ojo, mano, nariz).'; return false;">Fase 2: Partes del Cuerpo</button>
+                <button class="btn-small" type="button" onclick="document.getElementById('instruccion-ia').value='Genera 15 verbos médicos o de acción comunes en consulta (ej. doler, respirar, tragar) en infinitivo.'; return false;">Fase 3: Verbos Comunes</button>
             </div>
-            <div style="display: flex; gap: 10px; align-items: center; width: 100%;">
-                <input type="text" id="instruccion-ia" placeholder="Ej: Genera 5 partes del cuerpo, o 10 síntomas..." style="padding: 0.6em; border-radius: 6px; border: 1px solid #ccc; font-size: 1em; flex: 1;">
-                <button type="button" id="btn-ia" onclick="generarIA()" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 0.7em 1.5em; border: none; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 15px rgba(102,126,234,0.4); transition: transform 0.2s; white-space: nowrap;">✨ Generar con IA</button>
+            
+            <div class="ia-input-group">
+                <input type="text" id="instruccion-ia" placeholder="Ej: Genera 5 partes del cuerpo...">
+                <button type="button" id="btn-ia" class="btn-primary" onclick="generarIA()" style="flex: 0 0 auto;">✨ Generar con IA</button>
             </div>
-            <div id="ia-status" style="margin-top: 5px; font-size: 0.9em; color: #555; min-height: 1.2em;"></div>
+            <div id="ia-status" style="font-size: 0.85rem; color: rgba(255,255,255,0.5); min-height: 1.2em;"></div>
         </div>
         
         <form method="POST">
             <label for="espanol">Palabra o frase en español:</label>
-            <div style="font-size:1.2em; margin-bottom:0.5em;">
+            <div class="word-display">
                 {{ palabra_espanol }}
                 {% if aclaracion %}
-                    <span style="font-size:0.9em; color:#555;">{{ aclaracion }}</span>
+                    <span style="font-size:0.7em; color:rgba(255,255,255,0.4); font-weight:normal; margin-left: 10px;">{{ aclaracion }}</span>
                 {% endif %}
             </div>
             <input type="hidden" name="espanol" value="{{ palabra_espanol }}">
+            
             <label for="kiche">Traducción en K'iche':</label>
-            <input type="text" id="kiche" name="kiche" required autocomplete="off">
-            <div style="display: flex; gap: 10px;">
-                <button type="submit">Guardar</button>
-                <button type="button" onclick="window.location.href='/escritura'" style="background: #6c757d;">Saltar</button>
-                <button type="button" onclick="eliminarPendiente('{{ palabra_espanol }}')" style="background: transparent; border: 1px solid rgba(255,100,100,0.5); color: #ff6b6b; padding: 0.7em 1em; border-radius: 4px; cursor: pointer;">🗑️ Eliminar frase (basura)</button>
+            <input type="text" id="kiche" name="kiche" required autocomplete="off" placeholder="Escribe la traducción aquí...">
+            
+            <div class="action-buttons">
+                <button type="submit" class="btn-primary">Guardar</button>
+                <button type="button" class="btn-secondary" onclick="window.location.href='/escritura'">Saltar</button>
+                <button type="button" class="btn-danger" onclick="eliminarPendiente('{{ palabra_espanol }}')">🗑️ Basura</button>
             </div>
         </form>
 
-        <hr style="margin: 2em 0; border: 0; border-top: 1px solid #ddd;">
+        <hr style="margin: 2rem 0; border: 0; border-top: 1px solid rgba(255,255,255,0.1);">
         
-        <div style="background: #f1f8ff; padding: 1.5em; border-radius: 8px; border: 1px solid #c8e1ff;">
-            <h3 style="margin-top: 0; color: #0366d6;">➕ Agregar Frase Personalizada</h3>
-            <p style="font-size: 0.9em; color: #586069; margin-bottom: 1em;">Si deseas agregar una frase que no está en la lista generada por la IA, puedes hacerlo aquí.</p>
+        <div class="section-box" style="background: rgba(16, 185, 129, 0.05); border-color: rgba(16, 185, 129, 0.2);">
+            <h3 style="color: #34d399; font-size: 1.1rem; margin-top: 0;">➕ Agregar Frase Personalizada</h3>
+            <p style="font-size: 0.85rem; color: rgba(255,255,255,0.6); margin-bottom: 1rem;">Si deseas agregar una frase que no está en la lista de la IA, hazlo aquí.</p>
             <form method="POST">
                 <label for="custom_espanol">Frase en español:</label>
                 <input type="text" id="custom_espanol" name="espanol" required autocomplete="off" placeholder="Ej: Me duele la garganta">
                 
-                <label for="custom_kiche" style="margin-top: 10px; display: block;">Traducción en K'iche':</label>
+                <label for="custom_kiche">Traducción en K'iche':</label>
                 <input type="text" id="custom_kiche" name="kiche" required autocomplete="off" placeholder="Ej: K'ax nu qul">
                 
-                <button type="submit" style="background: #28a745; margin-top: 15px;">Guardar Frase Personalizada</button>
+                <button type="submit" class="btn-primary" style="width: 100%; background: linear-gradient(135deg, #10b981, #059669);">Guardar Frase Personalizada</button>
             </form>
         </div>
+
         {% if variantes_aprobadas and variantes_aprobadas|length > 0 %}
-        <div style="margin-top:1em; background:#d4edda; padding:0.7em 1em; border-radius:6px; color:#155724; border: 1px solid #c3e6cb;">
+        <div class="alert-box alert-success">
             <b>✅ Ya aprobaste esta palabra antes. Traducciones guardadas en tu diccionario:</b>
-            <ul style="margin:0.5em 0 0 1em;">
+            <ul style="margin: 0.5em 0 0 1.5em;">
                 {% for v in variantes_aprobadas %}
                 <li>{{ v }}</li>
                 {% endfor %}
             </ul>
-            <small style="display:block; margin-top:5px;">(Puedes saltarla usando el botón gris, o ingresar una nueva variante abajo si existe)</small>
+            <div style="margin-top: 8px; font-size: 0.85em; opacity: 0.8;">(Puedes saltarla usando el botón gris, o ingresar una nueva variante arriba si existe)</div>
         </div>
         {% endif %}
 
         {% if variantes_pendientes and variantes_pendientes|length > 0 %}
-        <div style="margin-top:1em; background:#eef; padding:0.7em 1em; border-radius:6px;">
+        <div class="alert-box alert-warning">
             <b>⏳ Variantes que ingresaste recién y están esperando revisión:</b>
-            <ul style="margin:0.5em 0 0 1em;">
+            <ul style="margin: 0.5em 0 0 1.5em;">
                 {% for v in variantes_pendientes %}
                 <li>{{ v }}</li>
                 {% endfor %}
             </ul>
         </div>
         {% endif %}
+
         {% if success %}
         <div class="success">¡Guardado! Nueva palabra/frase registrada.</div>
         {% endif %}
     </div>
 
     <script>
+        // --- WakeLock API to prevent screen from turning off ---
+        let wakeLock = null;
+        async function requestWakeLock() {
+            try {
+                if ('wakeLock' in navigator) {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                }
+            } catch (err) {
+                console.error(`WakeLock error: ${err.name}, ${err.message}`);
+            }
+        }
+        function releaseWakeLock() {
+            if (wakeLock !== null) {
+                wakeLock.release().then(() => { wakeLock = null; });
+            }
+        }
+
         async function eliminarPendiente(palabra) {
             if (!confirm("¿Seguro que quieres eliminar esta palabra permanentemente de la lista de pendientes?")) return;
             try {
@@ -124,8 +353,11 @@
             }
             
             btn.disabled = true;
-            status.style.color = '#555';
+            status.style.color = '#a78bfa';
             status.textContent = '⏳ Pensando (la IA está generando palabras)...';
+            
+            // Keep screen awake while processing
+            await requestWakeLock();
             
             try {
                 const res = await fetch('/generar-vocabulario-ia', { 
@@ -135,19 +367,20 @@
                 });
                 const data = await res.json();
                 if (data.status === 'ok') {
-                    status.style.color = 'green';
-                    status.innerHTML = `✅ <b>¡Éxito!</b> La IA ha generado <b>${data.palabras.length}</b> frases en español. <br>Actualizando página para que puedas traducirlas...`;
+                    status.style.color = '#10b981';
+                    status.innerHTML = `✅ <b>¡Éxito!</b> La IA ha generado <b>${data.palabras.length}</b> frases en español. <br>Actualizando página...`;
                     setTimeout(() => window.location.reload(), 1500);
                 } else {
-                    status.style.color = 'red';
+                    status.style.color = '#ff6b6b';
                     status.textContent = '❌ Error de la IA: ' + data.error;
                 }
             } catch (e) {
-                status.style.color = 'red';
+                status.style.color = '#ff6b6b';
                 status.textContent = '❌ Error de conexión al generar.';
+            } finally {
+                btn.disabled = false;
+                releaseWakeLock();
             }
-            
-            btn.disabled = false;
         }
     </script>
 </body>

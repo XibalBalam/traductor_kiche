@@ -542,6 +542,23 @@
         let currentAudioBlob = null;
         let currentAsrRaw = '';
 
+        // --- WakeLock API to prevent screen from turning off ---
+        let wakeLock = null;
+        async function requestWakeLock() {
+            try {
+                if ('wakeLock' in navigator) {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                }
+            } catch (err) {
+                console.error(`WakeLock error: ${err.name}, ${err.message}`);
+            }
+        }
+        function releaseWakeLock() {
+            if (wakeLock !== null) {
+                wakeLock.release().then(() => { wakeLock = null; });
+            }
+        }
+
         function initCategories() {
             const select = document.getElementById('categorySelect');
             for (const cat in categories) {
@@ -669,6 +686,9 @@
             document.getElementById('cancelProcessingContainer').style.display = 'block';
             currentAbortController = new AbortController();
 
+            // Keep screen awake while processing
+            await requestWakeLock();
+
             const len = audioData.reduce((a, b) => a + b.length, 0);
             const samples = new Float32Array(len);
             let off = 0;
@@ -709,6 +729,7 @@
                 isProcessing = false;
                 micBtn.style.opacity = '1';
                 document.getElementById('cancelProcessingContainer').style.display = 'none';
+                releaseWakeLock();
             }
         }
 
