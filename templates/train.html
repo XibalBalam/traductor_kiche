@@ -740,6 +740,10 @@
                     updateProgress(data.total);
                     renderSamples();
                     resetRecording();
+                    
+                    // Scroll up to the phrase card
+                    document.querySelector('.phrase-card').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    
                     // auto-advance to next phrase
                     setTimeout(() => nextPhrase(), 800);
                 }
