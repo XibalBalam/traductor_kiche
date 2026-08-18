@@ -408,6 +408,11 @@ sync_file_from_s3('medical_dictionary.json', DICT_PATH)
 sync_file_from_s3('escritura_dataset.csv', ESCRITURA_CSV)
 sync_file_from_s3('normalization_rules.json', RULES_PATH)
 
+TRAINING_FOLDER = 'training_data'
+TRAINING_CSV = os.path.join(TRAINING_FOLDER, 'metadata.csv')
+os.makedirs(TRAINING_FOLDER, exist_ok=True)
+sync_file_from_s3('training_data/metadata.csv', TRAINING_CSV)
+
 load_medical_dict()
 load_normalization_rules()
 
