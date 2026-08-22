@@ -1,60 +1,840 @@
 file_name,transcription,asr_raw
-audio/sample_0001.wav,k'ax waqan,Q'ax wakan
-audio/sample_0002.wav,k'ax nu jolom,Cq'ac n golum
-audio/sample_0003.wav,k'ax nu q'ab',Cq'annuq'ab
-audio/sample_0004.wav,k'ax waqan,
-audio/sample_0005.wav,k'ax nu jolom,
-audio/sample_0006.wav,k'ax waqan,Cx wakan
-audio/sample_0007.wav,k'ax nu jolom,Q'ax n jolom
-audio/sample_0008.wav,k'ax nu q'ab',Ach nuq'ab
-audio/sample_0009.wav,k'ax nuk'ux,Q'ax nu q'ux
-audio/sample_0010.wav,k'o nu q'aq'al,Q'un kaq'al
-audio/sample_0011.wav,maj wuxlab,Maj uxlab '
-audio/sample_0012.wav,kin jek' ta wuxlab,Quinjik' ta wuxlab
-audio/sample_0013.wav,ka lemlot wanima,Can lem lo tuan man
-audio/sample_0014.wav,kin xabik,Quin xobic
-audio/sample_0015.wav,xin tzaqik,Xin zakic
-audio/sample_0016.wav,xin q'osij,Xin kosij'
-audio/sample_0017.wav,xin jos nu q'ab',Xinjos nu q'ab
-audio/sample_0018.wav,k'ax waral,Q'ax waral
-audio/sample_0019.wav,nim k'ax,Nim q'ax
-audio/sample_0020.wav,in yowab',Min yuw up
-audio/sample_0021.wav,man utz taj,Man in uztaj
-audio/sample_0022.wav,in yowab',In yuwab
-audio/sample_0023.wav,xin q'osij,Xinkocij
-audio/sample_0024.wav,xin jos nu q'ab',Xinjos nu q'ab
-audio/sample_0025.wav,k'ax waral,Cj wral
-audio/sample_0026.wav,xin tzaqik,Xinzakic
-audio/sample_0027.wav,xin q'osij,Xinkozij
-audio/sample_0028.wav,xin jos nu q'ab',Xinjos nu q'ab
-audio/sample_0029.wav,k'ax waral,Q'ax ural
-audio/sample_0030.wav,nim k'ax,Nim q'ax'
-audio/sample_0031.wav,in yowab',Rin yowab
-audio/sample_0032.wav,ka lemlot wanima,Calem lo tuanima
-audio/sample_0033.wav,kin xabik,Quin cabic
-audio/sample_0034.wav,xin tzaqik,Xinzakic
-audio/sample_0035.wav,xin q'osij,Xin kosij'
-audio/sample_0036.wav,xin jos nu q'ab',Xinjos nu q'ab
-audio/sample_0037.wav,k'ax waral,Q'ax wa ral
-audio/sample_0038.wav,nim k'ax,Nim q'axh
-audio/sample_0039.wav,in yowab',In yo wa
-audio/sample_0040.wav,man utz taj,Man utztaj
-audio/sample_0041.wav,na toq'abej,Na tok a bej
-audio/sample_0042.wav,chi na to o',China to'
-audio/sample_0043.wav,na toq'aj,Ato aj
-audio/sample_0044.wav,waqan,Wakan
-audio/sample_0045.wav,jolom,Jolom
-audio/sample_0046.wav,q'ab',Wa'
-audio/sample_0047.wav,kik',Quik'
-audio/sample_0048.wav,q'aq'al,Bakal
-audio/sample_0049.wav,je',Je'
-audio/sample_0050.wav,man je' taj,Retac
-audio/sample_0051.wav,utz,Utz
-audio/sample_0052.wav,k'ax waqan,Q'ax wakon'
-audio/sample_0053.wav,k'ax nu jolom,Q'ax nu jolom
-audio/sample_0054.wav,k'ax nu q'ab',Q'ax nuq'at
-audio/sample_0055.wav,k'ax nuk'ux,Q'ax nu q'ux
-audio/sample_0056.wav,k'o nu q'aq'al,Q'un kaq'al
-audio/sample_0057.wav,maj wuxlab,Majuxlab
-audio/sample_0058.wav,kin jek' ta wuxlab,Quinjik' ta wuxla'
-audio/sample_0059.wav,ka lemlot wanima,Collem lo tuanm
+audio/sample_0001.wav,k'ax waqan,Cac wakin
+audio/sample_0002.wav,k'ax nu jolom,Q'ax n julum
+audio/sample_0003.wav,k'ax nu q'ab',Cax nu q'ab
+audio/sample_0004.wav,k'ax nuk'ux,Caxnu q'ur
+audio/sample_0005.wav,k'o nu q'aq'al,Q'u nu kabal
+audio/sample_0006.wav,maj wuxlab,Majuxla
+audio/sample_0007.wav,kin jek' ta wuxlab,Quinjic t wuxlab
+audio/sample_0008.wav,ka lemlot wanima,Calem lot wanima
+audio/sample_0009.wav,kin xabik,Quem xabiqu
+audio/sample_0010.wav,xin tzaqik,Cinzakic
+audio/sample_0011.wav,xin q'osij,Cinko cij
+audio/sample_0012.wav,xin jos nu q'ab',Xinjos nu q'ab
+audio/sample_0013.wav,k'ax waral,Q'axwral
+audio/sample_0014.wav,nim k'ax,Nimq'ax
+audio/sample_0015.wav,in yowab',Inyowuab
+audio/sample_0016.wav,na in utz taj,Nainctak
+audio/sample_0017.wav,na toq'abej,Natukabir
+audio/sample_0018.wav,chi na to o',Chinatu u
+audio/sample_0019.wav,na toq'aj,Mutoaj
+audio/sample_0020.wav,waqan,Wakan
+audio/sample_0021.wav,jolom,Julum
+audio/sample_0022.wav,q'ab',Kab
+audio/sample_0023.wav,kik',Quic
+audio/sample_0024.wav,q'aq'al,Kabac
+audio/sample_0025.wav,je',Ji''
+audio/sample_0026.wav,man je' taj,Maljetaj
+audio/sample_0027.wav,utz,Utz
+audio/sample_0028.wav,jas ab'i',Jasabi
+audio/sample_0029.wav,k'ax waqan,Q'ax wakan
+audio/sample_0030.wav,k'ax nu jolom,Q'ac n jolom
+audio/sample_0031.wav,k'ax nu q'ab',Q'ax nuq'ab
+audio/sample_0032.wav,k'ax nuk'ux,Q'axnu q'ux
+audio/sample_0033.wav,k'o nu q'aq'al,Q'u nu q'abal
+audio/sample_0034.wav,maj wuxlab,Majuxlab
+audio/sample_0035.wav,kin jek' ta wuxlab,Quinjik' ta wuxlab
+audio/sample_0036.wav,ka lemlot wanima,Calem lo t wan ma
+audio/sample_0037.wav,kin xabik,Quinxabic
+audio/sample_0038.wav,xin tzaqik,Xincak ic
+audio/sample_0039.wav,xin q'osij,Xhin kozij
+audio/sample_0040.wav,xin jos nu q'ab',Xhinjos nukab
+audio/sample_0041.wav,k'ax waral,Q'axwaral
+audio/sample_0042.wav,nim k'ax,Nim q'ax
+audio/sample_0043.wav,in yowab',Inyowab
+audio/sample_0044.wav,na in utz taj,Nam utaj
+audio/sample_0045.wav,na toq'abej,Natok abej
+audio/sample_0046.wav,chi na to o',Chinatu
+audio/sample_0047.wav,na toq'aj,Natuk' aj
+audio/sample_0048.wav,waqan,Wakan
+audio/sample_0049.wav,jolom,Julum
+audio/sample_0050.wav,q'ab',Kab
+audio/sample_0051.wav,kik',Qic
+audio/sample_0052.wav,q'aq'al,Kakar
+audio/sample_0053.wav,je',Je'
+audio/sample_0054.wav,man je' taj,Man je' tak
+audio/sample_0055.wav,utz,Utz
+audio/sample_0056.wav,jas ab'i',Jasbi
+audio/sample_0057.wav,jampa' ajunab',Jampa' ujnab
+audio/sample_0058.wav,jawije' at petinaq wi,Ja wicapéwi
+audio/sample_0059.wav,jas k'o awe,Jas q'ochawe
+audio/sample_0060.wav,jas ana'om,Cas cano
+audio/sample_0061.wav,k'ax waqan,Q'ax wakan
+audio/sample_0062.wav,k'ax nu jolom,Q'ax n julo
+audio/sample_0063.wav,k'ax nu q'ab',Q'acnukab'
+audio/sample_0064.wav,k'ax nuk'ux,Q'ax nu q'ux
+audio/sample_0065.wav,k'o nu q'aq'al,Q'o nu q'aq'al
+audio/sample_0066.wav,maj wuxlab,Majuxlab
+audio/sample_0067.wav,kin jek' ta wuxlab,Quinjek' cawuxlab
+audio/sample_0068.wav,ka lemlot wanima,Calem lo twanimán'
+audio/sample_0069.wav,kin xabik,Quinxabic
+audio/sample_0070.wav,xin tzaqik,Cintakic
+audio/sample_0071.wav,xin q'osij,Xinkocij
+audio/sample_0072.wav,xin jos nu q'ab',Xinjos nu q'ab
+audio/sample_0073.wav,k'ax waral,Q'ax waral
+audio/sample_0074.wav,nim k'ax,Nimq'ax
+audio/sample_0075.wav,in yowab',In yowuab
+audio/sample_0076.wav,na in utz taj,Nain uztaj
+audio/sample_0077.wav,na toq'abej,Na toq'abij
+audio/sample_0078.wav,chi na to o',China to' u'
+audio/sample_0079.wav,na toq'aj,Nato 'ak
+audio/sample_0080.wav,waqan,Wakan
+audio/sample_0081.wav,jolom,Jolo
+audio/sample_0082.wav,q'ab',Kab
+audio/sample_0083.wav,kik',Quic
+audio/sample_0084.wav,q'aq'al,Kakal
+audio/sample_0085.wav,je',Je
+audio/sample_0086.wav,man je' taj,Nujita
+audio/sample_0087.wav,utz,Cutz
+audio/sample_0088.wav,jas ab'i',Jasabi
+audio/sample_0089.wav,jampa' ajunab',Campa' canab
+audio/sample_0090.wav,jawije' at petinaq wi,Jewit pet ne kui
+audio/sample_0091.wav,jas k'o awe,Jas q'ochawe
+audio/sample_0092.wav,jas ana'om,Jasannom
+audio/sample_0093.wav,k'ax nu tza'm,Q'ax nu tzam
+audio/sample_0094.wav,mer kin xab'ik,Merquin xabic
+audio/sample_0095.wav,bixanem,Bixanim
+audio/sample_0096.wav,tajin kel kik',Tajin quelquic
+audio/sample_0097.wav,k'ax chi',Q'axchi'
+audio/sample_0098.wav,kajib,Cajib
+audio/sample_0099.wav,k'ax waral,Q'ax waral
+audio/sample_0100.wav,sibalaj na utz ta in k'owi,Sibala jun utz tein q'owi
+audio/sample_0101.wav,yowab',Yo wab
+audio/sample_0102.wav,ja',Ja'
+audio/sample_0103.wav,k'ax nu xkin,Q'ax nu xquin
+audio/sample_0104.wav,saqarik,Chakaric
+audio/sample_0105.wav,xu ya q'aq' chwe,Xuwi'aq'el chuwi
+audio/sample_0106.wav,k'ax,Q'ax
+audio/sample_0107.wav,wuqub',Wkub
+audio/sample_0108.wav,achalal,Achalal
+audio/sample_0109.wav,xyowajik,Xowwajic
+audio/sample_0110.wav,janipa xat yowajik?,Jan pa' xatiowajic
+audio/sample_0111.wav,xi nu lik,Xinulic
+audio/sample_0112.wav,saq,Sak
+audio/sample_0113.wav,maj nu kaqiq',Majnu cakik'
+audio/sample_0114.wav,i jolom,I jo lom
+audio/sample_0115.wav,qa qan,Kakan
+audio/sample_0116.wav,ya ka k'oji' ral,Yacaq'oji ral
+audio/sample_0117.wav,na utz ta in k'owi,Na uz tin q'oy
+audio/sample_0118.wav,sibalaj na utz taj,Sibalaj na utz taj
+audio/sample_0119.wav,janpa,Canpa'
+audio/sample_0120.wav,q'ab',Q'an
+audio/sample_0121.wav,qa jolom,Ka jolom
+audio/sample_0122.wav,xin k'amla waral pa kunalyab'il,Xinq'am la waral pa cunal yabil
+audio/sample_0123.wav,le qa jolom,Le kajulum
+audio/sample_0124.wav,kaqiq',Qakik'
+audio/sample_0125.wav,ta jin kin b'ek,Tajin quin bec
+audio/sample_0126.wav,na toq'aj,Natuk' aj
+audio/sample_0127.wav,tza'm,Tam
+audio/sample_0128.wav,jas a b'anom,Jas a banum
+audio/sample_0129.wav,q'eq,Q'ik
+audio/sample_0130.wav,je',Je
+audio/sample_0131.wav,jab',Jab
+audio/sample_0132.wav,janpa a yowajem?,Jampa yu wajim
+audio/sample_0133.wav,nima q'aq',Ni maq'ak'
+audio/sample_0134.wav,k'ax le nu q'ab',Q'ax le nu q'ab
+audio/sample_0135.wav,josom,Juzmm
+audio/sample_0136.wav,no,No
+audio/sample_0137.wav,janipa q'ij at yowab?,Janpa' q'i jatiowa'
+audio/sample_0138.wav,uwi aqan,U wi ekin
+audio/sample_0139.wav,xin tzaq chrij waqan,Xinzak chrij wakan
+audio/sample_0140.wav,in k'o waral,In q'owaral
+audio/sample_0141.wav,i waqan,Iwakan
+audio/sample_0142.wav,ta jin kin ek,Darin ging ic
+audio/sample_0143.wav,k'ax chiri',Q'acchiri'
+audio/sample_0144.wav,xin petik,Ximpetic
+audio/sample_0145.wav,joron,Jorn
+audio/sample_0146.wav,tat,Tat
+audio/sample_0147.wav,xa xyowajik,Chacyo wajic
+audio/sample_0148.wav,q'ajom aqan,Q'ejmakan
+audio/sample_0149.wav,xin jos waqan,Xinjos wakan
+audio/sample_0150.wav,nim q'aq',Nimq'ak'
+audio/sample_0151.wav,q'an,Kun
+audio/sample_0152.wav,saqa q'an,Sakaq'in
+audio/sample_0153.wav,jas,Jas
+audio/sample_0154.wav,Xeq'ij,Xkij
+audio/sample_0155.wav,xin jos nu jolom,Xinjos n jolom
+audio/sample_0156.wav,xin jos nu q'ab',Chinjos nu q'ab
+audio/sample_0157.wav,b'ixanik,Bixanic
+audio/sample_0158.wav,mukun,Mucun
+audio/sample_0159.wav,nu q'ab',Nuq'at
+audio/sample_0160.wav,tzibanik,Tz'ibanic
+audio/sample_0161.wav,in yowab',In yowab
+audio/sample_0162.wav,jun,Jun
+audio/sample_0163.wav,jani pa q'ij k'ax,Janpa q'ij q'ax
+audio/sample_0164.wav,xi nul pa le hospital,Xinul pa le hospital
+audio/sample_0165.wav,ru q'abla,Kabla
+audio/sample_0166.wav,ja,Ja
+audio/sample_0167.wav,q'ij,Kij
+audio/sample_0168.wav,k'ax nu jolom,Q'ax n julom
+audio/sample_0169.wav,wareaj,Warri ac
+audio/sample_0170.wav,ne',Ni'
+audio/sample_0171.wav,xin q'osij,Xinkocij
+audio/sample_0172.wav,sutz',Suz
+audio/sample_0173.wav,xab'ik,Xabic
+audio/sample_0174.wav,q'ajom,Q'ajum
+audio/sample_0175.wav,a jolom,A jolom
+audio/sample_0176.wav,mial,Mi'al
+audio/sample_0177.wav,jeri',Jeri
+audio/sample_0178.wav,kokta wuxlab',Q'ot wu xla'
+audio/sample_0179.wav,q'aq',Q'ak'
+audio/sample_0180.wav,le i jolom,Le ijolom
+audio/sample_0181.wav,le a baq'och,Le abaq'och
+audio/sample_0182.wav,chiri' k'axwi,Chiri q'ax wi
+audio/sample_0183.wav,k'uxaj,Q'ux
+audio/sample_0184.wav,kiaq,Quik
+audio/sample_0185.wav,q'ajom aqanaj,Ajumkanak
+audio/sample_0186.wav,ixim,Ixim
+audio/sample_0187.wav,te xin tzaqik,Tex in czakic
+audio/sample_0188.wav,xin tzaqik,Xintakic
+audio/sample_0189.wav,kinaq',Qinak'
+audio/sample_0190.wav,ta jin kinel pa kik',Tajin quin el paquic
+audio/sample_0191.wav,ankne'y,Ain cnic
+audio/sample_0192.wav,mam,Mam
+audio/sample_0193.wav,nan,Nan
+audio/sample_0194.wav,kin xab'ik,Quen xabic
+audio/sample_0195.wav,keb,Quib
+audio/sample_0196.wav,waral k'axwi,Waralq'ax wi
+audio/sample_0197.wav,le i waqan,Lewakan
+audio/sample_0198.wav,xin yowajik,Cinyowajic
+audio/sample_0199.wav,chanim,Chanim
+audio/sample_0200.wav,ka lemlot wanima,Calem lo tuwanima'
+audio/sample_0201.wav,josik,Josic
+audio/sample_0202.wav,xpe wanima,Xpe wanima
+audio/sample_0203.wav,a b'aq'och,Aba uch
+audio/sample_0204.wav,uwach nu k'ux,Wach nu q'ux
+audio/sample_0205.wav,janpa q'ij at yowajnaq,Jampa' q'ijat u wajnak
+audio/sample_0206.wav,ta jin kel.pa kik',Tajin quel pa quik'
+audio/sample_0207.wav,waqan k'ax,We kan q'ax
+audio/sample_0208.wav,janpa q'ij xat yowaik,Jampq'ij xtwajic
+audio/sample_0209.wav,janpa xat yowajik,Cmpax t wajic
+audio/sample_0210.wav,k'atan,Q'atan
+audio/sample_0211.wav,k'ax nu k'u'x,Q'ax nu q'ux
+audio/sample_0212.wav,q'ajom aq'an,Q'ejomkan
+audio/sample_0213.wav,aqan,Akan
+audio/sample_0214.wav,chi' k'ax,Chiq'ax
+audio/sample_0215.wav,chi',Chi
+audio/sample_0216.wav,xe q'ij,Xpekic
+audio/sample_0217.wav,chi k'ax,Chik' ax
+audio/sample_0218.wav,aqan la,Ikin le
+audio/sample_0219.wav,ki jolom,Qui jolo
+audio/sample_0220.wav,u b'aq'och,Ubaq'uch
+audio/sample_0221.wav,kel pa kik',Quel paquic
+audio/sample_0222.wav,nik',Nic
+audio/sample_0223.wav,ka sanow nu q'ab',Casanaw na q'ab
+audio/sample_0224.wav,k'o nu q'aq'al,Q'u nu q'akal
+audio/sample_0225.wav,k'ota kunab'al utz taj ka tijo,Q'o ta cun nabal utz tacatzojo
+audio/sample_0226.wav,ka paq' nu q'ab',Capak' nu q'ab
+audio/sample_0227.wav,uxlab',Uxla'
+audio/sample_0228.wav,ka k'oji',Caq'oji'
+audio/sample_0229.wav,kinel pa k'ik',Quinel pa quik'
+audio/sample_0230.wav,achi,A chi
+audio/sample_0231.wav,a wuk'am a wujil,Awuq'a mawuc
+audio/sample_0232.wav,wuxlab',Wuxla'
+audio/sample_0233.wav,nima kik' kelil,Nimaquic quelic
+audio/sample_0234.wav,chaq'ab',Chakab
+audio/sample_0235.wav,nima kik',Nimaquic
+audio/sample_0236.wav,janipa xat yowajik,Jinpaxtwjic
+audio/sample_0237.wav,k'ax k'owi,Q'axq'owi
+audio/sample_0238.wav,ixoq,Ixuk
+audio/sample_0239.wav,q'ajom q'ab',Ka jumq'ab
+audio/sample_0240.wav,ti'ij,Ti'ij
+audio/sample_0241.wav,nim q'oxom,Nim kuxum
+audio/sample_0242.wav,utz a wach,Utzawach
+audio/sample_0243.wav,il,Il
+audio/sample_0244.wav,xb'e q'ij,Xbekij
+audio/sample_0245.wav,jasche xat pe waral?,Jas chi xtpe waral
+audio/sample_0246.wav,uwach chek',Wach ch'ic
+audio/sample_0247.wav,waqib',Wakib
+audio/sample_0248.wav,xkin,Xqin
+audio/sample_0249.wav,aninaq,Maninak
+audio/sample_0250.wav,xaoj,X'uc
+audio/sample_0251.wav,kax,Q'axh
+audio/sample_0252.wav,xpe le ne',Xpele ne'
+audio/sample_0253.wav,jas kin tob'anik,Jas qintobanic
+audio/sample_0254.wav,k'olem,Q'ulim
+audio/sample_0255.wav,k'ax in k'owi,Q'ax in q'owi
+audio/sample_0256.wav,a wuxlab',Awuxla'
+audio/sample_0257.wav,chiaj,Chiac
+audio/sample_0258.wav,nu kaqiq',Nuqakik
+audio/sample_0259.wav,b'aq'uach,Bak'wach
+audio/sample_0260.wav,janipa',Chan pah
+audio/sample_0261.wav,kik'el,Quiq'uel
+audio/sample_0262.wav,jas ruk'an b'ia'j,Jas ru q'am vi ajla
+audio/sample_0263.wav,lemlotem anima,Lem lotema anima'
+audio/sample_0264.wav,jela',Jela'
+audio/sample_0265.wav,na utz taj,Na uc taj
+audio/sample_0266.wav,nima q'oxom,Nimaq'oxhu
+audio/sample_0267.wav,k'o diab'etes cha we'?,Q'o diabetes chowi
+audio/sample_0268.wav,ma ja naj xin tzaqik,Maj naj xintzakic
+audio/sample_0269.wav,ti',Ti'
+audio/sample_0270.wav,u ya om presion cha we?,Uya n preción chawui
+audio/sample_0271.wav,utz,Utz
+audio/sample_0272.wav,tzu'um,Tu'um
+audio/sample_0273.wav,la utz k'owila,Lot z cola
+audio/sample_0274.wav,wil wuj,Wil wug
+audio/sample_0275.wav,sib'alaj,Ocibalak
+audio/sample_0276.wav,nu tza'm k'ax,Nutzam q'ax
+audio/sample_0277.wav,a q'ab',A q'ab
+audio/sample_0278.wav,utz ta in k'owi,Utz te in q'owi
+audio/sample_0279.wav,tew,Teu
+audio/sample_0280.wav,ka q'oxow nu jolom,Caq'oxuc nu julum
+audio/sample_0281.wav,janipa xel la ri yab' la,Jampa' xel la riyabla
+audio/sample_0282.wav,waram,Warram
+audio/sample_0283.wav,xin jos,Xinjos
+audio/sample_0284.wav,ik,Ik'
+audio/sample_0285.wav,kin wa'ik,Qinwa'c
+audio/sample_0286.wav,q'oxom,Oxom
+audio/sample_0287.wav,k'olik,Q'olic
+audio/sample_0288.wav,chi na to o',China to '
+audio/sample_0289.wav,saqirik,Chakiric
+audio/sample_0290.wav,xin sok nu jolom,Xinsoc nu jolom
+audio/sample_0291.wav,tiox,Tiox
+audio/sample_0292.wav,ka nimar q'oxom,Canimark' xum
+audio/sample_0293.wav,je ri',Jri
+audio/sample_0294.wav,Ja chke tinamit ka pewi,Jachquetinamit capewi
+audio/sample_0295.wav,ja wi' k'ax,Jawi q'ax
+audio/sample_0296.wav,xe yowajik,Xay wajic
+audio/sample_0297.wav,jolom,Jolom
+audio/sample_0298.wav,ka q'oxowik,Cak'xwic
+audio/sample_0299.wav,ja nik',Janik'
+audio/sample_0300.wav,tz'u'mal,Tz'umal
+audio/sample_0301.wav,wa,Wa
+audio/sample_0302.wav,rij nan,Rijnan
+audio/sample_0303.wav,mi'al,Mi bal
+audio/sample_0304.wav,jas ka chakuj la?,Jas cachacuj la
+audio/sample_0305.wav,tajin ka tijla kunab'al?,Tajin catij la cunabal
+audio/sample_0306.wav,k'o kunab'al ka tij la'?,Q'o cun abax catij la
+audio/sample_0307.wav,ja ka b'anla waral kamik?,Jas caban la waral camic
+audio/sample_0308.wav,Jas ronojel ri b'i alaq?,Jas r nujel rbi lk
+audio/sample_0309.wav,na b'e mul ka pe waral?,Nabe mul cape waral
+audio/sample_0310.wav,k'o rachil alaq?,Q'o rachil alak
+audio/sample_0311.wav,tikel alaq pentaq o k'o uachil alaq,Taquel alak petinak o q'o achil alak
+audio/sample_0312.wav,etam la ri kik'el alaq?,Etam la ri quiq'uel alak
+audio/sample_0313.wav,k'ota alaxik iem jela'?,Q'ot laxicyem la
+audio/sample_0314.wav,k'ota alaxik iem jepanla'?,Q'o ta la xquiem la jepan la
+audio/sample_0315.wav,Jawi' ka chakun alaq',Jawi cachacun alak
+audio/sample_0316.wav,k'ota wujil alaq? Carnet,Q'o ta wuj alak carnet
+audio/sample_0317.wav,k'ota wujil alaq or wuj recech ch'ab'al,Q'o tawujil alak ruwuj rech ch'apal
+audio/sample_0318.wav,wachb'ej,Wachbe'
+audio/sample_0319.wav,utz in k'owi,U tzinq'owi
+audio/sample_0320.wav,maltiox,Maltiox
+audio/sample_0321.wav,nima tiox,Ne matiox
+audio/sample_0322.wav,k'o jun sokotajik,Q'ojun zo cutajic
+audio/sample_0323.wav,nima sokotajik,Nimosocotajic
+audio/sample_0324.wav,nim sokotajem,Nim sucotajem
+audio/sample_0325.wav,k'ax pam,Q'axpam
+audio/sample_0326.wav,xin sach nu wach,Xinsac nuwac
+audio/sample_0327.wav,kakaw,Caca
+audio/sample_0328.wav,ja chinaq,Jachinek
+audio/sample_0329.wav,na toq'ab'ej,La toc a ber
+audio/sample_0330.wav,jas ub'anom,Jas u bano
+audio/sample_0331.wav,xin q'osij nu jolom,Xinq'osij nu jolom
+audio/sample_0332.wav,chanim chin to'o',Chanim chin to''
+audio/sample_0333.wav,atz'am,Atz'am
+audio/sample_0334.wav,ali,Ali
+audio/sample_0335.wav,oxib',Oxib
+audio/sample_0336.wav,lajuj,Lajuc
+audio/sample_0337.wav,jawi' k'ax,Jawi q'ax
+audio/sample_0338.wav,jawi',Jawi
+audio/sample_0339.wav,jo'ob',Ju'b
+audio/sample_0340.wav,q'oxom jolom,O xom cu lomaj
+audio/sample_0341.wav,jela' k'axwi,Jila q'ax wi
+audio/sample_0342.wav,ka raj kaqiq',Craj cakil
+audio/sample_0343.wav,jas ri a b'i',Jas riabi'
+audio/sample_0344.wav,teleb',Telib
+audio/sample_0345.wav,xat yowajik,Catiwajic
+audio/sample_0346.wav,q'anq'oj,Kanq'uj
+audio/sample_0347.wav,chale',Chale'
+audio/sample_0348.wav,raxaq'an,Rexakan
+audio/sample_0349.wav,u ne',U ne'
+audio/sample_0350.wav,xu sach uwach,Cusachuwach
+audio/sample_0351.wav,sachalik,Sachalic
+audio/sample_0352.wav,xok aq'ab',Chucakam
+audio/sample_0353.wav,kin waik,Quin we'ic
+audio/sample_0354.wav,ka waj kin waik,Cawar quin wec
+audio/sample_0355.wav,rax,Rac
+audio/sample_0356.wav,tewil,Tewil
+audio/sample_0357.wav,maj tzij,Majzic
+audio/sample_0358.wav,lej,Leg
+audio/sample_0359.wav,chini to o',Chni to'
+audio/sample_0360.wav,b'aq,Bak
+audio/sample_0361.wav,a waqan,Awakan
+audio/sample_0362.wav,wajxaqib',Wjxkib
+audio/sample_0363.wav,china to o',China to'
+audio/sample_0364.wav,qulaj,Kullak
+audio/sample_0365.wav,xin xab'ik,Xinxabic
+audio/sample_0366.wav,nu jolom,Nucalo
+audio/sample_0367.wav,aq'al,Aq'al
+audio/sample_0368.wav,k'ax waqan,Q'ax wakan
+audio/sample_0369.wav,k'ax nu jolom,Q'ax n jolom
+audio/sample_0370.wav,k'ax nu q'ab',Q'ax nuq'ab
+audio/sample_0371.wav,k'ax nuk'ux,Q'ax nu q'ux
+audio/sample_0372.wav,k'o nu q'aq'al,Q'o nu q'aq'al
+audio/sample_0373.wav,maj wuxlab,Majuxlam
+audio/sample_0374.wav,kin jek' ta wuxlab,Quinjek' ta wucla'
+audio/sample_0375.wav,ka lemlot wanima,Can le mlot wan ma
+audio/sample_0376.wav,kin xabik,Quin xabic
+audio/sample_0377.wav,xin tzaqik,Xintakic
+audio/sample_0378.wav,xin q'osij,Xinkocij
+audio/sample_0379.wav,xin jos nu q'ab',Chinjos nu q'ab
+audio/sample_0380.wav,k'ax waral,Q'ax waral
+audio/sample_0381.wav,nim k'ax,Nimq'ax
+audio/sample_0382.wav,in yowab',In yoa
+audio/sample_0383.wav,na in utz taj,Nain uztag
+audio/sample_0384.wav,na toq'abej,A tok a bej
+audio/sample_0385.wav,chi na to o',Chi na to
+audio/sample_0386.wav,na toq'aj,Natoq'aj
+audio/sample_0387.wav,waqan,Wakan
+audio/sample_0388.wav,jolom,Jolom
+audio/sample_0389.wav,q'ab',Q'ab
+audio/sample_0390.wav,kik',Quik'
+audio/sample_0391.wav,q'aq'al,Q'aq'al
+audio/sample_0392.wav,je',Je
+audio/sample_0393.wav,man je' taj,An chat ach
+audio/sample_0394.wav,utz,Utz
+audio/sample_0395.wav,jas ab'i',Jasabi
+audio/sample_0396.wav,jampa' ajunab',Campaj na
+audio/sample_0397.wav,jawije' at petinaq wi,Jewkiyat petnak
+audio/sample_0398.wav,jas k'o awe,Jasq'owi
+audio/sample_0399.wav,jas ana'om,Jasanom
+audio/sample_0400.wav,k'ax nu tza'm,Q'an nacam
+audio/sample_0401.wav,mer kin xab'ik,Merquinxabi'
+audio/sample_0402.wav,bixanem,Bixannim
+audio/sample_0403.wav,tajin kel kik',Tajin quelcuik'
+audio/sample_0404.wav,k'ax chi',Q'axchi
+audio/sample_0405.wav,kajib,Cajib
+audio/sample_0406.wav,k'ax waral,Q'axwaral
+audio/sample_0407.wav,sibalaj na utz ta in k'owi,Sibalaj notz tin q'u
+audio/sample_0408.wav,yowab',Yo wa'
+audio/sample_0409.wav,ja',Ja
+audio/sample_0410.wav,k'ax nu xkin,Q'ac nuxcin
+audio/sample_0411.wav,saqarik,Bsakaric
+audio/sample_0412.wav,xu ya q'aq' chwe,Xuya q'aq'al cho
+audio/sample_0413.wav,k'ax,Q'axh
+audio/sample_0414.wav,wuqub',Wukub
+audio/sample_0415.wav,achalal,A chalal
+audio/sample_0416.wav,xyowajik,Cio wajic
+audio/sample_0417.wav,janipa xat yowajik?,Janpaxatywajic
+audio/sample_0418.wav,xi nu lik,Chinulic
+audio/sample_0419.wav,saq,Sak
+audio/sample_0420.wav,maj nu kaqiq',Maj nu cakik'
+audio/sample_0421.wav,i jolom,I jolom
+audio/sample_0422.wav,qa qan,Kakan
+audio/sample_0423.wav,ya ka k'oji' ral,Ya caq'oji ral
+audio/sample_0424.wav,na utz ta in k'owi,Not thinc
+audio/sample_0425.wav,sibalaj na utz taj,Sibalak na utstaj
+audio/sample_0426.wav,janpa,Canpa'
+audio/sample_0427.wav,q'ab',Kab
+audio/sample_0428.wav,qa jolom,Kajolom
+audio/sample_0429.wav,xin k'amla waral pa kunalyab'il,Xinq'am la waral pa cunal yabil
+audio/sample_0430.wav,le qa jolom,Le kajul'
+audio/sample_0431.wav,kaqiq',Cakik
+audio/sample_0432.wav,ta jin kin b'ek,Tajin quimbi'
+audio/sample_0433.wav,na toq'aj,Na tak a
+audio/sample_0434.wav,tza'm,Cam
+audio/sample_0435.wav,jas a b'anom,Jas a bano
+audio/sample_0436.wav,q'eq,Q'ik
+audio/sample_0437.wav,je',Ji'
+audio/sample_0438.wav,jab',Jab
+audio/sample_0439.wav,janpa a yowajem?,Jampaywajem
+audio/sample_0440.wav,nima q'aq',Nimkak
+audio/sample_0441.wav,k'ax le nu q'ab',Q'ax le nu q'ab
+audio/sample_0442.wav,josom,Jusum
+audio/sample_0443.wav,no',No
+audio/sample_0444.wav,janipa q'ij at yowab?,Janpaki jtwab
+audio/sample_0445.wav,uwi aqan,We kin
+audio/sample_0446.wav,xin tzaq chrij waqan,Xintzak ch ri jwakan
+audio/sample_0447.wav,in k'o waral,In q'o waral
+audio/sample_0448.wav,i waqan,Iwakan
+audio/sample_0449.wav,ta jin kin ek,Tajin quin iec
+audio/sample_0450.wav,k'ax chiri',Q'exchiri'
+audio/sample_0451.wav,xin petik,Ximpetic
+audio/sample_0452.wav,joron,Jorn
+audio/sample_0453.wav,tat,Tat
+audio/sample_0454.wav,xa xyowajik,Xa xiwajic
+audio/sample_0455.wav,q'ajom aqan,Ajumakan'
+audio/sample_0456.wav,xin jos waqan,Chin jos wok'
+audio/sample_0457.wav,nim q'aq',Nimq'ak
+audio/sample_0458.wav,q'an,Kan'
+audio/sample_0459.wav,saqa q'an,Sakak an'
+audio/sample_0460.wav,jas,Jas
+audio/sample_0461.wav,Xeq'ij,Xaq'i
+audio/sample_0462.wav,xin jos nu jolom,Xinjos n jolom
+audio/sample_0463.wav,xin jos nu q'ab',Xinjos nu q'ab
+audio/sample_0464.wav,b'ixanik,Bixanic
+audio/sample_0465.wav,mukun,Mucun
+audio/sample_0466.wav,nu q'ab',Nuq'ab
+audio/sample_0467.wav,tzibanik,Tz'ibanic
+audio/sample_0468.wav,in yowab',In yogua
+audio/sample_0469.wav,jun,Jun
+audio/sample_0470.wav,jani pa q'ij k'ax,Jampa' q'ij q'ac
+audio/sample_0471.wav,xi nul pa le hospital,Xinul pa le ospital
+audio/sample_0472.wav,ru q'abla,O kabl
+audio/sample_0473.wav,ja,Ja
+audio/sample_0474.wav,q'ij,Kij
+audio/sample_0475.wav,k'ax nu jolom,Q'ac nu julom
+audio/sample_0476.wav,wareaj,Wa re aj
+audio/sample_0477.wav,ne',Ne
+audio/sample_0478.wav,xin q'osij,Cinkozij
+audio/sample_0479.wav,sutz',Suz'
+audio/sample_0480.wav,xab'ik,Xabic
+audio/sample_0481.wav,q'ajom,Q'ajum
+audio/sample_0482.wav,a jolom,Ajulum
+audio/sample_0483.wav,mial,Mi al
+audio/sample_0484.wav,jeri',Jeri
+audio/sample_0485.wav,kokta wuxlab',Cocto wuxlab
+audio/sample_0486.wav,q'aq',Uq'ak'
+audio/sample_0487.wav,le i jolom,Lei julum
+audio/sample_0488.wav,le a baq'och,Lbakuch
+audio/sample_0489.wav,chiri' k'axwi,Chiri q'ax wi
+audio/sample_0490.wav,k'uxaj,Q'uxac
+audio/sample_0491.wav,kiaq,Quik
+audio/sample_0492.wav,q'ajom aqanaj,Q'ejo makan
+audio/sample_0493.wav,ixim,Ixim
+audio/sample_0494.wav,te xin tzaqik,Tec nzak ic
+audio/sample_0495.wav,xin tzaqik,Xintak ic
+audio/sample_0496.wav,kinaq',Quinak'
+audio/sample_0497.wav,ta jin kinel pa kik',Tajin quinel pa quik'
+audio/sample_0498.wav,ankne'y,Ain cnich
+audio/sample_0499.wav,mam,Mam
+audio/sample_0500.wav,nan,Nan
+audio/sample_0501.wav,kin xab'ik,Quin xabic
+audio/sample_0502.wav,keb,Quib
+audio/sample_0503.wav,waral k'axwi,Waral q'axui
+audio/sample_0504.wav,le i waqan,Ceyiwakan
+audio/sample_0505.wav,xin yowajik,Xinyo wajic
+audio/sample_0506.wav,chanim,Chanim
+audio/sample_0507.wav,ka lemlot wanima,Calem lo t uanima
+audio/sample_0508.wav,josik,Josic
+audio/sample_0509.wav,xpe wanima,Cpe wen ma
+audio/sample_0510.wav,a b'aq'och,Kabaq'uch
+audio/sample_0511.wav,uwach nu k'ux,Wach nu q'ux
+audio/sample_0512.wav,janpa q'ij at yowajnaq,Camba' kijt  wajnak
+audio/sample_0513.wav,ta jin kel pa kik',Tajin quinexpaquik'
+audio/sample_0514.wav,waqan k'ax,Wakan q'ax
+audio/sample_0515.wav,janpa q'ij xat yowaik,Campa' q'ij xatiowajc
+audio/sample_0516.wav,janpa xat yowajik,Jampax atiwajic
+audio/sample_0517.wav,k'atan,Q'atan
+audio/sample_0518.wav,k'ax nu k'u'x,Q'acnuq'ux
+audio/sample_0519.wav,q'ajom aq'an,Ajo makan
+audio/sample_0520.wav,aqan,Akan
+audio/sample_0521.wav,chi' k'ax,Chiq'ax
+audio/sample_0522.wav,chi',Chi
+audio/sample_0523.wav,xe q'ij,Xkij
+audio/sample_0524.wav,chi k'ax,Chiq'ax
+audio/sample_0525.wav,aqan la,Kakkan da
+audio/sample_0526.wav,ki jolom,Qui jolo
+audio/sample_0527.wav,u b'aq'och,U ba'och
+audio/sample_0528.wav,kel pa kik',Quelpaquic
+audio/sample_0529.wav,nik',Nik'
+audio/sample_0530.wav,ka sanow nu q'ab',Casnow nuq'ab
+audio/sample_0531.wav,k'o nu q'aq'al,Q'u nu q'abal
+audio/sample_0532.wav,k'ota kunab'al utz taj ka tijo,Q'o ta q'u nabal utz ta cart ju
+audio/sample_0533.wav,ka paq' nu q'ab',Capak' nu kab
+audio/sample_0534.wav,uxlab',Uxla
+audio/sample_0535.wav,ka k'oji',Caq'oji
+audio/sample_0536.wav,kinel pa k'ik',Quin ec paquik'
+audio/sample_0537.wav,achi,A chi
+audio/sample_0538.wav,a wuk'am a wujil,Awuq'aj mawuj
+audio/sample_0539.wav,wuxlab',Wiclab
+audio/sample_0540.wav,nima kik' kelil,Ni maquiq'uel
+audio/sample_0541.wav,chaq'ab',Chaq'at
+audio/sample_0542.wav,nima kik',Nimqik'
+audio/sample_0543.wav,janipa xat yowajik,Jempaxetwajic
+audio/sample_0544.wav,k'ax k'owi,Q'axq'owi
+audio/sample_0545.wav,ixoq,Ixuk
+audio/sample_0546.wav,q'ajom q'ab',Q'ajo makin
+audio/sample_0547.wav,ti'ij,Ti'ij
+audio/sample_0548.wav,nim q'oxom,Nim koxum
+audio/sample_0549.wav,utz a wach,Utz wach
+audio/sample_0550.wav,il,Ix
+audio/sample_0551.wav,xb'e q'ij,Xbekij
+audio/sample_0552.wav,jasche xat pe waral?,Jas chi xatape waral
+audio/sample_0553.wav,uwach chek',Wachch'ec
+audio/sample_0554.wav,janipa junab' q'axnaq,Jampa' ajna q'axnak
+audio/sample_0555.wav,waqib',Wakib
+audio/sample_0556.wav,xkin,Xqin
+audio/sample_0557.wav,aninaq,Ani nak
+audio/sample_0558.wav,xaoj,Xa uch
+audio/sample_0559.wav,k'ax,Q'axh
+audio/sample_0560.wav,xpe le ne',Chpelene
+audio/sample_0561.wav,jas kin tob'anik,Jas qin t banic
+audio/sample_0562.wav,k'olem,Q'olim
+audio/sample_0563.wav,k'ax in k'owi,Q'a xinq'owi
+audio/sample_0564.wav,a wuxlab',Aw xlab
+audio/sample_0565.wav,chiaj,Chi aj
+audio/sample_0566.wav,nu kaqiq',Nucakik'
+audio/sample_0567.wav,b'aq'uach,Buk' wach
+audio/sample_0568.wav,janipa',Jan pa'
+audio/sample_0569.wav,kik'el,Quiq'uel
+audio/sample_0570.wav,jas ruk'an b'ia'j,Jas rq'a mubi'
+audio/sample_0571.wav,lemlotem anima,Lem lo teman ma
+audio/sample_0572.wav,jela',Jela'
+audio/sample_0573.wav,na utz taj,Na uctajh
+audio/sample_0574.wav,nima q'oxom,Nimakxum
+audio/sample_0575.wav,k'o diab'etes cha we'?,Q'o diabet s chowe
+audio/sample_0576.wav,ma ja naj xin tzaqik,Maja' naj xintz'akc
+audio/sample_0577.wav,ti',Ti
+audio/sample_0578.wav,u ya om presion cha we?,Oyo ampresión chawe
+audio/sample_0579.wav,utz,Utz
+audio/sample_0580.wav,tzu'um,Cu'm
+audio/sample_0581.wav,la utz k'owila,La uzq'ola
+audio/sample_0582.wav,wil wuj,Wilwuj
+audio/sample_0583.wav,sib'alaj,Cibalaj
+audio/sample_0584.wav,nu tza'm k'ax,Nutzam caxhi
+audio/sample_0585.wav,a q'ab',Akab
+audio/sample_0586.wav,k'o u q'aq'al,Q'o u q'aq'al
+audio/sample_0587.wav,utz ta in k'owi,Kutz ten q'o wi
+audio/sample_0588.wav,tew,Teju
+audio/sample_0589.wav,ka q'oxow nu jolom,Caq'oxuw nu jolom
+audio/sample_0590.wav,janipa xel la ri yab' la,Jampa' xel la ri yabla
+audio/sample_0591.wav,waram,We ram
+audio/sample_0592.wav,xin jos,Cinjoz
+audio/sample_0593.wav,ik,Ic
+audio/sample_0594.wav,kin wa'ik,Qhinwe'ic
+audio/sample_0595.wav,q'oxom,Coxhom
+audio/sample_0596.wav,k'olik,Q'olic
+audio/sample_0597.wav,chi na to o',China to u
+audio/sample_0598.wav,saqirik,Zakir c
+audio/sample_0599.wav,xin sok nu jolom,Xinsoc nu jolom
+audio/sample_0600.wav,tiox,Tiox
+audio/sample_0601.wav,ka nimar q'oxom,Canimar coxo'
+audio/sample_0602.wav,je ri',Jeri'
+audio/sample_0603.wav,Ja chke tinamit ka pewi,Jachquetinamit capewi
+audio/sample_0604.wav,ja wi' k'ax,Jwi q'ax
+audio/sample_0605.wav,xe yowajik,Ceywajic
+audio/sample_0606.wav,jolom,Julum
+audio/sample_0607.wav,ka q'oxowik,Cakucuwic
+audio/sample_0608.wav,ja nik',Janic
+audio/sample_0609.wav,tz'u'mal,Tz'u mail
+audio/sample_0610.wav,wa,Cwi
+audio/sample_0611.wav,rij nan,Rinan
+audio/sample_0612.wav,mi'al,Mial
+audio/sample_0613.wav,jas ka chakuj la?,Jas cachacuj la
+audio/sample_0614.wav,tajin ka tijla kunab'al?,Tajin catij la cu n abal
+audio/sample_0615.wav,k'o kunab'al ka tij la'?,Q'o cuna baxcatij la
+audio/sample_0616.wav,ja ka b'anla waral kamik?,Jas caban la waral camic
+audio/sample_0617.wav,Jas ronojel ri b'i alaq?,Jas ronojel ri bi' alak
+audio/sample_0618.wav,na b'e mul ka pe waral?,Nabe mul cape waral
+audio/sample_0619.wav,k'o achil alaq?,Q'o achi'l alak
+audio/sample_0620.wav,tikel alaq pentaq o k'o uachil alaq,Tquel alak petinak o q'o achi'l alak
+audio/sample_0621.wav,etam la ri kik'el alaq?,Etam la riquiq'uel alak
+audio/sample_0622.wav,k'ota alaxik iem jela'?,Q'o t alaxic ye mjela
+audio/sample_0623.wav,k'ota alaxik iem jepanla'?,Q'o ta la xic yim jepana
+audio/sample_0624.wav,Jawi' ka chakun alaq',Ja wi cachacun alak
+audio/sample_0625.wav,k'ota wujil alaq? Carnet,Q'o tawujil alak carnet
+audio/sample_0626.wav,k'ota wujil alaq or wuj recech ch'ab'al,Q'o ta wujil alak u rwuj rech ch'abal
+audio/sample_0627.wav,wachb'ej,Wachbej
+audio/sample_0628.wav,utz in k'owi,U chin q'o wi
+audio/sample_0629.wav,maltiox,Maltiox
+audio/sample_0630.wav,nima tiox,Nimatioxh
+audio/sample_0631.wav,k'o jun sokotajik,Q'o jun socotajic
+audio/sample_0632.wav,nima sokotajik,Nima socotajiqui
+audio/sample_0633.wav,nim sokotajem,Nim sucutajim
+audio/sample_0634.wav,k'ax pam,Q'axpam
+audio/sample_0635.wav,xin sach nu wach,Cinsac n wacc
+audio/sample_0636.wav,kakaw,Cacaw
+audio/sample_0637.wav,ja chinaq,Achinak
+audio/sample_0638.wav,na toq'ab'ej,Nu to q'abij
+audio/sample_0639.wav,jas ub'anom,Jas u banom
+audio/sample_0640.wav,xin q'osij nu jolom,Xinq'osij nu jolom
+audio/sample_0641.wav,chanim chin to'o',Chanim chinto''
+audio/sample_0642.wav,atz'am,Atz'am
+audio/sample_0643.wav,ali,Ali
+audio/sample_0644.wav,oxib',Coxib
+audio/sample_0645.wav,lajuj,La cour
+audio/sample_0646.wav,jawi' k'ax,Jowi q'ax
+audio/sample_0647.wav,jawi',Cowi'
+audio/sample_0648.wav,jo'ob',Cho u
+audio/sample_0649.wav,q'oxom jolom,Q'oxom jolom
+audio/sample_0650.wav,jela' k'axwi,Jila' q'ax wi
+audio/sample_0651.wav,ka raj kaqiq',Caraj caki'
+audio/sample_0652.wav,jas ri a b'i',Jas  ri bi'
+audio/sample_0653.wav,teleb',Calib
+audio/sample_0654.wav,xat yowajik,Xatiwajic
+audio/sample_0655.wav,q'anq'oj,Q'anq'uj
+audio/sample_0656.wav,chale',Chane'
+audio/sample_0657.wav,raxaq'an,Raxkin
+audio/sample_0658.wav,u ne',U ni'
+audio/sample_0659.wav,xu sach uwach,Xhusach u wach
+audio/sample_0660.wav,sachalik,Sachalic
+audio/sample_0661.wav,xok aq'ab',Xucaq'ab
+audio/sample_0662.wav,kin waik,Quinwe'ic
+audio/sample_0663.wav,ka waj kin waik,Cawaj quinwa'ic
+audio/sample_0664.wav,rax,Rach
+audio/sample_0665.wav,tewil,Te wil
+audio/sample_0666.wav,maj tzij,Mac zij
+audio/sample_0667.wav,lej,Leg
+audio/sample_0668.wav,chini to o',Chinito''
+audio/sample_0669.wav,b'aq,Bak
+audio/sample_0670.wav,a waqan,Awakan
+audio/sample_0671.wav,wajxaqib',Wajxkib
+audio/sample_0672.wav,china to o',Chi na to u
+audio/sample_0673.wav,qulaj,Culaj
+audio/sample_0674.wav,xin xab'ik,Cinxabic
+audio/sample_0675.wav,nu jolom,Nujulum
+audio/sample_0676.wav,ak'al,A q'al
+audio/sample_0677.wav,k'ax waqan,Q'ax wakan
+audio/sample_0678.wav,k'ax nu jolom,Cacin colom
+audio/sample_0679.wav,k'ax nu q'ab',Q'ax nu q'eb
+audio/sample_0680.wav,k'ax nuk'ux,Q'ax nu q'ux
+audio/sample_0681.wav,k'ax waqan,Q'ax wakan
+audio/sample_0682.wav,k'ax nu jolom,Q'ax n julum
+audio/sample_0683.wav,ik,Ic
+audio/sample_0684.wav,kin wa'ik,Quin wac
+audio/sample_0685.wav,wa,Wa
+audio/sample_0686.wav,kin waik,Quinwa'ic
+audio/sample_0687.wav,ka waj kin waik,Cawaj quin wa'ic
+audio/sample_0688.wav,ik,Ic
+audio/sample_0689.wav,qa qan,Kakan
+audio/sample_0690.wav,q'ab',Kab
+audio/sample_0691.wav,jas a b'anom,Jas banu
+audio/sample_0692.wav,uwi aqan,U wi akan
+audio/sample_0693.wav,xin tzaq chrij waqan,Xintzak chrij wakan
+audio/sample_0694.wav,i waqan,Iwakan
+audio/sample_0695.wav,wareaj,Wa re aj
+audio/sample_0696.wav,le i waqan,Le iwakan
+audio/sample_0697.wav,aqan,Akan
+audio/sample_0698.wav,chi',Chi
+audio/sample_0699.wav,aqan la,Kanla
+audio/sample_0700.wav,nima kik',Nimquik'
+audio/sample_0701.wav,utz a wach,Utza wach
+audio/sample_0702.wav,xkin,Xcin
+audio/sample_0703.wav,na toq'ab'ej,Na tok abe
+audio/sample_0704.wav,teleb',Telim
+audio/sample_0705.wav,maj tzij,Majzic
+audio/sample_0706.wav,a waqan,Awakkan
+audio/sample_0707.wav,ka sanow nu jolom,Casanow nu jolom
+audio/sample_0708.wav,le yuk chrij waqan,Leyuc chrij wakan
+audio/sample_0709.wav,tz'apal upa nu tza'm,Tz'apa lu banucam
+audio/sample_0710.wav,spojnaq ri pospo'y,Spujnak ripuspuy
+audio/sample_0711.wav,xpujan le aqan,Xpujan la akan
+audio/sample_0712.wav,Tz'apal upa nu tza'm,Tz'apalu pa natzam
+audio/sample_0713.wav,"na ka kowin taj ka ch'awik, ka q'oxow u qul",Man cacowin taj cach'awic caq'oxow u kul
+audio/sample_0714.wav,u josom u q'ab',U jusomkb
+audio/sample_0715.wav,le kunanel xril ri b'aq'och alaq,Le cunanel xril ri baq'och alak
+audio/sample_0716.wav,xchaqij waq',Cchakij wak
+audio/sample_0717.wav,na ku koch'ta al nu ch'u'k,Nacucoch' ta q'al nu ch'uc
+audio/sample_0718.wav,Spoj nu b'aqil,Spoj nu bakil
+audio/sample_0719.wav,ka q'aq'an le u wikiq'ab',Caq'aq'an le u wiquiq'ab
+audio/sample_0720.wav,nu tza'm,Nutam
+audio/sample_0721.wav,ka kos nu q'ab' we kin wetz'ab'ej potz',Cacos nu q'eb we quinwetz'abej putz'
+audio/sample_0722.wav,qa qan,Qaqan
+audio/sample_0723.wav,q'ab',Q'ab'
+audio/sample_0724.wav,jas a b'anom,Jas a b'anom
+audio/sample_0725.wav,uwi aqan,Uwi' aqan
+audio/sample_0726.wav,xin tzaq chrij waqan,Xin tzaq chrij waqan
+audio/sample_0727.wav,i waqan,I waqan
+audio/sample_0728.wav,wareaj,Ware'aj
+audio/sample_0729.wav,chi',Chi'
+audio/sample_0730.wav,aqan la,Aqan la
+audio/sample_0731.wav,nima kik',Nima kik'
+audio/sample_0732.wav,xkin,Xkin
+audio/sample_0733.wav,na toq'ab'ej,Na toq'ab'ej
+audio/sample_0734.wav,teleb',Teleb'
+audio/sample_0735.wav,maj tzij,Maj tzij
+audio/sample_0736.wav,a waqan,A waqan
+audio/sample_0737.wav,ka sanow nu jolom,Ka sanow nu jolom
+audio/sample_0738.wav,le yuk chrij waqan,Leyuk' chrij waqan
+audio/sample_0739.wav,kin na' chirij waq',Kin na' chrij waqan
+audio/sample_0740.wav,tz'apal upa nu tza'm,Tz'apal u pa nu tza'm
+audio/sample_0741.wav,spojnaq ri pospo'y,Spojinaq ri posp'o'y
+audio/sample_0742.wav,xpujan le aqan,Xpujan le aqan
+audio/sample_0743.wav,Tz'apal upa nu tza'm,Tz'apal u pa nu tza'm
+audio/sample_0744.wav,"na ka kowin taj ka ch'awik, ka q'oxow u qul",Na ka kowin taj ka ch'awik ka q'oxo wuqul
+audio/sample_0745.wav,u josom u q'ab',U josom u q'ab'
+audio/sample_0746.wav,le kunanel xril ri b'aq'och alaq,Lekunanel xril ri b'aq'och alaq
+audio/sample_0747.wav,xchaqij waq',Xchaqij waq'
+audio/sample_0748.wav,na ku koch'ta al nu ch'u'k,Na kukoch' ta le nu ch'uk'
+audio/sample_0749.wav,Spoj nu b'aqil,Spoj nu b'aqil
+audio/sample_0750.wav,ka q'aq'an le u wikiq'ab',Ka q'aq'an le u wikiq'ab'
+audio/sample_0751.wav,ik,Ik
+audio/sample_0752.wav,kin wa'ik,Kin wa'ik
+audio/sample_0753.wav,wa,Wa
+audio/sample_0754.wav,kin waik,Kin wa'ik
+audio/sample_0755.wav,ka waj kin waik,Kawaj kin wa'ik
+audio/sample_0756.wav,ik,Ik
+audio/sample_0757.wav,joron,Joron
+audio/sample_0758.wav,mukun,Mukun
+audio/sample_0759.wav,ixim,Ixim
+audio/sample_0760.wav,kinaq',Kinaq'
+audio/sample_0761.wav,ankne'y,An kne'y
+audio/sample_0762.wav,ik,Ik
+audio/sample_0763.wav,ik,Ik
+audio/sample_0764.wav,q'ajom aqan,Q'ajom aqan
+audio/sample_0765.wav,xin jos waqan,Xin jos waqan
+audio/sample_0766.wav,xin jos nu jolom,Xin jos nu jolom
+audio/sample_0767.wav,xin jos nu q'ab',Xin jos nu q'ab'
+audio/sample_0768.wav,xin q'osij,Jin q'ojib
+audio/sample_0769.wav,q'ajom,Q'ajom
+audio/sample_0770.wav,q'ajom aqanaj,Q'ajom maqanaj
+audio/sample_0771.wav,te xin tzaqik,Te xin tzaqik
+audio/sample_0772.wav,xin tzaqik,Xin tzaqik
+audio/sample_0773.wav,q'ajom aq'an,Q'ajom aqan
+audio/sample_0774.wav,sibalaj na utz ta in k'owi,Sipalaj na utz te in q'owi
+audio/sample_0775.wav,na utz ta in k'owi,Na utz ta in q'owi
+audio/sample_0776.wav,saqarik,Tzaqarik
+audio/sample_0777.wav,Xeq'ij,Xe q'ij
+audio/sample_0778.wav,xe q'ij,Xe q'ij
+audio/sample_0779.wav,xb'e q'ij,Xb'eq'ij
+audio/sample_0780.wav,saqirik,Saqirik
+audio/sample_0781.wav,tiox,Tiox
+audio/sample_0782.wav,maltiox,Mal tiox
+audio/sample_0783.wav,nima tiox,Nima tiox
+audio/sample_0784.wav,xok aq'ab',Xoka q'ab'
+audio/sample_0785.wav,saqarik,Saqarik
+audio/sample_0786.wav,Xeq'ij,Xeq'ij
+audio/sample_0787.wav,xe q'ij,Xe q'ij
+audio/sample_0788.wav,xb'e q'ij,Xpe q'ij
+audio/sample_0789.wav,i jolom,I jolom
+audio/sample_0790.wav,qa jolom,Qaj jolom
+audio/sample_0791.wav,saqirik,Saqirik
+audio/sample_0792.wav,ik,Ik
+audio/sample_0793.wav,je',Je'
+audio/sample_0794.wav,ik,Ik
+audio/sample_0795.wav,kin wa'ik,Kin wa'ik
+audio/sample_0796.wav,wa,Wa
+audio/sample_0797.wav,kin waik,Kin waik
+audio/sample_0798.wav,ka waj kin waik,Ka waj kin wayik
+audio/sample_0799.wav,joron,Joron
+audio/sample_0800.wav,mukun,Mukun
+audio/sample_0801.wav,ixim,Ixim
+audio/sample_0802.wav,kinaq',Kinaq
+audio/sample_0803.wav,q'ajom aqan,Q'ajom maqanaj
+audio/sample_0804.wav,xin jos waqan,Xin jos waqan
+audio/sample_0805.wav,ankne'y,Anknel
+audio/sample_0806.wav,ti'ij,Tiij
+audio/sample_0807.wav,ti',T'i'
+audio/sample_0808.wav,kakaw,Kakaw
+audio/sample_0809.wav,atz'am,A tz'am
+audio/sample_0810.wav,lej,Lej
+audio/sample_0811.wav,q'ajom aqan,Q'ajom aqan
+audio/sample_0812.wav,xin jos waqan,Xin jos waqan
+audio/sample_0813.wav,xin jos nu jolom,Xin jos nu jolom
+audio/sample_0814.wav,xin jos nu q'ab',Xin jos nu q'ab'
+audio/sample_0815.wav,xin q'osij,Xin q'osij
+audio/sample_0816.wav,q'ajom,Q'ajom
+audio/sample_0817.wav,q'ajom aqanaj,Q'ajom aqanaj
+audio/sample_0818.wav,te xin tzaqik,T'e xin tzaqik
+audio/sample_0819.wav,xin tzaqik,Xin tzaqik
+audio/sample_0820.wav,q'ajom aq'an,Q'ajom aqan
+audio/sample_0821.wav,q'ajom q'ab',Q'ajom q'at'
+audio/sample_0822.wav,ma ja naj xin tzaqik,Majan naj xin tzaqip
+audio/sample_0823.wav,xin jos,Xin jos
+audio/sample_0824.wav,xin sok nu jolom,Xin sok nu jolom
+audio/sample_0825.wav,xin q'osij nu jolom,Xin q'osij nu jolom
+audio/sample_0826.wav,xtzaq nima jastaq chrij uwach ch'ek,Tzaq nimajastaq chrij u wach ch'ek
+audio/sample_0827.wav,q'ajom aqan,Ajom aqan
+audio/sample_0828.wav,kaqiq',Kaqieq'
+audio/sample_0829.wav,jab',Jab'
+audio/sample_0830.wav,sutz',Tutz
+audio/sample_0831.wav,q'aq',Q'aq'
+audio/sample_0832.wav,k'atan,Q'atan
+audio/sample_0833.wav,chaq'ab',Chaq'ab'
+audio/sample_0834.wav,tew,Tej
+audio/sample_0835.wav,kaqiq',Yaqiq'
+audio/sample_0836.wav,jab',Jab'
+audio/sample_0837.wav,achalal,Achalal
+audio/sample_0838.wav,k'ax waqan,Q'ax waqan
+audio/sample_0839.wav,a we,Awe

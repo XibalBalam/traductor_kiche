@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Entrenamiento de Escritura K'iche'</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
     <style>
         * {
             box-sizing: border-box;
@@ -255,12 +256,12 @@
 </head>
 <body>
     <div style="max-width: 600px; margin: auto;">
-        <a class="back-link" href="/">← Volver al Inicio</a>
-        <a class="back-link" href="/revisar" style="float: right; color: #a78bfa;">→ Ir a Revisión</a>
+        <a class="back-link" href="/" style="display: inline-flex; align-items: center; gap: 4px;"><span class="material-symbols-outlined" style="font-size: 1rem;">arrow_back</span> Volver al Inicio</a>
+        <a class="back-link" href="/revisar" style="float: right; color: #a78bfa; display: inline-flex; align-items: center; gap: 4px;">Ir a Revisión <span class="material-symbols-outlined" style="font-size: 1rem;">arrow_forward</span></a>
     </div>
 
     <div class="card">
-        <h2>✏️ Práctica de Escritura</h2>
+        <h2><span class="material-symbols-outlined" style="vertical-align: middle; font-size: 1.8rem; margin-right: 8px;">edit_note</span>Práctica de Escritura</h2>
         
         <!-- 1. MAIN FIELD AND ACTIONS -->
         <form method="POST">
@@ -279,14 +280,14 @@
             <div class="action-buttons">
                 <button type="submit" class="btn-primary">Guardar</button>
                 <button type="button" class="btn-secondary" onclick="window.location.href='/escritura'">Saltar</button>
-                <button type="button" class="btn-danger" onclick="eliminarPendiente('{{ palabra_espanol }}')">🗑️ Basura</button>
+                <button type="button" class="btn-danger" onclick="eliminarPendiente('{{ palabra_espanol }}')" style="display: flex; align-items: center; justify-content: center; gap: 6px;"><span class="material-symbols-outlined" style="font-size: 1.1rem;">delete</span> Basura</button>
             </div>
         </form>
 
         <!-- 2. ALERTS FOR THE CURRENT WORD -->
         {% if variantes_aprobadas and variantes_aprobadas|length > 0 %}
         <div class="alert-box alert-success">
-            <b>✅ Ya aprobaste esta palabra antes. Traducciones guardadas en tu diccionario:</b>
+            <b style="display: flex; align-items: center; gap: 6px;"><span class="material-symbols-outlined" style="font-size: 1.1rem;">check_circle</span> Ya aprobaste esta palabra antes. Traducciones guardadas en tu diccionario:</b>
             <ul style="margin: 0.5em 0 0 1.5em;">
                 {% for v in variantes_aprobadas %}
                 <li>{{ v }}</li>
@@ -298,7 +299,7 @@
 
         {% if variantes_pendientes and variantes_pendientes|length > 0 %}
         <div class="alert-box alert-warning">
-            <b>⏳ Variantes que ingresaste recién y están esperando revisión:</b>
+            <b style="display: flex; align-items: center; gap: 6px;"><span class="material-symbols-outlined" style="font-size: 1.1rem;">hourglass_empty</span> Variantes que ingresaste recién y están esperando revisión:</b>
             <ul style="margin: 0.5em 0 0 1.5em;">
                 {% for v in variantes_pendientes %}
                 <li>{{ v }}</li>
@@ -317,9 +318,9 @@
         <h3 style="font-size: 1rem; color: rgba(255,255,255,0.6); margin-bottom: 1rem; text-align: center;">Otras Acciones</h3>
 
         <details class="collapsible-section" style="margin-bottom: 1rem;">
-            <summary class="btn-secondary" style="width: 100%;">🤖 Generar palabras con IA</summary>
+            <summary class="btn-secondary" style="width: 100%; display: flex; align-items: center; gap: 8px;"><span class="material-symbols-outlined">smart_toy</span> Generar palabras con IA</summary>
             <div class="section-box">
-                <label>🚀 Plan de Entrenamiento (Botones Rápidos):</label>
+                <label style="display: flex; align-items: center; gap: 4px;"><span class="material-symbols-outlined" style="font-size: 1rem;">rocket_launch</span> Plan de Entrenamiento (Botones Rápidos):</label>
                 <div style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">
                     <button class="btn-small" type="button" onclick="document.getElementById('instruccion-ia').value='Genera 10 pronombres personales y posesivos básicos (yo, tú, mi, tu, etc). En SINGULAR.'; return false;">Fase 1: Pronombres</button>
                     <button class="btn-small" type="button" onclick="document.getElementById('instruccion-ia').value='Genera 20 partes anatómicas del cuerpo humano, estrictamente en SINGULAR y sin determinantes (ej. ojo, mano, nariz).'; return false;">Fase 2: Partes del Cuerpo</button>
@@ -328,14 +329,14 @@
                 
                 <div class="ia-input-group">
                     <input type="text" id="instruccion-ia" placeholder="Ej: Genera 5 partes del cuerpo...">
-                    <button type="button" id="btn-ia" class="btn-primary" onclick="generarIA()" style="flex: 0 0 auto;">✨ Generar con IA</button>
+                    <button type="button" id="btn-ia" class="btn-primary" onclick="generarIA()" style="flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px;"><span class="material-symbols-outlined" style="font-size: 1.1rem;">auto_awesome</span> Generar con IA</button>
                 </div>
                 <div id="ia-status" style="font-size: 0.85rem; color: rgba(255,255,255,0.5); min-height: 1.2em;"></div>
             </div>
         </details>
 
         <details class="collapsible-section">
-            <summary class="btn-secondary" style="width: 100%;">➕ Agregar Frase Personalizada</summary>
+            <summary class="btn-secondary" style="width: 100%; display: flex; align-items: center; gap: 8px;"><span class="material-symbols-outlined">add</span> Agregar Frase Personalizada</summary>
             <div class="section-box" style="background: rgba(16, 185, 129, 0.05); border-color: rgba(16, 185, 129, 0.2);">
                 <p style="font-size: 0.85rem; color: rgba(255,255,255,0.6); margin-bottom: 1rem; margin-top: 0;">Si deseas agregar una frase que no está en la lista de la IA, hazlo aquí.</p>
                 <form method="POST">

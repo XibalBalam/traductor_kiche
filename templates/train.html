@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Modo Entrenamiento — K'iche'</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
     <style>
         * {
             box-sizing: border-box;
@@ -447,10 +448,10 @@
 </head>
 
 <body>
-    <a class="back-link" href="/">← Volver al Traductor</a>
+    <a class="back-link" href="/" style="display: flex; align-items: center; gap: 4px;"><span class="material-symbols-outlined" style="font-size: 1rem;">arrow_back</span> Volver al Traductor</a>
 
     <div class="header">
-        <h1>🎓 Modo Entrenamiento</h1>
+        <h1><span class="material-symbols-outlined" style="vertical-align: middle; font-size: 2rem; margin-right: 8px;">school</span>Modo Entrenamiento</h1>
         <p>Graba frases en K'iche' para mejorar el reconocimiento automático</p>
     </div>
 
@@ -468,35 +469,35 @@
         <div class="phrase-kiche" id="phraseKiche">k'ax waqan</div>
         <div class="phrase-spanish" id="phraseSpanish">me duele la pierna / el pie</div>
         <div class="phrase-nav">
-            <button class="btn-nav" onclick="prevPhrase()">← Anterior</button>
-            <button class="btn-nav" onclick="nextPhrase()">Siguiente →</button>
-            <button class="btn-nav" onclick="randomPhrase()">🎲 Aleatoria</button>
+            <button class="btn-nav" onclick="prevPhrase()" style="display: flex; align-items: center; gap: 4px;"><span class="material-symbols-outlined" style="font-size: 1rem;">arrow_back</span> Anterior</button>
+            <button class="btn-nav" onclick="nextPhrase()" style="display: flex; align-items: center; gap: 4px;">Siguiente <span class="material-symbols-outlined" style="font-size: 1rem;">arrow_forward</span></button>
+            <button class="btn-nav" onclick="randomPhrase()" style="display: flex; align-items: center; gap: 4px;"><span class="material-symbols-outlined" style="font-size: 1rem;">shuffle</span> Aleatoria</button>
         </div>
         <div style="margin-top: 10px; text-align: center;">
-            <button onclick="eliminarFraseActual()" style="background: transparent; border: 1px solid rgba(255,100,100,0.5); color: #ff6b6b; padding: 4px 10px; border-radius: 4px; font-size: 0.8em; cursor: pointer;">🗑️ Eliminar frase (basura)</button>
+            <button onclick="eliminarFraseActual()" style="background: transparent; border: 1px solid rgba(255,100,100,0.5); color: #ff6b6b; padding: 4px 10px; border-radius: 4px; font-size: 0.8em; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;"><span class="material-symbols-outlined" style="font-size: 1.2rem;">delete</span> Eliminar frase (basura)</button>
         </div>
     </div>
 
     <!-- RECORD -->
     <div class="record-panel">
         <h3>1. Graba tu voz</h3>
-        <button class="btn-mic" id="micBtn">🎤</button>
+        <button class="btn-mic" id="micBtn"><span class="material-symbols-outlined" style="font-size: 40px;">mic</span></button>
         <div class="mic-status" id="micStatus">Mantén presionado para grabar</div>
         
         <div id="cancelProcessingContainer" style="display: none; text-align: center; margin-bottom: 1rem;">
-            <button class="btn-nav" onclick="cancelProcessing()" style="color: #ff6b6b; border-color: rgba(255,107,107,0.4); background: rgba(255,107,107,0.1);">❌ Cancelar procesamiento</button>
+            <button class="btn-nav" onclick="cancelProcessing()" style="color: #ff6b6b; border-color: rgba(255,107,107,0.4); background: rgba(255,107,107,0.1); display: inline-flex; align-items: center; gap: 6px;"><span class="material-symbols-outlined" style="font-size: 1.1rem;">cancel</span> Cancelar procesamiento</button>
         </div>
 
         <div class="asr-box" id="asrBox">
             <div class="field-label">Lo que el modelo escuchó (ASR)</div>
             <div class="asr-text" id="asrText">—</div>
 
-            <div class="field-label">✏️ Transcripción CORRECTA en K'iche' (edita si hay errores)</div>
+            <div class="field-label" style="display: flex; align-items: center; gap: 4px;"><span class="material-symbols-outlined" style="font-size: 1.1rem;">edit_note</span> Transcripción CORRECTA en K'iche' (edita si hay errores)</div>
             <input class="correct-input" id="correctInput" type="text" placeholder="Escribe lo que dijiste..."
                 autocomplete="off">
 
-            <button class="btn-save" id="saveBtn" onclick="saveSample()" disabled>
-                💾 Guardar grabación
+            <button class="btn-save" id="saveBtn" onclick="saveSample()" disabled style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <span class="material-symbols-outlined">save</span> Guardar grabación
             </button>
         </div>
     </div>
@@ -521,7 +522,7 @@
         <div>
             <div class="samples-header">
                 <h3>Grabaciones guardadas</h3>
-                <a class="btn-export" href="/export-dataset">⬇ Exportar CSV</a>
+                <a class="btn-export" href="/export-dataset" style="display: flex; align-items: center; gap: 4px;"><span class="material-symbols-outlined" style="font-size: 1.1rem;">download</span> Exportar CSV</a>
             </div>
             <div id="samplesList">
                 <div class="empty-msg">Aún no hay grabaciones. ¡Empieza grabando!</div>
@@ -810,7 +811,7 @@
                 `<div class="sample-item">
                     <span class="sample-num">#${s.num}</span>
                     <span class="sample-text">${s.text}</span>
-                    <button class="sample-play" onclick="playAudio('${s.file}')">▶</button>
+                    <button class="sample-play" onclick="playAudio('${s.file}')"><span class="material-symbols-outlined">play_arrow</span></button>
                 </div>`
             ).join('');
         }

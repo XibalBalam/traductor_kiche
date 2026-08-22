@@ -8,7 +8,7 @@ import unicodedata
 import requests as http_requests
 import torch
 import librosa
-from flask import Flask, render_template, request, jsonify, send_from_directory
+from flask import Flask, render_template, request, jsonify, send_from_directory, session, redirect, url_for, flash
 from transformers import Wav2Vec2ForCTC, AutoProcessor
 from deep_translator import GoogleTranslator
 from gtts import gTTS
@@ -17,12 +17,186 @@ import rapidfuzz
 import boto3
 import io
 import zipfile
+import datetime
+from functools import wraps
+from flask_sqlalchemy import SQLAlchemy
+from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
 
 
 app = Flask(__name__)
+app.secret_key = os.environ.get('SECRET_KEY', 'default-dev-key')
+
+# Force db to be created in the current directory, not in 'instance/'
+DB_PATH = os.path.join(os.path.dirname(__file__), 'app.db')
+app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_PATH}'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+db = SQLAlchemy(app)
+
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    password_hash = db.Column(db.String(256), nullable=False)
+    security_question = db.Column(db.String(200), nullable=False)
+    security_answer_hash = db.Column(db.String(256), nullable=False)
+    role = db.Column(db.String(20), default='basico', nullable=False)
+    status = db.Column(db.String(20), default='pending', nullable=False)
+
+class Audit(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    action = db.Column(db.String(200), nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user_id' not in session:
+            return redirect(url_for('login_page'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+def role_required(*allowed_roles):
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if 'user_id' not in session:
+                return redirect(url_for('login_page'))
+            user = User.query.get(session['user_id'])
+            if not user or user.role not in allowed_roles:
+                flash("No tienes permisos para acceder a esta sección.", "error")
+                return redirect(url_for('index'))
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
+
 ESCRITURA_CSV = os.path.join(os.path.dirname(__file__), 'escritura_dataset.csv')
 DICT_PATH = os.path.join(os.path.dirname(__file__), 'medical_dictionary.json')
+
+# --- AUTH ROUTES ---
+@app.route('/login', methods=['GET', 'POST'])
+def login_page():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        user = User.query.filter_by(username=username).first()
+        if user and check_password_hash(user.password_hash, password):
+            if user.status != 'approved':
+                flash("Tu cuenta ha sido registrada y está pendiente de aprobación por un administrador.", "error")
+                return render_template('login.html')
+            
+            session['user_id'] = user.id
+            session['username'] = user.username
+            session['role'] = user.role
+            return redirect(url_for('index'))
+        else:
+            flash("Usuario o contraseña incorrectos", "error")
+    return render_template('login.html')
+
+@app.route('/register', methods=['GET', 'POST'])
+def register_page():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        security_question = request.form.get('security_question')
+        security_answer = request.form.get('security_answer')
+        
+        if User.query.filter_by(username=username).first():
+            flash("El usuario ya existe", "error")
+        else:
+            is_first_user = User.query.count() == 0
+            new_user = User(
+                username=username,
+                password_hash=generate_password_hash(password, method='pbkdf2:sha256'),
+                security_question=security_question,
+                security_answer_hash=generate_password_hash(security_answer.lower().strip(), method='pbkdf2:sha256'),
+                role='admin' if is_first_user else 'basico',
+                status='approved' if is_first_user else 'pending'
+            )
+            db.session.add(new_user)
+            db.session.commit()
+            sync_file_to_s3(DB_PATH, 'app.db')
+            if is_first_user:
+                flash("¡Bienvenido! Al ser el primer usuario, has sido configurado como Administrador automáticamente. Inicia sesión.", "success")
+            else:
+                flash("Usuario registrado exitosamente. Tu cuenta debe ser aprobada por un administrador antes de iniciar sesión.", "success")
+            return redirect(url_for('login_page'))
+    return render_template('register.html')
+
+@app.route('/recover', methods=['GET', 'POST'])
+def recover_page():
+    if request.method == 'POST':
+        step = request.form.get('step')
+        
+        if step == '1': # Check username
+            username = request.form.get('username')
+            user = User.query.filter_by(username=username).first()
+            if user:
+                return render_template('recover.html', step=2, username=username, question=user.security_question)
+            else:
+                flash("Usuario no encontrado", "error")
+                return render_template('recover.html', step=1)
+                
+        elif step == '2': # Check answer
+            username = request.form.get('username')
+            answer = request.form.get('security_answer').lower().strip()
+            user = User.query.filter_by(username=username).first()
+            if user and check_password_hash(user.security_answer_hash, answer):
+                return render_template('recover.html', step=3, username=username)
+            else:
+                flash("Respuesta incorrecta", "error")
+                return render_template('recover.html', step=2, username=username, question=user.security_question if user else "")
+                
+        elif step == '3': # Set new password
+            username = request.form.get('username')
+            new_password = request.form.get('new_password')
+            user = User.query.filter_by(username=username).first()
+            if user:
+                user.password_hash = generate_password_hash(new_password, method='pbkdf2:sha256')
+                db.session.commit()
+                sync_file_to_s3(DB_PATH, 'app.db')
+                flash("Contraseña actualizada exitosamente", "success")
+                return redirect(url_for('login_page'))
+    
+    return render_template('recover.html', step=1)
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login_page'))
+
+# --- ADMIN ROUTES ---
+@app.route('/admin')
+@role_required('admin')
+def admin_page():
+    users = User.query.all()
+    return render_template('admin.html', users=users)
+
+@app.route('/admin/approve/<int:user_id>', methods=['POST'])
+@role_required('admin')
+def admin_approve(user_id):
+    user = User.query.get(user_id)
+    if user:
+        user.status = 'approved'
+        db.session.commit()
+        sync_file_to_s3(DB_PATH, 'app.db')
+        flash(f"Usuario {user.username} aprobado.", "success")
+    return redirect(url_for('admin_page'))
+
+@app.route('/admin/changerole/<int:user_id>', methods=['POST'])
+@role_required('admin')
+def admin_changerole(user_id):
+    user = User.query.get(user_id)
+    new_role = request.form.get('role')
+    if user and new_role in ['basico', 'entrenador', 'admin']:
+        user.role = new_role
+        db.session.commit()
+        sync_file_to_s3(DB_PATH, 'app.db')
+        flash(f"Rol de {user.username} cambiado a {new_role}.", "success")
+    return redirect(url_for('admin_page'))
+
+# --- ESCRITURA TRAINING PAGE ---
 
 # --- ESCRITURA TRAINING PAGE ---
 
@@ -64,6 +238,7 @@ def get_escritura_vocab():
 
 
 @app.route('/escritura', methods=['GET', 'POST'])
+@role_required('admin', 'entrenador')
 def escritura_page():
     vocab = get_escritura_vocab()
     success = False
@@ -190,6 +365,7 @@ def eliminar_pendiente_escritura():
     return jsonify({'error': 'No se encontró la palabra'}), 404
 
 @app.route('/revisar')
+@role_required('admin', 'entrenador')
 def revisar_page():
     variantes = []
     if os.path.exists(ESCRITURA_CSV):
@@ -407,6 +583,11 @@ def load_normalization_rules():
 sync_file_from_s3('medical_dictionary.json', DICT_PATH)
 sync_file_from_s3('escritura_dataset.csv', ESCRITURA_CSV)
 sync_file_from_s3('normalization_rules.json', RULES_PATH)
+
+DB_PATH = os.path.join(os.path.dirname(__file__), 'app.db')
+sync_file_from_s3('app.db', DB_PATH)
+with app.app_context():
+    db.create_all()
 
 TRAINING_FOLDER = 'training_data'
 TRAINING_CSV = os.path.join(TRAINING_FOLDER, 'metadata.csv')
@@ -663,6 +844,7 @@ def status():
     })
 
 @app.route('/')
+@login_required
 def index():
     return render_template('index.html')
 
@@ -849,6 +1031,7 @@ def get_training_count():
         return max(0, sum(1 for _ in f) - 1)  # subtract header
 
 @app.route('/train')
+@role_required('admin', 'entrenador')
 def train_page():
     categorized_phrases = {
         "Frases Básicas": list(TRAINING_PHRASES)

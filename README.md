@@ -1,3 +1,12 @@
+---
+title: Traductor Kiche
+emoji: 🏥
+colorFrom: blue
+colorTo: green
+sdk: docker
+app_port: 7860
+pinned: false
+---
 # Traductor K'iche' - Español (PoC)
 
 Esta es una prueba de concepto para traducir audio K'iche' a voz en Español.

@@ -13,3 +13,5 @@ peft
 boto3
 python-dotenv
 gunicorn
+Flask-SQLAlchemy
+Werkzeug

@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Revisar y Aprobar Variantes</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
     <style>
         * {
             box-sizing: border-box;
@@ -181,13 +182,15 @@
 </head>
 <body>
     <div class="container">
-        <a class="back-link" href="/escritura">← Volver a Práctica de Escritura</a>
+        <a class="back-link" href="/escritura" style="display: flex; align-items: center; gap: 4px;">
+            <span class="material-symbols-outlined" style="font-size: 1rem;">arrow_back</span> Volver a Práctica de Escritura
+        </a>
         
         <h2>Panel de Revisión y Aprobación</h2>
         
         {% if variantes|length == 0 %}
             <div class="empty-state">
-                <div style="font-size: 2.5rem; margin-bottom: 1rem;">📭</div>
+                <div style="margin-bottom: 1rem;"><span class="material-symbols-outlined" style="font-size: 3rem;">inbox</span></div>
                 <p>No hay traducciones pendientes de revisión en este momento.</p>
             </div>
         {% else %}
@@ -218,10 +221,10 @@
                     
                     <div class="variant-actions">
                         <button class="btn-approve" onclick="aprobar({{ loop.index }})" title="Aprobar y guardar al diccionario principal">
-                            ✅ Aprobar
+                            <span class="material-symbols-outlined" style="font-size: 1.2rem;">check_circle</span> Aprobar
                         </button>
                         <button class="btn-delete" onclick="eliminar({{ loop.index }})" title="Eliminar definitivamente esta variante">
-                            🗑️ Descartar
+                            <span class="material-symbols-outlined" style="font-size: 1.2rem;">delete</span> Descartar
                         </button>
                     </div>
                     

@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Traductor K'iche' ↔ Español</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         * {
@@ -255,19 +256,34 @@
     <div class="flex flex-col lg:flex-row gap-6 items-start justify-center w-full max-w-5xl mx-auto">
         <!-- COLUMNA 1: TRADUCTOR -->
         <div class="container">
-        <h1>🎙️ Traductor K'iche' ↔ Español</h1>
+        <h1><span class="material-symbols-outlined align-middle mr-2" style="font-size: 2rem;">mic</span>Traductor K'iche' ↔ Español</h1>
         <div class="flex flex-wrap justify-center gap-2 mb-6 w-full">
+            
+            {% if session.get('role') in ['admin', 'entrenador'] %}
             <a href="/train"
                 class="flex items-center justify-center bg-purple-500/15 border border-purple-500/35 text-purple-400 hover:bg-purple-500/30 rounded-full px-4 py-2.5 text-sm font-medium transition-colors text-center w-full sm:w-auto">
-                🎓 Modo Entrenamiento
+                <span class="material-symbols-outlined mr-2" style="font-size: 1.2rem;">school</span> Modo Entrenamiento
             </a>
             <a href="/escritura"
                 class="flex items-center justify-center bg-green-500/15 border border-green-500/35 text-green-400 hover:bg-green-500/30 rounded-full px-4 py-2.5 text-sm font-medium transition-colors text-center w-full sm:w-auto">
-                ✍️ Práctica de Escritura
+                <span class="material-symbols-outlined mr-2" style="font-size: 1.2rem;">edit_note</span> Práctica de Escritura
             </a>
             <a href="/actualizar-reglas"
                 class="flex items-center justify-center bg-sky-500/15 border border-sky-500/35 text-sky-400 hover:bg-sky-500/30 rounded-full px-4 py-2.5 text-sm font-medium transition-colors text-center w-full sm:w-auto">
-                ⚙️ Normalización
+                <span class="material-symbols-outlined mr-2" style="font-size: 1.2rem;">settings</span> Normalización
+            </a>
+            {% endif %}
+            
+            {% if session.get('role') == 'admin' %}
+            <a href="/admin"
+                class="flex items-center justify-center bg-orange-500/15 border border-orange-500/35 text-orange-400 hover:bg-orange-500/30 rounded-full px-4 py-2.5 text-sm font-medium transition-colors text-center w-full sm:w-auto">
+                <span class="material-symbols-outlined mr-2" style="font-size: 1.2rem;">admin_panel_settings</span> Panel Admin
+            </a>
+            {% endif %}
+
+            <a href="/logout"
+                class="flex items-center justify-center bg-red-500/15 border border-red-500/35 text-red-400 hover:bg-red-500/30 rounded-full px-4 py-2.5 text-sm font-medium transition-colors text-center w-full sm:w-auto" style="margin-left: auto;">
+                <span class="material-symbols-outlined mr-2" style="font-size: 1.2rem;">logout</span> Salir
             </a>
         </div>
 
@@ -278,7 +294,7 @@
             <button class="mode-btn" id="btnEsToKiche" onclick="setMode('es-kiche')">Español → K'iche'</button>
         </div>
 
-        <button id="micBtn" class="btn-mic">🎤</button>
+        <button id="micBtn" class="btn-mic"><span class="material-symbols-outlined" style="font-size: 40px;">mic</span></button>
 
         <div class="status-text" id="status">Mantén presionado para hablar en K'iche'</div>
 
@@ -291,7 +307,7 @@
             <div class="result-label" id="labelLang1">K'iche' reconocido</div>
             <textarea class="result-textarea" id="transcriptionInput" rows="2"
                 placeholder="Texto reconocido..."></textarea>
-            <button class="btn-retranslate" id="retranslateBtn" onclick="retranslate()">🔄 Volver a traducir</button>
+            <button class="btn-retranslate" id="retranslateBtn" onclick="retranslate()" style="display: flex; align-items: center; justify-content: center; gap: 6px;"><span class="material-symbols-outlined">sync</span> Volver a traducir</button>
 
             <div class="result-label" id="labelLang2">Español</div>
             <div class="result-text" id="translationText">...</div>
@@ -309,7 +325,7 @@
             
             <!-- ASISTENCIA GRÁFICA -->
             <div class="container" style="padding: 1.5rem; text-align: center; width: 100%; max-width: none;">
-                <h2 class="text-lg font-bold mb-4">🧍 Asistencia Anatómica</h2>
+                <h2 class="text-lg font-bold mb-4 flex justify-center items-center gap-2"><span class="material-symbols-outlined" style="font-size: 1.5rem;">accessibility_new</span> Asistencia Anatómica</h2>
                 <div class="relative mx-auto w-40 h-56 border border-white/20 rounded-xl bg-white/5 overflow-hidden">
                     <!-- Cabeza -->
                     <div id="zona-cabeza" class="absolute top-2 left-1/2 -translate-x-1/2 w-8 h-8 border-2 border-white/30 rounded-full transition-all duration-300"></div>
@@ -327,13 +343,13 @@
 
             <!-- RESUMEN CLÍNICO -->
             <div class="container" style="padding: 1.5rem; width: 100%; max-width: none;">
-                <h2 class="text-lg font-bold mb-4 text-center">📝 Resumen Clínico</h2>
+                <h2 class="text-lg font-bold mb-4 text-center flex justify-center items-center gap-2"><span class="material-symbols-outlined" style="font-size: 1.5rem;">clinical_notes</span> Resumen Clínico</h2>
                 <button onclick="generateSummary()" id="btnGenerateSummary" class="w-full bg-gradient-to-r from-teal-400 to-blue-500 hover:from-teal-500 hover:to-blue-600 text-white font-bold py-2 px-4 rounded-full shadow-lg transition-transform hover:scale-105 mb-4 text-sm">
                     Generar Resumen de Sesión
                 </button>
                 <textarea id="summaryTextarea" class="w-full bg-white/10 border border-white/20 rounded-lg p-3 text-white text-sm focus:outline-none focus:border-teal-400 min-h-[120px] resize-none mb-3" placeholder="El resumen de triaje generado con IA aparecerá aquí..." readonly></textarea>
-                <button onclick="copySummary()" class="w-full bg-white/20 hover:bg-white/30 text-white font-semibold py-1.5 px-4 rounded-lg transition-colors text-sm">
-                    📋 Copiar al Portapapeles
+                <button onclick="copySummary()" class="w-full bg-white/20 hover:bg-white/30 text-white font-semibold py-1.5 px-4 rounded-lg transition-colors text-sm flex justify-center items-center gap-2">
+                    <span class="material-symbols-outlined" style="font-size: 1.1rem;">content_paste</span> Copiar al Portapapeles
                 </button>
             </div>
 
@@ -404,7 +420,7 @@
                 labelLang1.textContent = "Español reconocido";
                 labelLang2.textContent = "K'iche'";
                 audioSection.style.display = 'none';
-                noteText.textContent = "ℹ️ Modo K'iche' solo muestra texto (sin audio).";
+                noteText.innerHTML = `<span class="material-symbols-outlined align-middle mr-1" style="font-size: 1rem;">info</span> Modo K'iche' solo muestra texto (sin audio).`;
             }
             resultBox.style.display = 'none';
             transcriptionInput.value = '';

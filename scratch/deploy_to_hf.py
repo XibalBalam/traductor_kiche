@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-HF_TOKEN = "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"
+HF_TOKEN = os.environ.get("HF_TOKEN")
 USERNAME = "XibalBalam"
 REPO_NAME = "traductor-kiche"
 REPO_ID = f"{USERNAME}/{REPO_NAME}"
