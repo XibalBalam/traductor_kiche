@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="view-transition" content="same-origin">
+    <title>Recuperar Contraseña - Traductor Médico K'iche'</title>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: url("{{ url_for('static', filename='backgroundLogin.jpeg') }}") center center / cover no-repeat fixed;
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem 1rem;
+        }
+        /* Capa de oscurecimiento más sutil para que la imagen resalte más */
+        .overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(15, 23, 42, 0.4); 
+            z-index: 1;
+        }
+        /* Estilo Glassmorphism super evidente y premium */
+        .card {
+            position: relative;
+            z-index: 2;
+            background: rgba(255, 255, 255, 0.05); /* Fondo casi transparente */
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-top: 1px solid rgba(255, 255, 255, 0.25);
+            border-left: 1px solid rgba(255, 255, 255, 0.25);
+            border-radius: 20px;
+            padding: 2.5rem 2rem;
+            width: 100%;
+            max-width: 380px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            view-transition-name: auth-card;
+        }
+        h2 { font-weight: 700; text-align: center; margin-bottom: 0.3rem; letter-spacing: -0.02em; font-size: 1.5rem; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+        p.subtitle { color: #E2E8F0; text-align: center; margin-bottom: 1.5rem; font-size: 0.85rem; font-weight: 400; }
+        
+        label { display: block; font-size: 0.75rem; color: #E2E8F0; margin-bottom: 0.4rem; font-weight: 500; letter-spacing: 0.03em; text-transform: uppercase; }
+        
+        input[type=text], input[type=password] {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.6); /* #0F172A para el input */
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            padding: 0.75rem 1rem;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+        .input-group { margin-bottom: 1.25rem; }
+        .password-wrapper { position: relative; width: 100%; display: flex; align-items: center; }
+        .password-wrapper input { padding-right: 2.5rem; }
+        .toggle-password {
+            position: absolute; right: 12px; background: none; border: none;
+            color: rgba(255, 255, 255, 0.5); cursor: pointer; transition: color 0.2s; padding: 0; display: flex;
+        }
+        .toggle-password:hover { color: white; }
+        
+        input:focus { 
+            border-color: #059669; /* Jade Oscuro */
+            box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.25); 
+            background: rgba(15, 23, 42, 0.8);
+        }
+        
+        .btn-primary {
+            background: #10B981; /* Verde Jade puro */
+            color: #0F172A; /* Contraste alto */
+            border: none;
+            padding: 0.85rem;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 700;
+            width: 100%;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.25);
+            margin-top: 0.25rem;
+            margin-bottom: 1.5rem;
+        }
+        .btn-primary:hover { 
+            background: #059669; /* Jade Oscuro */
+            transform: translateY(-2px); 
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35);
+            color: white;
+        }
+        
+        .links { text-align: center; font-size: 0.9rem; display: flex; flex-direction: column; gap: 0.8rem; }
+        a.link-simple { display: inline-flex; align-items: center; justify-content: center; color: #10B981; text-decoration: none; font-weight: 600; transition: color 0.2s; }
+        a.link-simple:hover { color: #34d399; }
+        
+        .alert { padding: 1rem; border-radius: 12px; margin-bottom: 1.5rem; font-size: 0.95rem; text-align: center; font-weight: 500; backdrop-filter: blur(8px); }
+        .alert-error { background: rgba(186, 21, 17, 0.2); color: #ff8a87; border: 1px solid rgba(186, 21, 17, 0.4); } /* Rojo Cinabrio */
+        .alert-success { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); }
+        
+        .question-box {
+            background: rgba(15, 23, 42, 0.6);
+            padding: 0.75rem 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            margin-bottom: 1.25rem;
+            font-style: italic;
+            text-align: center;
+            color: #E2E8F0;
+            font-size: 0.95rem;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+    </style>
+
+    <link rel="icon" type="image/png" href="/static/favicon/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="/static/favicon/favicon.svg" />
+    <link rel="shortcut icon" href="/static/favicon/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/favicon/apple-touch-icon.png" />
+    <link rel="manifest" href="/static/favicon/site.webmanifest" />
+</head>
+<body>
+    <div class="overlay"></div>
+    <div class="card">
+        <h2>Recuperar Contraseña</h2>
+        
+        {% if step == 1 %}
+            <p class="subtitle">Paso 1: Identificación</p>
+        {% elif step == 2 %}
+            <p class="subtitle">Paso 2: Pregunta de Seguridad</p>
+        {% elif step == 3 %}
+            <p class="subtitle">Paso 3: Nueva Contraseña</p>
+        {% endif %}
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST" id="recoverForm">
+            {% if step == 1 %}
+                <input type="hidden" name="step" value="1">
+                <label for="username">Ingresa tu nombre de usuario</label>
+                <div class="input-group">
+                    <input type="text" id="username" name="username" required autocomplete="username" placeholder="Tu usuario" autofocus aria-label="Nombre de usuario" title="Ingresa el usuario que deseas recuperar">
+                </div>
+                <button type="submit" class="btn-primary" id="recoverBtn">Continuar</button>
+            
+            {% elif step == 2 %}
+                <input type="hidden" name="step" value="2">
+                <input type="hidden" name="username" value="{{ username }}">
+                <label>Pregunta secreta de la cuenta:</label>
+                <div class="question-box">"{{ question }}"</div>
+                <label for="security_answer">Tu respuesta secreta</label>
+                <div class="input-group password-wrapper">
+                    <input type="password" id="security_answer" name="security_answer" required placeholder="Escribe tu respuesta" autofocus aria-label="Respuesta secreta" title="Ingresa tu respuesta de seguridad">
+                    <button type="button" class="toggle-password" aria-label="Mostrar u ocultar respuesta" title="Mostrar respuesta">
+                        <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 0 24 24" width="20px" fill="currentColor"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+                    </button>
+                </div>
+                <button type="submit" class="btn-primary" id="recoverBtn">Verificar Respuesta</button>
+                
+            {% elif step == 3 %}
+                <input type="hidden" name="step" value="3">
+                <input type="hidden" name="username" value="{{ username }}">
+                <label for="new_password">Elige tu nueva contraseña</label>
+                <div class="input-group password-wrapper">
+                    <input type="password" id="new_password" name="new_password" required autocomplete="new-password" placeholder="Nueva contraseña" autofocus aria-label="Nueva contraseña" title="Crea tu nueva contraseña">
+                    <button type="button" class="toggle-password" aria-label="Mostrar u ocultar contraseña" title="Mostrar contraseña">
+                        <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 0 24 24" width="20px" fill="currentColor"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+                    </button>
+                </div>
+                <button type="submit" class="btn-primary" id="recoverBtn">Actualizar Contraseña</button>
+            {% endif %}
+        </form>
+        
+        <div class="links">
+            <a href="/login" class="link-simple"><span class="material-symbols-outlined" style="margin-right: 4px; font-size: 1.1rem;">arrow_back</span> Volver al Login</a>
+        </div>
+    </div>
+    
+    <script>
+        // Heurística 5: Prevención de errores (Mostrar contraseñas)
+        document.querySelectorAll('.toggle-password').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const input = this.previousElementSibling;
+                const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
+                input.setAttribute('type', type);
+                this.style.color = type === 'text' ? 'white' : 'rgba(255, 255, 255, 0.5)';
+            });
+        });
+        
+        // Heurística 1 y 5: Estado de carga y bloqueo de doble submit
+        const recoverForm = document.getElementById('recoverForm');
+        const recoverBtn = document.getElementById('recoverBtn');
+        if (recoverForm) {
+            recoverForm.addEventListener('submit', function() {
+                recoverBtn.innerHTML = 'Procesando...';
+                recoverBtn.style.opacity = '0.7';
+                recoverBtn.style.pointerEvents = 'none';
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administrador - Traductor Médico K'iche'</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3e 50%, #0a1a2e 100%);
+            color: white;
+            min-height: 100vh;
+            padding: 2rem 1rem;
+        }
+        .container {
+            max-width: 900px;
+            margin: auto;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        .back-link {
+            display: inline-block;
+            color: rgba(255, 255, 255, 0.5);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+        }
+        .back-link:hover { color: white; }
+        h1 { font-size: 1.8rem; font-weight: 600; }
+        .card {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .user-info { flex: 1; min-width: 200px; }
+        .user-name { font-size: 1.2rem; font-weight: 600; margin-bottom: 0.3rem; }
+        .badge {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .badge-pending { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); }
+        .badge-approved { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); }
+        
+        .role-form { display: flex; gap: 0.5rem; align-items: center; }
+        select {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 0.5rem;
+            border-radius: 6px;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+        }
+        select option { background: #1a1a3e; color: white; }
+        
+        button {
+            border: none;
+            padding: 0.6rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .btn-primary { background: rgba(102, 126, 234, 0.2); color: #a78bfa; border: 1px solid rgba(102, 126, 234, 0.4); }
+        .btn-primary:hover { background: rgba(102, 126, 234, 0.4); }
+        .btn-success { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); }
+        .btn-success:hover { background: rgba(16, 185, 129, 0.4); }
+
+        .alert { padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; font-size: 0.9rem; text-align: center; }
+        .alert-success { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+    </style>
+
+    <link rel="icon" type="image/png" href="/static/favicon/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="/static/favicon/favicon.svg" />
+    <link rel="shortcut icon" href="/static/favicon/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/favicon/apple-touch-icon.png" />
+    <link rel="manifest" href="/static/favicon/site.webmanifest" />
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Panel de Administrador</h1>
+            <a class="back-link" href="/" style="display: flex; align-items: center; gap: 4px;">
+                <span class="material-symbols-outlined" style="font-size: 1.2rem;">arrow_back</span> Volver al Traductor
+            </a>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <h3 style="margin-bottom: 1rem; color: rgba(255,255,255,0.7);">Gestión de Usuarios</h3>
+
+        {% for user in users %}
+        <div class="card">
+            <div class="user-info">
+                <div class="user-name"><span class="material-symbols-outlined" style="vertical-align: middle; margin-right: 4px;">person</span>{{ user.username }}</div>
+                <div style="margin-top: 0.5rem;">
+                    Estado: 
+                    {% if user.status == 'pending' %}
+                        <span class="badge badge-pending">Pendiente</span>
+                    {% else %}
+                        <span class="badge badge-approved">Aprobado</span>
+                    {% endif %}
+                    
+                    <span style="margin-left: 1rem;">Rol Actual: <b style="color: #a78bfa;">{{ user.role }}</b></span>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                {% if user.status == 'pending' %}
+                <form method="POST" action="/admin/approve/{{ user.id }}">
+                    <button type="submit" class="btn-success" style="display: flex; align-items: center; gap: 6px;"><span class="material-symbols-outlined">check_circle</span> Aprobar Cuenta</button>
+                </form>
+                {% endif %}
+
+                <form class="role-form" method="POST" action="/admin/changerole/{{ user.id }}">
+                    <select name="role">
+                        <option value="basico" {% if user.role == 'basico' %}selected{% endif %}>Básico (Sólo Traductor)</option>
+                        <option value="entrenador" {% if user.role == 'entrenador' %}selected{% endif %}>Entrenador</option>
+                        <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>Administrador</option>
+                    </select>
+                    <button type="submit" class="btn-primary">Cambiar Rol</button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</body>
+</html>

@@ -9,6 +9,50 @@
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        :root {
+            /* Modo Claro (Default) */
+            --bg-canvas-overlay: rgba(248, 250, 252, 0.65); /* Estuco claro con opacidad para imagen */
+            --primary-jade: #10B981;
+            --text-main: #233B33;
+            --text-muted: rgba(35, 59, 51, 0.65);
+            --accent-terra: #BA5011;
+            --error-red: #BA1511;
+            
+            --card-bg: rgba(255, 255, 255, 0.4);
+            --card-border: rgba(255, 255, 255, 0.5);
+            --card-shadow: rgba(0, 0, 0, 0.1);
+            
+            --btn-mic-grad1: #10B981;
+            --btn-mic-grad2: #059669;
+            --btn-mic-shadow: rgba(16, 185, 129, 0.4);
+            
+            --input-bg: rgba(255, 255, 255, 0.6);
+            --input-border: rgba(35, 59, 51, 0.2);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                /* Modo Oscuro */
+                --bg-canvas-overlay: rgba(15, 23, 42, 0.75); /* Azul oscuro profundo */
+                --primary-jade: #059669;
+                --text-main: #E2E8F0;
+                --text-muted: rgba(226, 232, 240, 0.65);
+                --accent-terra: #BA5011;
+                --error-red: #BA1511;
+                
+                --card-bg: rgba(51, 65, 85, 0.45); /* Gris Pizarra translúcido */
+                --card-border: rgba(255, 255, 255, 0.15);
+                --card-shadow: rgba(0, 0, 0, 0.35);
+                
+                --btn-mic-grad1: #059669;
+                --btn-mic-grad2: #10B981;
+                --btn-mic-shadow: rgba(5, 150, 105, 0.4);
+                
+                --input-bg: rgba(15, 23, 42, 0.6);
+                --input-border: rgba(255, 255, 255, 0.15);
+            }
+        }
+
         * {
             box-sizing: border-box;
             margin: 0;
@@ -17,8 +61,8 @@
 
         body {
             font-family: 'Inter', 'Segoe UI', sans-serif;
-            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
-            color: white;
+            background: url("{{ url_for('static', filename='backgroundLogin.jpeg') }}") center center / cover no-repeat fixed;
+            color: var(--text-main);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
@@ -27,13 +71,28 @@
             padding: 1rem;
         }
 
+        .overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: var(--bg-canvas-overlay);
+            z-index: 0;
+        }
+        
+        .main-wrapper {
+            position: relative;
+            z-index: 1;
+        }
+
         .container {
-            background: rgba(255, 255, 255, 0.07);
+            background: var(--card-bg);
             backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             padding: 2rem;
             border-radius: 24px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 8px 32px var(--card-shadow);
+            border: 1px solid var(--card-border);
+            border-top: 1px solid rgba(255, 255, 255, 0.3);
+            border-left: 1px solid rgba(255, 255, 255, 0.3);
             width: 100%;
             max-width: 520px;
         }
@@ -49,18 +108,19 @@
         /* MODE TOGGLE */
         .mode-toggle {
             display: flex;
-            background: rgba(0, 0, 0, 0.3);
+            background: rgba(0, 0, 0, 0.15);
             border-radius: 50px;
             padding: 4px;
             margin-bottom: 1.8rem;
             position: relative;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
         }
 
         .mode-btn {
             flex: 1;
             border: none;
             background: transparent;
-            color: rgba(255, 255, 255, 0.6);
+            color: var(--text-muted);
             padding: 0.6rem 1rem;
             border-radius: 50px;
             cursor: pointer;
@@ -72,7 +132,7 @@
         }
 
         .mode-btn.active {
-            color: white;
+            color: #FFFFFF; /* Siempre blanco dentro del badge activo para buen contraste */
         }
 
         .mode-slider {
@@ -81,10 +141,10 @@
             left: 4px;
             width: calc(50% - 4px);
             height: calc(100% - 8px);
-            background: linear-gradient(135deg, #667eea, #764ba2);
+            background: var(--accent-terra);
             border-radius: 50px;
             transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 4px 15px rgba(186, 80, 17, 0.4);
         }
 
         .mode-slider.right {
@@ -97,15 +157,15 @@
             height: 90px;
             border-radius: 50%;
             border: none;
-            background: linear-gradient(135deg, #ff416c, #ff4b2b);
-            color: white;
+            background: linear-gradient(135deg, var(--btn-mic-grad1), var(--btn-mic-grad2));
+            color: #FFFFFF;
             font-size: 36px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
             margin: 0 auto 1.5rem;
-            box-shadow: 0 4px 20px rgba(255, 75, 43, 0.5);
+            box-shadow: 0 4px 20px var(--btn-mic-shadow);
             transition: transform 0.2s, box-shadow 0.2s;
         }
 
@@ -115,20 +175,20 @@
 
         .btn-mic.recording {
             animation: pulse 1.5s infinite;
-            background: linear-gradient(135deg, #ff6b6b, #ff416c);
+            background: var(--error-red);
         }
 
         @keyframes pulse {
             0% {
-                box-shadow: 0 0 0 0 rgba(255, 65, 108, 0.7);
+                box-shadow: 0 0 0 0 rgba(186, 21, 17, 0.7);
             }
 
             70% {
-                box-shadow: 0 0 0 20px rgba(255, 65, 108, 0);
+                box-shadow: 0 0 0 20px rgba(186, 21, 17, 0);
             }
 
             100% {
-                box-shadow: 0 0 0 0 rgba(255, 65, 108, 0);
+                box-shadow: 0 0 0 0 rgba(186, 21, 17, 0);
             }
         }
 
@@ -137,14 +197,15 @@
             text-align: center;
             font-size: 1rem;
             min-height: 1.4em;
-            color: rgba(255, 255, 255, 0.85);
+            color: var(--text-main);
+            font-weight: 500;
             margin-bottom: 0.8rem;
         }
 
         /* PROGRESS */
         .progress-container {
             width: 100%;
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(0, 0, 0, 0.1);
             border-radius: 10px;
             margin: 0.8rem 0;
             overflow: hidden;
@@ -154,14 +215,15 @@
         .progress-bar {
             width: 0%;
             height: 8px;
-            background: linear-gradient(90deg, #667eea, #00b09b);
+            background: linear-gradient(90deg, var(--primary-jade), var(--btn-mic-grad2));
             transition: width 0.3s ease;
             border-radius: 10px;
         }
 
         /* RESULT BOX */
         .result-box {
-            background: rgba(0, 0, 0, 0.25);
+            background: rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--card-border);
             padding: 1.2rem;
             border-radius: 14px;
             margin-top: 1rem;
@@ -171,9 +233,10 @@
 
         .result-label {
             font-size: 0.72rem;
-            color: rgba(255, 255, 255, 0.5);
+            color: var(--text-muted);
             text-transform: uppercase;
             letter-spacing: 1.5px;
+            font-weight: 600;
             margin-bottom: 0.3rem;
             margin-top: 0.8rem;
         }
@@ -185,10 +248,10 @@
         /* EDITABLE TRANSCRIPTION */
         .result-textarea {
             width: 100%;
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
             border-radius: 8px;
-            color: white;
+            color: var(--text-main);
             font-family: 'Inter', sans-serif;
             font-size: 1rem;
             padding: 0.6rem 0.8rem;
@@ -199,21 +262,25 @@
         }
 
         .result-textarea:focus {
-            border-color: rgba(102, 126, 234, 0.6);
+            border-color: var(--primary-jade);
         }
 
         .result-text {
             font-size: 1.05rem;
-            color: rgba(255, 255, 255, 0.9);
+            color: var(--text-main);
             margin-bottom: 0.3rem;
+            font-weight: 500;
         }
 
         /* RE-TRANSLATE BUTTON */
         .btn-retranslate {
-            display: block;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
             margin: 0.8rem auto 0;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
+            background: var(--primary-jade);
+            color: #0F172A;
             border: none;
             border-radius: 50px;
             padding: 0.5rem 1.4rem;
@@ -222,7 +289,7 @@
             font-family: 'Inter', sans-serif;
             cursor: pointer;
             transition: transform 0.2s, box-shadow 0.2s;
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 4px 12px var(--btn-mic-shadow);
         }
 
         .btn-retranslate:hover {
@@ -238,123 +305,154 @@
         /* KICHE ONLY NOTE */
         .note-text {
             font-size: 0.8rem;
-            color: rgba(255, 255, 255, 0.45);
+            color: var(--text-muted);
             text-align: center;
             margin-top: 0.5rem;
         }
 
         /* ANATOMY HIGHLIGHT */
         .highlight-anatomy {
-            border-color: #ff416c !important;
-            background-color: rgba(255, 65, 108, 0.4) !important;
-            box-shadow: 0 0 15px rgba(255, 65, 108, 0.6);
+            border-color: var(--error-red) !important;
+            background-color: rgba(186, 21, 17, 0.25) !important;
+            box-shadow: 0 0 15px rgba(186, 21, 17, 0.5);
         }
+        
+        /* OVERRIDES PARA ESTILOS EN LÍNEA DE LA COLUMNA DERECHA */
+        .summary-btn {
+            background: var(--primary-jade);
+            color: #0F172A;
+            box-shadow: 0 4px 12px var(--btn-mic-shadow);
+        }
+        .summary-btn:hover { background: var(--btn-mic-grad2); transform: scale(1.02); }
+        .summary-textarea {
+            background: var(--input-bg);
+            border-color: var(--input-border);
+            color: var(--text-main);
+        }
+        .summary-textarea:focus { border-color: var(--primary-jade); }
+        .copy-btn {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            color: var(--text-main);
+        }
+        .copy-btn:hover { background: var(--card-border); }
+        .anatomy-stroke { border-color: var(--card-border) !important; }
     </style>
+
+    <link rel="icon" type="image/png" href="/static/favicon/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="/static/favicon/favicon.svg" />
+    <link rel="shortcut icon" href="/static/favicon/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/favicon/apple-touch-icon.png" />
+    <link rel="manifest" href="/static/favicon/site.webmanifest" />
 </head>
 
 <body>
-    <div class="flex flex-col lg:flex-row gap-6 items-start justify-center w-full max-w-5xl mx-auto">
-        <!-- COLUMNA 1: TRADUCTOR -->
-        <div class="container">
-        <h1><span class="material-symbols-outlined align-middle mr-2" style="font-size: 2rem;">mic</span>Traductor K'iche' ↔ Español</h1>
-        <div class="flex flex-wrap justify-center gap-2 mb-6 w-full">
+    <div class="overlay"></div>
+    <div class="main-wrapper flex flex-col items-center justify-start pt-[10vh] w-full max-w-3xl mx-auto min-h-screen">
+        <!-- FLOATING TOP CONTROLS -->
+        <div class="w-full flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
+            <!-- MODE SELECTOR (MINI SWITCH) -->
+            <div class="mode-toggle relative group" id="modeToggle" title="Haz clic para alternar el idioma de entrada. Usa K'iche' o Español según lo que hable el paciente." style="margin: 0; padding: 3px; width: 220px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); background: var(--card-bg); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid var(--card-border);">
+                <div class="mode-slider" id="modeSlider" style="background: var(--primary-jade);"></div>
+                <button class="mode-btn active cursor-pointer" id="btnKicheToEs" onclick="setMode('kiche-es')" style="padding: 0.4rem; font-size: 0.75rem;">K'iche' → Español</button>
+                <button class="mode-btn cursor-pointer" id="btnEsToKiche" onclick="setMode('es-kiche')" style="padding: 0.4rem; font-size: 0.75rem;">Español → K'iche'</button>
+                <span class="material-symbols-outlined absolute -right-8 top-1.5 opacity-30 group-hover:opacity-100 transition-opacity" style="font-size: 1.2rem; cursor: help;" title="Ayuda: Alterna el idioma de entrada">help</span>
+            </div>
             
-            {% if session.get('role') in ['admin', 'entrenador'] %}
-            <a href="/train"
-                class="flex items-center justify-center bg-purple-500/15 border border-purple-500/35 text-purple-400 hover:bg-purple-500/30 rounded-full px-4 py-2.5 text-sm font-medium transition-colors text-center w-full sm:w-auto">
-                <span class="material-symbols-outlined mr-2" style="font-size: 1.2rem;">school</span> Modo Entrenamiento
-            </a>
-            <a href="/escritura"
-                class="flex items-center justify-center bg-green-500/15 border border-green-500/35 text-green-400 hover:bg-green-500/30 rounded-full px-4 py-2.5 text-sm font-medium transition-colors text-center w-full sm:w-auto">
-                <span class="material-symbols-outlined mr-2" style="font-size: 1.2rem;">edit_note</span> Práctica de Escritura
-            </a>
-            <a href="/actualizar-reglas"
-                class="flex items-center justify-center bg-sky-500/15 border border-sky-500/35 text-sky-400 hover:bg-sky-500/30 rounded-full px-4 py-2.5 text-sm font-medium transition-colors text-center w-full sm:w-auto">
-                <span class="material-symbols-outlined mr-2" style="font-size: 1.2rem;">settings</span> Normalización
-            </a>
-            {% endif %}
-            
-            {% if session.get('role') == 'admin' %}
-            <a href="/admin"
-                class="flex items-center justify-center bg-orange-500/15 border border-orange-500/35 text-orange-400 hover:bg-orange-500/30 rounded-full px-4 py-2.5 text-sm font-medium transition-colors text-center w-full sm:w-auto">
-                <span class="material-symbols-outlined mr-2" style="font-size: 1.2rem;">admin_panel_settings</span> Panel Admin
-            </a>
-            {% endif %}
-
-            <a href="/logout"
-                class="flex items-center justify-center bg-red-500/15 border border-red-500/35 text-red-400 hover:bg-red-500/30 rounded-full px-4 py-2.5 text-sm font-medium transition-colors text-center w-full sm:w-auto" style="margin-left: auto;">
-                <span class="material-symbols-outlined mr-2" style="font-size: 1.2rem;">logout</span> Salir
-            </a>
+            <!-- ADMIN CONTROLS (ICONS ONLY) -->
+            <div class="flex gap-2">
+                <a href="/cuenta" title="Mi Cuenta (Perfil)" class="w-9 h-9 flex items-center justify-center rounded-full bg-slate-500/15 border border-slate-500/35 text-slate-400 hover:bg-slate-500/30 transition-colors"><span class="material-symbols-outlined" style="font-size: 1.1rem;">person</span></a>
+                
+                {% if session.get('role') in ['admin', 'entrenador'] %}
+                <a href="/train" title="Modo Entrenamiento" class="w-9 h-9 flex items-center justify-center rounded-full bg-purple-500/15 border border-purple-500/35 text-purple-400 hover:bg-purple-500/30 transition-colors"><span class="material-symbols-outlined" style="font-size: 1.1rem;">school</span></a>
+                <a href="/escritura" title="Práctica de Escritura" class="w-9 h-9 flex items-center justify-center rounded-full bg-green-500/15 border border-green-500/35 text-green-400 hover:bg-green-500/30 transition-colors"><span class="material-symbols-outlined" style="font-size: 1.1rem;">edit_note</span></a>
+                {% endif %}
+                {% if session.get('role') == 'admin' %}
+                <a href="/admin" title="Administrar Usuarios y Aprobaciones" class="w-9 h-9 flex items-center justify-center rounded-full bg-blue-500/15 border border-blue-500/35 text-blue-400 hover:bg-blue-500/30 transition-colors"><span class="material-symbols-outlined" style="font-size: 1.1rem;">manage_accounts</span></a>
+                {% endif %}
+                <a href="/logout" title="Salir" class="w-9 h-9 flex items-center justify-center rounded-full bg-red-500/15 border border-red-500/35 text-red-400 hover:bg-red-500/30 transition-colors"><span class="material-symbols-outlined" style="font-size: 1.1rem;">logout</span></a>
+            </div>
         </div>
 
-        <!-- MODE SELECTOR -->
-        <div class="mode-toggle" id="modeToggle">
-            <div class="mode-slider" id="modeSlider"></div>
-            <button class="mode-btn active" id="btnKicheToEs" onclick="setMode('kiche-es')">K'iche' → Español</button>
-            <button class="mode-btn" id="btnEsToKiche" onclick="setMode('es-kiche')">Español → K'iche'</button>
-        </div>
-
-        <button id="micBtn" class="btn-mic"><span class="material-symbols-outlined" style="font-size: 40px;">mic</span></button>
-
-        <div class="status-text" id="status">Mantén presionado para hablar en K'iche'</div>
-
-        <div class="progress-container" id="progressContainer">
-            <div class="progress-bar" id="progressBar"></div>
-        </div>
-
-        <!-- RESULT BOX K'iche' → ES -->
-        <div class="result-box" id="resultBox">
-            <div class="result-label" id="labelLang1">K'iche' reconocido</div>
-            <textarea class="result-textarea" id="transcriptionInput" rows="2"
-                placeholder="Texto reconocido..."></textarea>
-            <button class="btn-retranslate" id="retranslateBtn" onclick="retranslate()" style="display: flex; align-items: center; justify-content: center; gap: 6px;"><span class="material-symbols-outlined">sync</span> Volver a traducir</button>
-
-            <div class="result-label" id="labelLang2">Español</div>
-            <div class="result-text" id="translationText">...</div>
-
-            <div id="audioSection">
-                <audio id="audioPlayer" controls></audio>
+        <!-- MAIN CARD -->
+        <div class="container relative flex flex-col items-center pt-8 pb-8 px-6 sm:px-10" style="padding: 2.5rem 2rem; max-width: 800px; width: 100%;">
+            <button id="micBtn" class="btn-mic relative z-10 cursor-pointer" title="Mantén presionado para dictar síntoma (o usa la tecla Ctrl)" style="margin-bottom: 1rem;"><span class="material-symbols-outlined" style="font-size: 44px;">mic</span></button>
+            <div class="status-text text-sm mb-2 font-medium transition-colors flex items-center justify-center gap-2" id="statusContainer" style="height: 1.5em; color: var(--text-muted);">
+                <span id="statusIndicator" class="w-2 h-2 rounded-full transition-colors duration-300" style="background-color: transparent;"></span>
+                <span id="status">Mantén presionado para hablar en K'iche'</span>
             </div>
 
-            <div class="note-text" id="noteText"></div>
-        </div>
-        </div> <!-- FIN COLUMNA 1 -->
+            <div class="progress-container" id="progressContainer" style="width: 150px; height: 4px; border-radius: 4px; margin-bottom: 1rem; display: none;">
+                <div class="progress-bar" id="progressBar" style="height: 100%; border-radius: 4px;"></div>
+            </div>
 
-        <!-- COLUMNA 2: ASISTENCIA Y RESUMEN -->
-        <div class="w-full lg:w-80 flex flex-col gap-6">
-            
-            <!-- ASISTENCIA GRÁFICA -->
-            <div class="container" style="padding: 1.5rem; text-align: center; width: 100%; max-width: none;">
-                <h2 class="text-lg font-bold mb-4 flex justify-center items-center gap-2"><span class="material-symbols-outlined" style="font-size: 1.5rem;">accessibility_new</span> Asistencia Anatómica</h2>
-                <div class="relative mx-auto w-40 h-56 border border-white/20 rounded-xl bg-white/5 overflow-hidden">
-                    <!-- Cabeza -->
-                    <div id="zona-cabeza" class="absolute top-2 left-1/2 -translate-x-1/2 w-8 h-8 border-2 border-white/30 rounded-full transition-all duration-300"></div>
-                    <!-- Pecho/Torso -->
-                    <div id="zona-pecho" class="absolute top-[44px] left-1/2 -translate-x-1/2 w-12 h-14 border-2 border-white/30 rounded-xl transition-all duration-300"></div>
-                    <!-- Estomago -->
-                    <div id="zona-estomago" class="absolute top-[104px] left-1/2 -translate-x-1/2 w-10 h-8 border-2 border-white/30 rounded-xl transition-all duration-300"></div>
-                    <!-- Brazos -->
-                    <div id="zona-brazos" class="absolute top-[44px] left-1/2 -translate-x-1/2 w-24 h-20 border-t-2 border-white/30 transition-all duration-300 rounded-t-xl" style="pointer-events: none; border-left: 2px solid rgba(255,255,255,0.3); border-right: 2px solid rgba(255,255,255,0.3);"></div>
-                    <!-- Piernas -->
-                    <div id="zona-piernas" class="absolute top-[140px] left-1/2 -translate-x-1/2 w-12 h-16 border-t-2 border-white/30 transition-all duration-300 rounded-b-xl" style="border-left: 2px solid rgba(255,255,255,0.3); border-right: 2px solid rgba(255,255,255,0.3); border-bottom: 2px solid rgba(255,255,255,0.3);"></div>
+            <!-- DYNAMIC ROW CONTAINER (TEXT + ANATOMY) -->
+            <div id="dynamicContentWrapper" class="w-full flex flex-col sm:flex-row items-center sm:items-start justify-center gap-0 sm:gap-6 mt-2 transition-all duration-700">
+                
+                <!-- RESULT BOX MINIMALISTA -->
+                <div id="resultBox" class="flex-1 w-full text-center transition-all duration-700 opacity-0 hidden flex-col items-center justify-center" style="background: transparent; border: none; box-shadow: none; padding: 0;">
+                    
+                    <textarea class="font-medium w-full text-center mb-1 text-lg leading-relaxed bg-transparent border-0 outline-none resize-none transition-colors duration-300 hover:bg-black/5 focus:bg-black/5 rounded-xl" id="transcriptionInput" rows="2" placeholder="..." style="color: var(--primary-jade); padding: 0.5rem;" title="Texto reconocido. Puedes editarlo antes de corregir la traducción."></textarea>
+                    
+                    <button class="mt-0 mb-4 scale-95 opacity-0 transition-all duration-300 hover:scale-100 flex items-center justify-center gap-1 mx-auto rounded-full px-3 py-1 text-xs cursor-pointer" id="retranslateBtn" onclick="retranslate()" title="Haz clic para volver a traducir si modificaste el texto superior." style="color: var(--text-muted); border: 1px solid var(--text-muted);"><span class="material-symbols-outlined text-[1rem]">sync</span> Corregir Traducción</button>
+
+                    <div class="w-12 h-[1px] mb-4" style="background: var(--card-border);"></div>
+
+                    <div class="result-text text-2xl font-bold mb-5 w-full leading-tight" id="translationText" style="min-height: 1.5em; color: var(--text-main);"></div>
+                    
+                    <div id="audioSection" class="w-full max-w-sm mb-2 transition-opacity duration-700 opacity-0">
+                        <audio id="audioPlayer" controls class="h-10 opacity-70 w-full"></audio>
+                    </div>
                 </div>
-                <p class="text-xs text-white/50 mt-4 leading-relaxed">El sistema detectará palabras clave y resaltará la zona afectada.</p>
+
+                <!-- ASISTENCIA GRÁFICA (A LA PAR) -->
+                <div id="anatomyContainer" class="overflow-hidden transition-all duration-700 ease-[cubic-bezier(0.4,0,0.2,1)] flex-shrink-0 flex flex-col items-center justify-center border-t sm:border-t-0 sm:border-l pt-5 sm:pt-0 sm:pl-5" style="max-height: 0px; max-width: 0px; opacity: 0; border-color: var(--card-border);">
+                    <h2 class="text-[0.65rem] font-bold mb-2 opacity-75 flex items-center gap-1 uppercase tracking-widest text-center whitespace-nowrap" style="color: var(--text-muted);"><span class="material-symbols-outlined text-[1rem]">accessibility_new</span> Zona Detectada</h2>
+                    <div class="relative w-28 h-40 opacity-90 mx-auto">
+                        <div id="zona-cabeza" class="absolute top-1 left-1/2 -translate-x-1/2 w-6 h-6 border-[1.5px] anatomy-stroke rounded-full transition-all duration-500"></div>
+                        <div id="zona-pecho" class="absolute top-[32px] left-1/2 -translate-x-1/2 w-10 h-10 border-[1.5px] anatomy-stroke rounded-xl transition-all duration-500"></div>
+                        <div id="zona-estomago" class="absolute top-[80px] left-1/2 -translate-x-1/2 w-8 h-6 border-[1.5px] anatomy-stroke rounded-xl transition-all duration-500"></div>
+                        <div id="zona-brazos" class="absolute top-[32px] left-1/2 -translate-x-1/2 w-20 h-16 border-t-[1.5px] border-l-[1.5px] border-r-[1.5px] anatomy-stroke transition-all duration-500 rounded-t-xl" style="pointer-events: none;"></div>
+                        <div id="zona-piernas" class="absolute top-[110px] left-1/2 -translate-x-1/2 w-10 h-14 border-l-[1.5px] border-r-[1.5px] border-b-[1.5px] anatomy-stroke transition-all duration-500 rounded-b-xl"></div>
+                    </div>
+                </div>
+
             </div>
 
-            <!-- RESUMEN CLÍNICO -->
-            <div class="container" style="padding: 1.5rem; width: 100%; max-width: none;">
-                <h2 class="text-lg font-bold mb-4 text-center flex justify-center items-center gap-2"><span class="material-symbols-outlined" style="font-size: 1.5rem;">clinical_notes</span> Resumen Clínico</h2>
-                <button onclick="generateSummary()" id="btnGenerateSummary" class="w-full bg-gradient-to-r from-teal-400 to-blue-500 hover:from-teal-500 hover:to-blue-600 text-white font-bold py-2 px-4 rounded-full shadow-lg transition-transform hover:scale-105 mb-4 text-sm">
-                    Generar Resumen de Sesión
-                </button>
-                <textarea id="summaryTextarea" class="w-full bg-white/10 border border-white/20 rounded-lg p-3 text-white text-sm focus:outline-none focus:border-teal-400 min-h-[120px] resize-none mb-3" placeholder="El resumen de triaje generado con IA aparecerá aquí..." readonly></textarea>
-                <button onclick="copySummary()" class="w-full bg-white/20 hover:bg-white/30 text-white font-semibold py-1.5 px-4 rounded-lg transition-colors text-sm flex justify-center items-center gap-2">
-                    <span class="material-symbols-outlined" style="font-size: 1.1rem;">content_paste</span> Copiar al Portapapeles
-                </button>
+        </div> <!-- FIN MAIN CARD -->
+    </div> <!-- FIN MAIN WRAPPER -->
+
+    <!-- FLOATING SUMMARY BUTTON -->
+    <div id="summaryFabContainer" class="fixed bottom-6 right-6 z-50 transition-all duration-700 transform translate-y-24 opacity-0 pointer-events-none">
+        <div class="relative">
+            <span id="sessionCountBadge" class="absolute -top-1 -right-1 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center border-2 z-10 transition-transform scale-0" style="background: var(--error-red); border-color: #0F172A;" title="Síntomas registrados en esta sesión">0</span>
+            <button onclick="toggleSummaryModal()" class="w-14 h-14 rounded-full flex items-center justify-center shadow-2xl transition-transform hover:scale-110 pointer-events-auto cursor-pointer" title="Generar Resumen Clínico del Paciente Actual" style="background: var(--primary-jade); color: #0F172A; box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4);">
+                <span class="material-symbols-outlined" style="font-size: 1.8rem;">clinical_notes</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- SUMMARY MODAL (Liquid Glass) -->
+    <div id="summaryModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 transition-all duration-300 opacity-0 pointer-events-none" style="background: rgba(0,0,0,0.5); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);">
+        <div class="container relative w-full max-w-md transform scale-95 transition-all duration-300" id="summaryModalContent" style="padding: 2.5rem; background: var(--card-bg);">
+            <button onclick="toggleSummaryModal()" class="absolute top-5 right-5" style="color: var(--text-muted);"><span class="material-symbols-outlined hover:text-white transition-colors">close</span></button>
+            <h2 class="text-xl font-bold mb-2 flex items-center gap-2" style="color: var(--text-main);"><span class="material-symbols-outlined text-[1.5rem]" style="color: var(--primary-jade);">clinical_notes</span> Resumen Clínico</h2>
+            <p class="text-xs mb-5 opacity-75" style="color: var(--text-muted);">Consolida el historial del paciente actual.</p>
+            <textarea id="summaryTextarea" class="w-full border rounded-xl p-4 text-sm focus:outline-none min-h-[160px] resize-none mb-5 transition-colors" placeholder="El resumen generado con IA aparecerá aquí..." readonly style="background: var(--input-bg); border-color: var(--input-border); color: var(--text-main);"></textarea>
+            <div class="flex gap-3">
+                <button onclick="generateSummary()" id="btnGenerateSummary" class="flex-1 py-2.5 rounded-full font-bold text-sm transition-transform hover:scale-105 cursor-pointer" style="background: var(--primary-jade); color: #0F172A; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);">Generar Ahora</button>
+                <button onclick="copySummary()" class="py-2.5 px-4 rounded-full transition-colors flex items-center justify-center hover:bg-black/10 cursor-pointer" title="Copiar resumen al portapapeles" style="background: var(--input-bg); border: 1px solid var(--card-border); color: var(--text-main);"><span class="material-symbols-outlined text-[1.2rem]">content_paste</span></button>
             </div>
+        </div>
+    </div>
 
-        </div> <!-- FIN COLUMNA 2 -->
-
+    <!-- ERROR TOAST (Liquid Glass) -->
+    <div id="errorToast" class="fixed bottom-6 left-6 z-[100] transition-all duration-500 transform translate-y-12 opacity-0 flex items-center gap-3 px-5 py-4 rounded-xl" style="background: var(--card-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--error-red); border-left: 4px solid var(--error-red); box-shadow: 0 8px 32px rgba(186, 21, 17, 0.25); max-width: 350px; pointer-events: none;">
+        <span class="material-symbols-outlined" style="font-size: 1.8rem; color: var(--error-red);">warning</span>
+        <div class="flex-1">
+            <h4 class="font-bold text-sm m-0" style="color: var(--text-main); margin-bottom: 2px;">Error del Sistema</h4>
+            <p id="errorToastMsg" class="text-xs m-0" style="color: var(--text-muted); line-height: 1.2;">No se pudo completar la solicitud.</p>
+        </div>
     </div>
 
     <script>
@@ -376,12 +474,34 @@
         const translationText = document.getElementById('translationText');
         const audioPlayer = document.getElementById('audioPlayer');
         const audioSection = document.getElementById('audioSection');
-        const noteText = document.getElementById('noteText');
-        const labelLang1 = document.getElementById('labelLang1');
-        const labelLang2 = document.getElementById('labelLang2');
         const modeSlider = document.getElementById('modeSlider');
         const btnKicheToEs = document.getElementById('btnKicheToEs');
         const btnEsToKiche = document.getElementById('btnEsToKiche');
+
+        // ── MANEJO DE ERRORES (TOAST) ──────────────────────────────────────
+        let errorToastTimeout;
+        function showErrorAlert(msg) {
+            const toast = document.getElementById('errorToast');
+            document.getElementById('errorToastMsg').textContent = msg || "Error en el servidor de traducción.";
+            
+            // Animación de entrada
+            toast.style.pointerEvents = 'auto';
+            toast.classList.remove('translate-y-12', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+            
+            // Actualizar status general
+            statusEl.textContent = "¡Hubo un error! Intenta de nuevo.";
+            micBtn.classList.remove('recording');
+            progressContainer.style.display = 'none';
+
+            // Auto ocultar después de 5 segundos
+            clearTimeout(errorToastTimeout);
+            errorToastTimeout = setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-12', 'opacity-0');
+                toast.style.pointerEvents = 'none';
+            }, 5000);
+        }
 
         // ── MODE TOGGLE ────────────────────────────────────────────────────
         // --- WakeLock API to prevent screen from turning off ---
@@ -408,29 +528,98 @@
                 btnKicheToEs.classList.add('active');
                 btnEsToKiche.classList.remove('active');
                 statusEl.textContent = "Mantén presionado para hablar en K'iche'";
-                labelLang1.textContent = "K'iche' reconocido";
-                labelLang2.textContent = "Español";
                 audioSection.style.display = 'block';
-                noteText.textContent = '';
             } else {
                 modeSlider.classList.add('right');
                 btnEsToKiche.classList.add('active');
                 btnKicheToEs.classList.remove('active');
                 statusEl.textContent = "Mantén presionado para hablar en Español";
-                labelLang1.textContent = "Español reconocido";
-                labelLang2.textContent = "K'iche'";
                 audioSection.style.display = 'none';
-                noteText.innerHTML = `<span class="material-symbols-outlined align-middle mr-1" style="font-size: 1rem;">info</span> Modo K'iche' solo muestra texto (sin audio).`;
             }
-            resultBox.style.display = 'none';
+            resetUI();
+        }
+
+        let isSummaryGenerated = false;
+
+        function toggleSummaryModal() {
+            const modal = document.getElementById('summaryModal');
+            const content = document.getElementById('summaryModalContent');
+            if (modal.classList.contains('opacity-0')) {
+                modal.classList.remove('opacity-0', 'pointer-events-none');
+                content.classList.remove('scale-95');
+                content.classList.add('scale-100');
+            } else {
+                modal.classList.add('opacity-0', 'pointer-events-none');
+                content.classList.remove('scale-100');
+                content.classList.add('scale-95');
+            }
+        }
+
+        const resetUI = () => {
+            const rBox = document.getElementById('resultBox');
+            rBox.classList.add('opacity-0', 'hidden');
+            rBox.classList.remove('flex');
+            
+            const anatomy = document.getElementById('anatomyContainer');
+            anatomy.style.maxHeight = '0px';
+            anatomy.style.maxWidth = '0px';
+            anatomy.style.opacity = '0';
+            
             transcriptionInput.value = '';
-            translationText.textContent = '...';
+            translationText.textContent = '';
+            document.getElementById('retranslateBtn').classList.remove('opacity-100', 'scale-100');
+            document.getElementById('retranslateBtn').classList.add('opacity-0', 'scale-95');
+            document.getElementById('audioSection').classList.remove('opacity-100');
+            document.getElementById('audioSection').classList.add('opacity-0');
+            
+            if (isSummaryGenerated) {
+                sessionTranslations = [];
+                isSummaryGenerated = false;
+                document.getElementById('summaryTextarea').value = '';
+                const fab = document.getElementById('summaryFabContainer');
+                fab.classList.remove('translate-y-0', 'opacity-100', 'pointer-events-auto');
+                fab.classList.add('translate-y-24', 'opacity-0', 'pointer-events-none');
+                
+                const badge = document.getElementById('sessionCountBadge');
+                badge.classList.remove('scale-100');
+                badge.classList.add('scale-0');
+            }
+        }
+        
+        function updateStatusIndicator(state) {
+            const ind = document.getElementById('statusIndicator');
+            if(state === 'recording') {
+                ind.style.backgroundColor = 'var(--error-red)';
+                ind.classList.add('animate-pulse');
+            } else if (state === 'done') {
+                ind.style.backgroundColor = 'var(--primary-jade)';
+                ind.classList.remove('animate-pulse');
+            } else {
+                ind.style.backgroundColor = 'transparent';
+                ind.classList.remove('animate-pulse');
+            }
+        }
+
+        function typeWriterEffect(element, text, isInput = false, speed = 20) {
+            return new Promise(resolve => {
+                let i = 0;
+                if (isInput) { element.value = ""; } else { element.textContent = ""; }
+                function type() {
+                    if (i < text.length) {
+                        if (isInput) { element.value += text.charAt(i); } else { element.textContent += text.charAt(i); }
+                        i++;
+                        setTimeout(type, speed);
+                    } else { resolve(); }
+                }
+                type();
+            });
         }
 
         // ── MIC BUTTON ─────────────────────────────────────────────────────
         const startAction = async (e) => {
             e.preventDefault();
             if (!isRecording) {
+                resetUI();
                 await requestWakeLock(); // Prevent screen sleep
                 if (currentMode === 'kiche-es') {
                     await startKicheRecording();
@@ -451,18 +640,57 @@
             }
         };
 
+        // ── EVENT LISTENERS ──────────────────────────────────
         micBtn.addEventListener('mousedown', startAction);
         micBtn.addEventListener('touchstart', startAction, {passive: false});
         window.addEventListener('mouseup', stopAction);
         window.addEventListener('touchend', stopAction);
 
+        // Atajo de teclado (Ctrl para grabar)
+        window.addEventListener('keydown', async (e) => {
+            if (e.key === 'Control' && !e.repeat && !isRecording && document.activeElement.tagName !== 'TEXTAREA') {
+                await startAction(e);
+            }
+            // ESC para cerrar modal
+            if (e.key === 'Escape' && !document.getElementById('summaryModal').classList.contains('opacity-0')) {
+                toggleSummaryModal();
+            }
+        });
+        window.addEventListener('keyup', (e) => {
+            if (e.key === 'Control' && isRecording) {
+                stopAction(e);
+            }
+        });
+
+        // Clic fuera del modal para cerrarlo
+        document.getElementById('summaryModal').addEventListener('click', function(e) {
+            if(e.target === this) toggleSummaryModal();
+        });
+
+        // Deshabilitar botón de corrección si está vacío
+        transcriptionInput.addEventListener('input', () => {
+            const btn = document.getElementById('retranslateBtn');
+            if (transcriptionInput.value.trim() === "") {
+                btn.classList.add('opacity-50', 'pointer-events-none');
+            } else {
+                btn.classList.remove('opacity-50', 'pointer-events-none');
+            }
+        });
+
         // ── MODE: K'ICHE' → ES (WAV via MMS server) ───────────────────────
         async function startKicheRecording() {
             try {
                 audioData = [];
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                // Desactivar filtros del navegador que destruyen los saltillos (q', k') del K'iche'
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    audio: {
+                        echoCancellation: false,
+                        noiseSuppression: false,
+                        autoGainControl: false
+                    } 
+                });
                 mediaStream = stream;
-                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
                 inputNode = audioContext.createMediaStreamSource(stream);
                 processor = audioContext.createScriptProcessor(4096, 1, 1);
                 processor.onaudioprocess = e => {
@@ -474,9 +702,10 @@
                 isRecording = true;
                 micBtn.classList.add('recording');
                 statusEl.textContent = "Grabando K'iche'... (Suelta para traducir)";
-                resultBox.style.display = 'none';
+                updateStatusIndicator('recording');
             } catch (err) {
                 statusEl.textContent = "Error: No se pudo acceder al micrófono.";
+                updateStatusIndicator('error');
             }
         }
 
@@ -514,21 +743,55 @@
                 setTimeout(() => { progressContainer.style.display = 'none'; progressBar.style.width = '0%'; }, 500);
 
                 statusEl.textContent = "¡Completado!";
-                transcriptionInput.value = data.transcription;
-                translationText.textContent = data.translation;
+                updateStatusIndicator('done');
+                
+                // Show Result Box with fade-in
+                const rBox = document.getElementById('resultBox');
+                rBox.style.display = ''; // Limpiar inline styles anteriores si existían
+                rBox.classList.remove('hidden');
+                rBox.classList.add('flex');
+                void rBox.offsetWidth; // force reflow
+                rBox.classList.remove('opacity-0');
+                rBox.classList.add('opacity-100');
+
+                // Update text (Typewriter Effect)
+                transcriptionInput.value = "";
+                translationText.textContent = "";
+                
                 audioPlayer.src = data.audio_url + "?t=" + Date.now();
                 audioPlayer.play();
-                resultBox.style.display = 'block';
+
+                typeWriterEffect(transcriptionInput, data.transcription, true, 20);
+                await typeWriterEffect(translationText, data.translation, false, 25);
+
+                document.getElementById('retranslateBtn').classList.remove('opacity-0', 'scale-95');
+                document.getElementById('retranslateBtn').classList.add('opacity-100', 'scale-100');
+                document.getElementById('audioSection').classList.remove('opacity-0');
+                document.getElementById('audioSection').classList.add('opacity-100');
 
                 // Guardar en el historial de sesión y analizar contexto visual
                 if (data.translation && !data.translation.startsWith("[Sin traducción")) {
                     sessionTranslations.push(data.translation);
                 }
+                
+                // Mostrar FAB de resumen y actualizar badge
+                if (sessionTranslations.length > 0) {
+                    const fab = document.getElementById('summaryFabContainer');
+                    fab.classList.remove('translate-y-24', 'opacity-0', 'pointer-events-none');
+                    fab.classList.add('translate-y-0', 'opacity-100', 'pointer-events-auto');
+                    
+                    const badge = document.getElementById('sessionCountBadge');
+                    badge.textContent = sessionTranslations.length;
+                    badge.classList.remove('scale-0');
+                    badge.classList.add('scale-100');
+                }
+
                 analyzeMedicalContext(data.translation + " " + data.transcription);
 
             } catch (err) {
-                statusEl.textContent = "Error: " + err.message;
-                progressContainer.style.display = 'none';
+                // Mensaje de error claro
+                showErrorAlert(err.message || "Fallo en la red. Verifica tu conexión e intenta de nuevo.");
+                updateStatusIndicator('none');
             } finally {
                 releaseWakeLock(); // Release screen lock
             }
@@ -551,7 +814,10 @@
                     });
                     const data = await res.json();
                     if (data.error) throw new Error(data.error);
-                    translationText.textContent = data.translation;
+                    
+                    translationText.textContent = "";
+                    await typeWriterEffect(translationText, data.translation, false, 20);
+                    
                     if (data.audio_url) {
                         audioPlayer.src = data.audio_url + "?t=" + Date.now();
                         audioPlayer.play();
@@ -564,7 +830,7 @@
                     analyzeMedicalContext(data.translation + " " + text);
 
                 } catch (err) {
-                    statusEl.textContent = "Error: " + err.message;
+                    showErrorAlert(err.message);
                 }
             } else {
                 // Already in es-kiche, retranslate to kiche
@@ -590,7 +856,7 @@
                 isRecording = true;
                 micBtn.classList.add('recording');
                 statusEl.textContent = "Escuchando en Español... (Suelta para traducir)";
-                resultBox.style.display = 'none';
+                updateStatusIndicator('recording');
             };
 
             recognition.onresult = async (event) => {
@@ -630,21 +896,46 @@
                 });
                 const data = await res.json();
                 if (data.error) throw new Error(data.error);
-                translationText.textContent = data.translation;
-                resultBox.style.display = 'block';
+                // Show Result Box with fade-in
+                const rBox = document.getElementById('resultBox');
+                rBox.style.display = '';
+                rBox.classList.remove('hidden');
+                rBox.classList.add('flex');
+                void rBox.offsetWidth; // force reflow
+                rBox.classList.remove('opacity-0');
+                rBox.classList.add('opacity-100');
+                
+                translationText.textContent = "";
                 statusEl.textContent = "¡Traducción completada!";
                 
+                await typeWriterEffect(translationText, data.translation, false, 20);
+
                 if (data.audio_url) {
                     audioPlayer.src = data.audio_url + "?t=" + Date.now();
                     audioPlayer.play();
+                    
+                    document.getElementById('audioSection').classList.remove('opacity-0');
+                    document.getElementById('audioSection').classList.add('opacity-100');
                 }
 
                 // Guardar en el historial (español) y analizar
                 sessionTranslations.push(text);
+                
+                if (sessionTranslations.length > 0) {
+                    const fab = document.getElementById('summaryFabContainer');
+                    fab.classList.remove('translate-y-24', 'opacity-0', 'pointer-events-none');
+                    fab.classList.add('translate-y-0', 'opacity-100', 'pointer-events-auto');
+                    
+                    const badge = document.getElementById('sessionCountBadge');
+                    badge.textContent = sessionTranslations.length;
+                    badge.classList.remove('scale-0');
+                    badge.classList.add('scale-100');
+                }
+                
                 analyzeMedicalContext(text + " " + data.translation);
 
             } catch (err) {
-                statusEl.textContent = "Error: " + err.message;
+                showErrorAlert(err.message || "Fallo en la red. Verifica tu conexión e intenta de nuevo.");
             } finally {
                 releaseWakeLock(); // Release screen lock
             }
@@ -679,27 +970,37 @@
         function analyzeMedicalContext(text) {
             if (!text) return;
             const t = text.toLowerCase();
+            const anatomy = document.getElementById('anatomyContainer');
             
             // Limpiar clases previas
             const zones = ['cabeza', 'pecho', 'estomago', 'brazos', 'piernas'];
             zones.forEach(z => document.getElementById('zona-' + z).classList.remove('highlight-anatomy'));
+            
+            let found = false;
 
             // Analizar palabras clave asíncronamente (sin bloquear)
             setTimeout(() => {
                 if (t.includes('cabeza') || t.includes('jolom') || t.includes('mareo') || t.includes('lemlot') || t.includes('oído') || t.includes('xiq') || t.includes('nariz') || t.includes('ni\'')) {
-                    document.getElementById('zona-cabeza').classList.add('highlight-anatomy');
+                    document.getElementById('zona-cabeza').classList.add('highlight-anatomy'); found = true;
                 }
                 if (t.includes('pecho') || t.includes('k\'u\'x') || t.includes('respirar') || t.includes('aire') || t.includes('uxlab') || t.includes('corazón')) {
-                    document.getElementById('zona-pecho').classList.add('highlight-anatomy');
+                    document.getElementById('zona-pecho').classList.add('highlight-anatomy'); found = true;
                 }
                 if (t.includes('estómago') || t.includes('panza') || t.includes('vomit') || t.includes('xabik') || t.includes('digest')) {
-                    document.getElementById('zona-estomago').classList.add('highlight-anatomy');
+                    document.getElementById('zona-estomago').classList.add('highlight-anatomy'); found = true;
                 }
                 if (t.includes('brazo') || t.includes('mano') || t.includes('q\'ab') || t.includes('hombro') || t.includes('molaj')) {
-                    document.getElementById('zona-brazos').classList.add('highlight-anatomy');
+                    document.getElementById('zona-brazos').classList.add('highlight-anatomy'); found = true;
                 }
                 if (t.includes('pierna') || t.includes('pie') || t.includes('rodilla') || t.includes('waqan') || t.includes('wakan') || t.includes('koxol')) {
-                    document.getElementById('zona-piernas').classList.add('highlight-anatomy');
+                    document.getElementById('zona-piernas').classList.add('highlight-anatomy'); found = true;
+                }
+                
+                if (found) {
+                    anatomy.style.maxHeight = '280px';
+                    // max-width de 220px da espacio horizontal al modelo
+                    anatomy.style.maxWidth = '220px';
+                    anatomy.style.opacity = '1';
                 }
             }, 50);
         }
@@ -727,13 +1028,14 @@
                 
                 const data = await res.json();
                 textarea.value = data.summary || "Error al procesar el resumen.";
+                isSummaryGenerated = true; // Flag for next session
                 
             } catch (err) {
                 textarea.value = "Error al contactar al servidor. Revisa tu conexión.";
                 console.error(err);
             } finally {
                 btn.disabled = false;
-                btn.textContent = "Generar Resumen de Sesión";
+                btn.textContent = "Generar Ahora";
             }
         }
 

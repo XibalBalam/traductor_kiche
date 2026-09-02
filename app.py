@@ -42,6 +42,8 @@ class User(db.Model):
     security_answer_hash = db.Column(db.String(256), nullable=False)
     role = db.Column(db.String(20), default='basico', nullable=False)
     status = db.Column(db.String(20), default='pending', nullable=False)
+    full_name = db.Column(db.String(150), nullable=True)
+    profile_image = db.Column(db.String(255), nullable=True)
 
 class Audit(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -165,6 +167,57 @@ def recover_page():
 def logout():
     session.clear()
     return redirect(url_for('login_page'))
+
+# --- PROFILE ROUTES ---
+from werkzeug.utils import secure_filename
+
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@app.route('/cuenta', methods=['GET', 'POST'])
+@login_required
+def cuenta_page():
+    user = User.query.get(session['user_id'])
+    
+    if request.method == 'POST':
+        # Update Profile
+        full_name = request.form.get('full_name')
+        new_password = request.form.get('new_password')
+        current_password = request.form.get('current_password')
+        
+        # Verify current password before any changes
+        if not current_password or not check_password_hash(user.password_hash, current_password):
+            flash("La contraseña actual es incorrecta. No se guardaron los cambios.", "error")
+            return redirect(url_for('cuenta_page'))
+            
+        # Update Name
+        if full_name is not None:
+            user.full_name = full_name.strip()
+            
+        # Update Password
+        if new_password:
+            if len(new_password) < 4:
+                flash("La nueva contraseña debe tener al menos 4 caracteres.", "error")
+                return redirect(url_for('cuenta_page'))
+            user.password_hash = generate_password_hash(new_password, method='pbkdf2:sha256')
+            
+        # Update Profile Image
+        if 'profile_image' in request.files:
+            file = request.files['profile_image']
+            if file and file.filename != '' and allowed_file(file.filename):
+                filename = secure_filename(f"user_{user.id}_{int(time.time())}_{file.filename}")
+                upload_folder = os.path.join(app.root_path, 'static', 'profiles')
+                os.makedirs(upload_folder, exist_ok=True)
+                file.save(os.path.join(upload_folder, filename))
+                user.profile_image = filename
+
+        db.session.commit()
+        # sync_file_to_s3(DB_PATH, 'app.db')
+        flash("Perfil actualizado exitosamente.", "success")
+        return redirect(url_for('cuenta_page'))
+
+    return render_template('cuenta.html', user=user)
 
 # --- ADMIN ROUTES ---
 @app.route('/admin')
@@ -492,10 +545,11 @@ def eliminar_variante():
     return jsonify({'status': 'ok'})
 
 # ── HUGGINGFACE, GROQ & AWS S3 CONFIG ──────────────────────────────────────────
+# ── HUGGINGFACE, GEMINI & AWS S3 CONFIG ──────────────────────────────────────────
 load_dotenv()
 
 HF_TOKEN = os.getenv('HF_TOKEN')
-GROQ_API_KEY = os.getenv('GROQ_API_KEY')
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
 AWS_REGION = os.getenv('AWS_REGION', 'us-east-1')
@@ -506,10 +560,10 @@ if HF_TOKEN:
 else:
     print("[HF] WARNING: No HF_TOKEN found in .env")
 
-if GROQ_API_KEY:
-    print(f"[GROQ] API Key loaded ({GROQ_API_KEY[:8]}...)")
+if GEMINI_API_KEY:
+    print(f"[GEMINI] API Key loaded ({GEMINI_API_KEY[:8]}...)")
 else:
-    print("[GROQ] WARNING: No GROQ_API_KEY found in .env")
+    print("[GEMINI] WARNING: No GEMINI_API_KEY found in .env")
 
 s3_client = None
 if AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY and S3_BUCKET_NAME:
@@ -749,10 +803,19 @@ def translate_kiche_to_spanish(text):
                 return result['translation_text']
         # Any error → fallback
         print(f"[NLLB] Non-200 response, falling back.")
-        return GoogleTranslator(source='auto', target='es').translate(text)
+        fallback_text = GoogleTranslator(source='auto', target='es').translate(text)
+        if "Error 500" in fallback_text or "That’s an error" in fallback_text or "<html" in fallback_text.lower():
+            raise Exception("El servicio de traducción no está disponible temporalmente.")
+        return fallback_text
     except Exception as e:
         print(f"[NLLB] Exception: {e}")
-        return GoogleTranslator(source='auto', target='es').translate(text)
+        try:
+            fallback_text = GoogleTranslator(source='auto', target='es').translate(text)
+            if "Error 500" in fallback_text or "That’s an error" in fallback_text or "<html" in fallback_text.lower():
+                raise Exception("El servicio de traducción no está disponible temporalmente.")
+            return fallback_text
+        except:
+            raise Exception("El servicio de traducción falló (Error 500).")
 
 
 
@@ -866,13 +929,21 @@ def translate():
         # ASR
         audio_input, _ = librosa.load(filepath, sr=16000)
         
+        # Eliminar silencios al principio y al final para evitar alucinaciones (q'axax...)
+        audio_input, _ = librosa.effects.trim(audio_input, top_db=30)
+        
         # Prevent Wav2Vec2 "Kernel size can't be greater than actual input size" error for short audio
         if len(audio_input) < 1600:
             return jsonify({
-                'transcription': "(No se detectó voz - el audio es muy corto)",
+                'transcription': "(No se detectó voz - el audio es muy corto o en silencio)",
                 'translation': "",
                 'audio_url': None
             })
+            
+        # Normalizar el volumen del audio al rango -1 a 1 (reduce más las alucinaciones por ruido blanco)
+        import numpy as np
+        if np.max(np.abs(audio_input)) > 0:
+            audio_input = audio_input / np.max(np.abs(audio_input))
             
         inputs = processor(audio_input, sampling_rate=16000, return_tensors="pt").to(device)
         with torch.no_grad():
@@ -956,6 +1027,9 @@ def translate_to_kiche():
     try:
         translator = GoogleTranslator(source='es', target='qu')
         kiche_translation = translator.translate(spanish_text)
+        
+        if "Error 500" in kiche_translation or "That’s an error" in kiche_translation or "<html" in kiche_translation.lower():
+            raise Exception("El servicio de traducción hacia K'iche' no está disponible.")
         
         response_data = {
             'original': spanish_text,
@@ -1176,39 +1250,41 @@ def generate_summary():
     if not symptoms:
         return jsonify({'summary': 'No hay síntomas registrados.'})
 
-    if not GROQ_API_KEY:
+    if not GEMINI_API_KEY:
         # Fallback si no hay API KEY
         return jsonify({'summary': 'Síntomas reportados:\n- ' + '\n- '.join(symptoms)})
     
     try:
-        url = "https://api.groq.com/openai/v1/chat/completions"
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={GEMINI_API_KEY}"
         headers = {
-            "Authorization": f"Bearer {GROQ_API_KEY}",
             "Content-Type": "application/json"
         }
         
         system_prompt = "Eres un asistente médico de triaje. Recibirás una lista de síntomas aislados. Tu única tarea es redactar un resumen clínico ejecutivo, estructurado y objetivo en un solo párrafo. No saludes, no des consejos médicos, solo resume los datos."
         
         payload = {
-            "model": "llama-3.1-8b-instant",
-            "messages": [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": f"Síntomas reportados: {', '.join(symptoms)}"}
-            ],
-            "temperature": 0.3
+            "contents": [{
+                "parts": [{"text": f"Síntomas reportados: {', '.join(symptoms)}"}]
+            }],
+            "systemInstruction": {
+                "parts": [{"text": system_prompt}]
+            },
+            "generationConfig": {
+                "temperature": 0.3
+            }
         }
         
         resp = http_requests.post(url, headers=headers, json=payload, timeout=15)
         if resp.status_code == 200:
             result = resp.json()
-            summary = result['choices'][0]['message']['content'].strip()
+            summary = result['candidates'][0]['content']['parts'][0]['text'].strip()
             return jsonify({'summary': summary})
         else:
-            print(f"[GROQ] Error API: {resp.text}")
+            print(f"[GEMINI] Error API: {resp.text}")
             return jsonify({'summary': 'Síntomas reportados:\n- ' + '\n- '.join(symptoms)})
             
     except Exception as e:
-        print(f"[GROQ] Exception: {e}")
+        print(f"[GEMINI] Exception: {e}")
         return jsonify({'summary': 'Síntomas reportados:\n- ' + '\n- '.join(symptoms)})
 
 @app.route('/actualizar-reglas', methods=['GET', 'POST'])
@@ -1236,16 +1312,15 @@ def actualizar_reglas():
 
 @app.route('/generar-vocabulario-ia', methods=['POST'])
 def generar_vocabulario_ia():
-    api_key = GROQ_API_KEY
+    api_key = GEMINI_API_KEY
     if not api_key:
-        return jsonify({'error': 'No hay API Key de Groq configurada en tu archivo .env.'}), 500
+        return jsonify({'error': 'No hay API Key de Gemini configurada en tu archivo .env.'}), 500
         
     try:
         data = request.get_json() or {}
         instruccion_personalizada = data.get('instruccion', 'Genera 5 frases MUY CORTAS sobre síntomas básicos de triaje.').strip()
         
         headers = {
-            "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json"
         }
         
@@ -1269,18 +1344,18 @@ def generar_vocabulario_ia():
                         palabras_existentes.add(e.lower())
                     
         existentes_unicas = sorted(list(palabras_existentes))
-        # Pasar TODAS las palabras existentes a la IA, ya que Llama-3 tiene suficiente contexto (8k+ tokens)
-        existentes_sample = ", ".join(existentes_unicas)
+        # Limitar la lista de existentes si es muy larga
+        existentes_sample = ", ".join(existentes_unicas[:1000]) if len(existentes_unicas) > 1000 else ", ".join(existentes_unicas)
         
         prompt = f"""
         INSTRUCCIÓN DEL USUARIO: {instruccion_personalizada}
         
         REGLAS CRÍTICAS DE NEGOCIO:
-        1. NO generes NINGUNA de estas palabras que ya tenemos en nuestra base de datos (lee la lista completa y evítalas): [{existentes_sample}]
+        1. NO generes NINGUNA de estas palabras que ya tenemos en nuestra base de datos (lee la lista y evítalas): [{existentes_sample}]
         2. Si la instrucción pide "partes del cuerpo" o similares, DEVUELVE ESTRICTAMENTE LA PALABRA EN SINGULAR (ej. "el ojo", "la mano", NO "los ojos", NO "manos").
         3. No uses puntos finales, no des explicaciones.
         
-        REGLA CRÍTICA DE FORMATO: Devuelve SOLO un arreglo JSON estrictamente válido. 
+        REGLA CRÍTICA DE FORMATO: Devuelve SOLO un arreglo JSON estrictamente válido y nada más. No devuelvas markdown format tags como ```json.
         LA ÚNICA CLAVE PERMITIDA EN LOS OBJETOS ES "espanol".
         Bajo ninguna circunstancia uses la palabra generada como clave (no hagas {{"labio": "labio"}}).
         
@@ -1292,20 +1367,32 @@ def generar_vocabulario_ia():
         ]
         """
         
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
         payload = {
-            "model": "llama-3.3-70b-versatile",
-            "messages": [{"role": "user", "content": prompt.strip()}],
-            "temperature": 0.1, # Más bajo para mayor obediencia
-            "max_tokens": 1024
+            "contents": [{
+                "parts": [{"text": prompt.strip()}]
+            }],
+            "generationConfig": {
+                "temperature": 0.1,
+                "maxOutputTokens": 1024,
+                "responseMimeType": "application/json"
+            }
         }
         
-        response = http_requests.post("https://api.groq.com/openai/v1/chat/completions", headers=headers, json=payload, timeout=10)
+        response = http_requests.post(url, headers=headers, json=payload, timeout=15)
         response.raise_for_status()
         
         resp_data = response.json()
-        content = resp_data['choices'][0]['message']['content'].strip()
+        content = resp_data['candidates'][0]['content']['parts'][0]['text'].strip()
         
-        # Buscar el bloque JSON dentro de la respuesta (para ignorar texto conversacional)
+        # Eliminar formato markdown residual de Gemini si hubiere (por la versión de API)
+        if content.startswith('```json'):
+            content = content[7:]
+        if content.endswith('```'):
+            content = content[:-3]
+        content = content.strip()
+        
+        # Buscar el bloque JSON dentro de la respuesta
         start_idx = content.find('[')
         end_idx = content.rfind(']')
         
