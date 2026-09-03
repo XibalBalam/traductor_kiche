@@ -4,9 +4,48 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Revisar y Aprobar Variantes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
     <style>
+        :root {
+            /* Modo Claro (Default) */
+            --bg-canvas-overlay: rgba(248, 250, 252, 0.65);
+            --primary-jade: #10B981;
+            --primary-hover: #059669;
+            --text-main: #233B33;
+            --text-muted: rgba(35, 59, 51, 0.65);
+            --accent-terra: #BA5011;
+            --error-red: #BA1511;
+            
+            --card-bg: rgba(255, 255, 255, 0.4);
+            --card-border: rgba(255, 255, 255, 0.5);
+            --card-shadow: rgba(0, 0, 0, 0.1);
+            
+            --input-bg: rgba(255, 255, 255, 0.6);
+            --input-border: rgba(35, 59, 51, 0.2);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                /* Modo Oscuro */
+                --bg-canvas-overlay: rgba(15, 23, 42, 0.75);
+                --primary-jade: #059669;
+                --primary-hover: #10B981;
+                --text-main: #E2E8F0;
+                --text-muted: rgba(226, 232, 240, 0.65);
+                --accent-terra: #BA5011;
+                --error-red: #BA1511;
+                
+                --card-bg: rgba(51, 65, 85, 0.45);
+                --card-border: rgba(255, 255, 255, 0.15);
+                --card-shadow: rgba(0, 0, 0, 0.35);
+                
+                --input-bg: rgba(15, 23, 42, 0.6);
+                --input-border: rgba(255, 255, 255, 0.15);
+            }
+        }
+
         * {
             box-sizing: border-box;
             margin: 0;
@@ -15,169 +54,94 @@
 
         body {
             font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3e 50%, #0a1a2e 100%);
-            color: white;
+            background: url("{{ url_for('static', filename='backgroundLogin.jpeg') }}") center center / cover no-repeat fixed;
+            color: var(--text-main);
             min-height: 100vh;
-            padding: 1.5rem 1rem;
         }
 
-        .back-link {
-            display: inline-block;
-            color: rgba(255, 255, 255, 0.5);
-            text-decoration: none;
-            font-size: 0.85rem;
-            margin-bottom: 1rem;
-            transition: color 0.2s;
+        .overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: var(--bg-canvas-overlay);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: -1;
+            transition: background 0.3s;
         }
 
-        .back-link:hover {
-            color: white;
+        .main-wrapper {
+            animation: smokeIn 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
         }
 
-        .container {
-            max-width: 800px;
-            margin: auto;
+        .main-wrapper.smoke-out {
+            animation: smokeOut 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
         }
 
-        h2 {
-            font-size: 1.5rem;
-            font-weight: 600;
-            margin-bottom: 1.5rem;
-            text-align: center;
+        @keyframes smokeIn {
+            0% { opacity: 0; filter: blur(15px); transform: translateY(10px) scale(0.98); }
+            100% { opacity: 1; filter: blur(0); transform: translateY(0) scale(1); }
         }
 
-        .empty-state {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px dashed rgba(255, 255, 255, 0.2);
-            border-radius: 12px;
-            padding: 3rem 1rem;
-            text-align: center;
-            color: rgba(255, 255, 255, 0.6);
+        @keyframes smokeOut {
+            0% { opacity: 1; filter: blur(0); transform: scale(1); }
+            100% { opacity: 0; filter: blur(15px); transform: translateY(-10px) scale(0.98); }
         }
 
-        .variant-card {
-            background: rgba(255, 255, 255, 0.06);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            padding: 1.2rem;
-            margin-bottom: 1rem;
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-            transition: transform 0.2s, background 0.2s;
+        .glass-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--card-border);
+            border-top: 1px solid rgba(255, 255, 255, 0.3);
+            border-left: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px var(--card-shadow);
+            border-radius: 24px;
         }
 
-        .variant-card:hover {
-            background: rgba(255, 255, 255, 0.08);
-            border-color: rgba(255, 255, 255, 0.2);
+        .form-input {
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            color: var(--text-main);
+            transition: all 0.3s ease;
         }
 
-        @media (min-width: 600px) {
-            .variant-card {
-                flex-direction: row;
-                align-items: center;
-                justify-content: space-between;
-            }
-        }
-
-        .variant-info {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 0.8rem;
-        }
-
-        .info-group {
-            display: flex;
-            flex-direction: column;
-            gap: 0.3rem;
-        }
-
-        label {
-            font-size: 0.75rem;
-            color: rgba(255, 255, 255, 0.5);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        .text-value {
-            font-size: 1.1rem;
-            font-weight: 500;
-        }
-
-        .kiche-text {
-            color: #a78bfa;
-            font-weight: 600;
-        }
-
-        .styled-select {
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: white;
-            padding: 0.5rem;
-            border-radius: 6px;
-            font-family: 'Inter', sans-serif;
-            font-size: 0.9rem;
+        .form-input:focus {
             outline: none;
-            width: 100%;
-            max-width: 250px;
-        }
-        
-        .styled-select option {
-            background: #1a1a3e;
-            color: white;
+            border-color: var(--primary-jade);
+            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.1);
         }
 
-        .variant-actions {
-            display: flex;
-            gap: 0.5rem;
-            flex-shrink: 0;
-        }
-
-        @media (max-width: 599px) {
-            .variant-actions {
-                width: 100%;
-            }
-            .variant-actions button {
-                flex: 1;
-            }
-        }
-
-        button {
-            border: none;
-            padding: 0.7rem 1.2rem;
-            border-radius: 8px;
-            cursor: pointer;
-            font-family: 'Inter', sans-serif;
-            font-size: 0.9rem;
-            font-weight: 500;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
+        .form-input option {
+            background: var(--card-bg);
+            color: var(--text-main);
         }
 
         .btn-approve {
             background: rgba(16, 185, 129, 0.15);
-            color: #34d399;
+            color: var(--primary-jade);
             border: 1px solid rgba(16, 185, 129, 0.3);
+            transition: all 0.2s ease;
         }
-
         .btn-approve:hover {
-            background: rgba(16, 185, 129, 0.3);
+            background: rgba(16, 185, 129, 0.25);
+            transform: translateY(-1px);
         }
 
         .btn-delete {
-            background: rgba(244, 63, 94, 0.15);
-            color: #fb7185;
-            border: 1px solid rgba(244, 63, 94, 0.3);
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--error-red);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            transition: all 0.2s ease;
         }
-
         .btn-delete:hover {
-            background: rgba(244, 63, 94, 0.3);
+            background: rgba(239, 68, 68, 0.2);
+            transform: translateY(-1px);
         }
 
+        .variant-item {
+            transition: all 0.3s ease;
+        }
+        
     </style>
 
     <link rel="icon" type="image/png" href="/static/favicon/favicon-96x96.png" sizes="96x96" />
@@ -186,38 +150,48 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/static/favicon/apple-touch-icon.png" />
     <link rel="manifest" href="/static/favicon/site.webmanifest" />
 </head>
-<body>
-    <div class="container">
-        <a class="back-link" href="/escritura" style="display: flex; align-items: center; gap: 4px;">
-            <span class="material-symbols-outlined" style="font-size: 1rem;">arrow_back</span> Volver a Práctica de Escritura
-        </a>
+<body class="p-4 sm:p-8 flex flex-col items-center">
+    <div class="overlay"></div>
+    <div class="main-wrapper w-full max-w-4xl">
+        <div class="mb-6">
+            <a href="/escritura" class="transition-link inline-flex items-center gap-1.5 text-[color:var(--text-muted)] hover:text-[color:var(--text-main)] transition-colors text-sm font-medium">
+                <span class="material-symbols-outlined text-[1.1rem]">arrow_back</span> Volver a Práctica de Escritura
+            </a>
+        </div>
         
-        <h2>Panel de Revisión y Aprobación</h2>
+        <div class="text-center mb-8">
+            <h1 class="text-2xl sm:text-3xl font-bold tracking-tight flex items-center justify-center gap-2">
+                <span class="material-symbols-outlined text-[2rem] text-[color:var(--primary-jade)]">fact_check</span> Panel de Revisión
+            </h1>
+        </div>
         
         {% if variantes|length == 0 %}
-            <div class="empty-state">
-                <div style="margin-bottom: 1rem;"><span class="material-symbols-outlined" style="font-size: 3rem;">inbox</span></div>
-                <p>No hay traducciones pendientes de revisión en este momento.</p>
+            <div class="glass-card p-10 text-center flex flex-col items-center justify-center">
+                <span class="material-symbols-outlined text-[4rem] text-[color:var(--text-muted)] mb-4 opacity-50">task_alt</span>
+                <h3 class="text-xl font-bold text-[color:var(--text-main)] mb-2">Sin pendientes</h3>
+                <p class="text-sm text-[color:var(--text-muted)] max-w-md mx-auto leading-relaxed">
+                    No hay traducciones pendientes de revisión en este momento. Todas las palabras sugeridas ya han sido procesadas.
+                </p>
             </div>
         {% else %}
-            <div class="variants-list">
+            <div class="variants-list flex flex-col gap-4">
                 {% for v in variantes %}
-                <div class="variant-card" id="row-{{ loop.index }}">
+                <div class="glass-card p-5 sm:p-6 flex flex-col sm:flex-row gap-6 items-start sm:items-center variant-item" id="row-{{ loop.index }}">
                     
-                    <div class="variant-info">
-                        <div class="info-group">
-                            <label>Español</label>
-                            <div class="text-value" id="esp-{{ loop.index }}">{{ v.espanol }}</div>
+                    <div class="flex-1 w-full grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+                        <div class="flex flex-col gap-1">
+                            <label class="text-[0.65rem] tracking-[1px] uppercase font-bold text-[color:var(--text-muted)]">Español</label>
+                            <div class="text-base font-semibold text-[color:var(--text-main)]" id="esp-{{ loop.index }}">{{ v.espanol }}</div>
                         </div>
                         
-                        <div class="info-group">
-                            <label>K'iche' (Sugerido)</label>
-                            <div class="text-value kiche-text" id="kich-{{ loop.index }}">{{ v.kiche }}</div>
+                        <div class="flex flex-col gap-1">
+                            <label class="text-[0.65rem] tracking-[1px] uppercase font-bold text-[color:var(--text-muted)]">K'iche' (Sugerido)</label>
+                            <div class="text-base font-bold text-[color:var(--primary-jade)]" id="kich-{{ loop.index }}">{{ v.kiche }}</div>
                         </div>
                         
-                        <div class="info-group">
-                            <label>Categoría Destino</label>
-                            <select class="styled-select" id="cat-{{ loop.index }}">
+                        <div class="flex flex-col gap-1">
+                            <label class="text-[0.65rem] tracking-[1px] uppercase font-bold text-[color:var(--text-muted)]">Categoría Destino</label>
+                            <select class="form-input rounded-lg px-3 py-1.5 text-sm w-full outline-none" id="cat-{{ loop.index }}">
                                 {% for c in categorias %}
                                     <option value="{{ c }}" {% if c == v.recomendada %}selected{% endif %}>{{ c }}</option>
                                 {% endfor %}
@@ -225,12 +199,12 @@
                         </div>
                     </div>
                     
-                    <div class="variant-actions">
-                        <button class="btn-approve" onclick="aprobar({{ loop.index }})" title="Aprobar y guardar al diccionario principal">
-                            <span class="material-symbols-outlined" style="font-size: 1.2rem;">check_circle</span> Aprobar
+                    <div class="flex flex-row sm:flex-col gap-2 w-full sm:w-auto mt-2 sm:mt-0">
+                        <button class="btn-approve rounded-lg px-4 py-2 text-sm flex-1 flex items-center justify-center gap-1.5 font-bold" onclick="aprobar({{ loop.index }})" title="Aprobar y guardar">
+                            <span class="material-symbols-outlined text-[1.2rem]">check_circle</span> Aprobar
                         </button>
-                        <button class="btn-delete" onclick="eliminar({{ loop.index }})" title="Eliminar definitivamente esta variante">
-                            <span class="material-symbols-outlined" style="font-size: 1.2rem;">delete</span> Descartar
+                        <button class="btn-delete rounded-lg px-4 py-2 text-sm flex-1 flex items-center justify-center gap-1.5 font-bold" onclick="eliminar({{ loop.index }})" title="Descartar variante">
+                            <span class="material-symbols-outlined text-[1.2rem]">delete</span> Descartar
                         </button>
                     </div>
                     
@@ -240,22 +214,51 @@
         {% endif %}
     </div>
 
+    <!-- TOAST DE NOTIFICACIÓN -->
+    <div id="actionToast" class="fixed bottom-6 left-6 z-[100] transition-all duration-500 transform translate-y-12 opacity-0 flex items-center gap-3 px-5 py-4 rounded-xl" style="background: var(--card-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--primary-jade); border-left: 4px solid var(--primary-jade); box-shadow: 0 8px 32px rgba(16, 185, 129, 0.15); max-width: 350px; pointer-events: none;">
+        <span id="actionToastIcon" class="material-symbols-outlined text-[1.4rem]" style="color: var(--primary-jade);">check_circle</span>
+        <div>
+            <h4 id="actionToastTitle" class="font-semibold text-sm mb-0.5" style="color: var(--text-main); line-height: 1.2;">Éxito</h4>
+            <p id="actionToastMsg" class="text-xs m-0" style="color: var(--text-muted); line-height: 1.2; word-break: break-all; overflow-wrap: anywhere;">Acción completada.</p>
+        </div>
+    </div>
+
     <script>
-        function showToast(msg, color = '#34d399') {
-            const toast = document.createElement('div');
-            toast.textContent = msg;
-            toast.style.position = 'fixed';
-            toast.style.bottom = '20px';
-            toast.style.left = '50%';
-            toast.style.transform = 'translateX(-50%)';
-            toast.style.background = 'rgba(0,0,0,0.8)';
-            toast.style.color = color;
-            toast.style.padding = '12px 24px';
-            toast.style.borderRadius = '8px';
-            toast.style.zIndex = '1000';
-            toast.style.border = `1px solid ${color}`;
-            document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 3000);
+        let actionToastTimeout;
+        function showActionToast(msg, type = 'success') {
+            const toast = document.getElementById('actionToast');
+            const title = document.getElementById('actionToastTitle');
+            const icon = document.getElementById('actionToastIcon');
+            const msgEl = document.getElementById('actionToastMsg');
+            
+            msgEl.textContent = msg;
+            
+            if (type === 'success') {
+                toast.style.borderColor = 'var(--card-border)';
+                toast.style.borderLeftColor = 'var(--primary-jade)';
+                toast.style.boxShadow = '0 8px 32px rgba(16, 185, 129, 0.15)';
+                icon.style.color = 'var(--primary-jade)';
+                icon.textContent = 'check_circle';
+                title.textContent = 'Aprobado';
+            } else {
+                toast.style.borderColor = 'var(--card-border)';
+                toast.style.borderLeftColor = 'var(--error-red)';
+                toast.style.boxShadow = '0 8px 32px rgba(186, 21, 17, 0.25)';
+                icon.style.color = 'var(--error-red)';
+                icon.textContent = 'delete';
+                title.textContent = 'Descartado';
+            }
+            
+            toast.style.pointerEvents = 'auto';
+            toast.classList.remove('translate-y-12', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+            
+            clearTimeout(actionToastTimeout);
+            actionToastTimeout = setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-12', 'opacity-0');
+                toast.style.pointerEvents = 'none';
+            }, 4000);
         }
 
         function aprobar(index) {
@@ -264,7 +267,8 @@
             const categoria = document.getElementById(`cat-${index}`).value;
             const row = document.getElementById(`row-${index}`);
             
-            row.style.opacity = '0.5';
+            row.style.opacity = '0.4';
+            row.style.pointerEvents = 'none';
 
             fetch('/aprobar', {
                 method: 'POST',
@@ -272,19 +276,26 @@
                 body: new URLSearchParams({espanol, kiche, categoria})
             }).then(r => r.json()).then(res => {
                 if(res.status === 'ok') {
-                    row.remove();
-                    showToast('✅ Aprobado y guardado en el diccionario');
-                    
-                    // Check if empty
-                    if (document.querySelectorAll('.variant-card').length === 0) {
-                        location.reload(); // Reloads to show empty state
-                    }
+                    row.style.transform = 'scale(0.95)';
+                    setTimeout(() => {
+                        row.remove();
+                        showActionToast('Variante guardada en el diccionario.', 'success');
+                        
+                        if (document.querySelectorAll('.variant-item').length === 0) {
+                            setTimeout(() => {
+                                document.querySelector('.main-wrapper').classList.add('smoke-out');
+                                setTimeout(() => location.reload(), 400);
+                            }, 500);
+                        }
+                    }, 200);
                 } else {
                     row.style.opacity = '1';
+                    row.style.pointerEvents = 'auto';
                     alert('Error: ' + res.error);
                 }
             }).catch(err => {
                 row.style.opacity = '1';
+                row.style.pointerEvents = 'auto';
                 alert('Error de conexión.');
             });
         }
@@ -296,7 +307,8 @@
             const kiche = document.getElementById(`kich-${index}`).innerText;
             const row = document.getElementById(`row-${index}`);
             
-            row.style.opacity = '0.5';
+            row.style.opacity = '0.4';
+            row.style.pointerEvents = 'none';
 
             fetch('/eliminar_variante', {
                 method: 'POST',
@@ -304,22 +316,43 @@
                 body: new URLSearchParams({espanol, kiche})
             }).then(r => r.json()).then(res => {
                 if(res.status === 'ok') {
-                    row.remove();
-                    showToast('🗑️ Variante descartada', '#fb7185');
-                    
-                    // Check if empty
-                    if (document.querySelectorAll('.variant-card').length === 0) {
-                        location.reload(); // Reloads to show empty state
-                    }
+                    row.style.transform = 'scale(0.95)';
+                    setTimeout(() => {
+                        row.remove();
+                        showActionToast('Variante eliminada permanentemente.', 'error');
+                        
+                        if (document.querySelectorAll('.variant-item').length === 0) {
+                            setTimeout(() => {
+                                document.querySelector('.main-wrapper').classList.add('smoke-out');
+                                setTimeout(() => location.reload(), 400);
+                            }, 500);
+                        }
+                    }, 200);
                 } else {
                     row.style.opacity = '1';
+                    row.style.pointerEvents = 'auto';
                     alert('Error: no se pudo eliminar');
                 }
             }).catch(err => {
                 row.style.opacity = '1';
+                row.style.pointerEvents = 'auto';
                 alert('Error de conexión.');
             });
         }
+
+        // Animación de humo al cambiar de página (enlaces)
+        document.querySelectorAll('.transition-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                if (this.href && !this.href.includes('#') && this.getAttribute('target') !== '_blank') {
+                    e.preventDefault();
+                    const target = this.href;
+                    document.querySelector('.main-wrapper').classList.add('smoke-out');
+                    setTimeout(() => {
+                        window.location.href = target;
+                    }, 400);
+                }
+            });
+        });
     </script>
 </body>
 </html>

@@ -5,64 +5,126 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mi Cuenta - Traductor K'iche'</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
-    <link rel="stylesheet" href="/static/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
     <style>
         :root {
-            --bg-dark: #09090b;
-            --card-bg: rgba(24, 24, 27, 0.65);
-            --card-border: rgba(255, 255, 255, 0.08);
+            /* Modo Claro (Default) */
+            --bg-canvas-overlay: rgba(248, 250, 252, 0.65);
             --primary-jade: #10B981;
             --primary-hover: #059669;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --input-bg: rgba(0, 0, 0, 0.2);
-            --input-border: rgba(255, 255, 255, 0.1);
+            --text-main: #233B33;
+            --text-muted: rgba(35, 59, 51, 0.65);
+            --accent-terra: #BA5011;
+            --error-red: #BA1511;
+            
+            --card-bg: rgba(255, 255, 255, 0.4);
+            --card-border: rgba(255, 255, 255, 0.5);
+            --card-shadow: rgba(0, 0, 0, 0.1);
+            
+            --input-bg: rgba(255, 255, 255, 0.6);
+            --input-border: rgba(35, 59, 51, 0.2);
         }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                /* Modo Oscuro */
+                --bg-canvas-overlay: rgba(15, 23, 42, 0.75);
+                --primary-jade: #059669;
+                --primary-hover: #10B981;
+                --text-main: #E2E8F0;
+                --text-muted: rgba(226, 232, 240, 0.65);
+                --accent-terra: #BA5011;
+                --error-red: #BA1511;
+                
+                --card-bg: rgba(51, 65, 85, 0.45);
+                --card-border: rgba(255, 255, 255, 0.15);
+                --card-shadow: rgba(0, 0, 0, 0.35);
+                
+                --input-bg: rgba(15, 23, 42, 0.6);
+                --input-border: rgba(255, 255, 255, 0.15);
+            }
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
-            background-color: var(--bg-dark);
-            background-image: 
-                radial-gradient(circle at 15% 50%, rgba(16, 185, 129, 0.04) 0%, transparent 50%),
-                radial-gradient(circle at 85% 30%, rgba(16, 185, 129, 0.03) 0%, transparent 50%);
+            font-family: 'Inter', sans-serif;
+            background: url("{{ url_for('static', filename='backgroundLogin.jpeg') }}") center center / cover no-repeat fixed;
             color: var(--text-main);
-            font-family: 'Outfit', sans-serif;
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
         }
+
+        .overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: var(--bg-canvas-overlay);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: -1;
+            transition: background 0.3s;
+        }
+
+        .main-wrapper {
+            animation: smokeIn 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+        }
+
+        .main-wrapper.smoke-out {
+            animation: smokeOut 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        @keyframes smokeIn {
+            0% { opacity: 0; filter: blur(15px); transform: translateY(10px) scale(0.98); }
+            100% { opacity: 1; filter: blur(0); transform: translateY(0) scale(1); }
+        }
+
+        @keyframes smokeOut {
+            0% { opacity: 1; filter: blur(0); transform: scale(1); }
+            100% { opacity: 0; filter: blur(15px); transform: translateY(-10px) scale(0.98); }
+        }
+
         .glass-card {
             background: var(--card-bg);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             border: 1px solid var(--card-border);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-            border-radius: 1.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.3);
+            border-left: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px var(--card-shadow);
+            border-radius: 24px;
         }
+
         .form-input {
             background: var(--input-bg);
             border: 1px solid var(--input-border);
             color: var(--text-main);
             transition: all 0.3s ease;
         }
+
         .form-input:focus {
             outline: none;
             border-color: var(--primary-jade);
             box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.1);
         }
+
         .btn-primary {
-            background: var(--primary-jade);
-            color: #0F172A;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.2);
-        }
-        .btn-primary:hover {
-            background: var(--primary-hover);
-            transform: translateY(-1px);
-            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3);
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--primary-jade);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            transition: all 0.2s ease;
         }
         
+        .btn-primary:hover {
+            background: rgba(16, 185, 129, 0.25);
+            transform: translateY(-1px);
+        }
+
         .avatar-preview {
             width: 100px;
             height: 100px;
@@ -74,9 +136,35 @@
             align-items: center;
             justify-content: center;
             color: var(--text-muted);
-            font-size: 2rem;
             margin: 0 auto;
+            transition: transform 0.2s;
         }
+        
+        .avatar-preview:hover {
+            transform: scale(1.05);
+        }
+
+        /* Flash Toasts */
+        .alert-toast {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--card-border);
+            box-shadow: 0 8px 32px var(--card-shadow);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .alert-success { border-left: 4px solid var(--primary-jade); }
+        .alert-error { border-left: 4px solid var(--error-red); }
+        .alert-info { border-left: 4px solid #3b82f6; }
+
+        .alert-toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        
     </style>
 
     <link rel="icon" type="image/png" href="/static/favicon/favicon-96x96.png" sizes="96x96" />
@@ -86,87 +174,102 @@
     <link rel="manifest" href="/static/favicon/site.webmanifest" />
 </head>
 <body class="p-4 sm:p-8">
+    <div class="overlay"></div>
 
-    <div class="glass-card w-full max-w-lg p-8 sm:p-10 relative">
-        <a href="/" class="absolute top-6 left-6 text-slate-400 hover:text-white transition-colors" title="Volver al Traductor">
-            <span class="material-symbols-outlined">arrow_back</span>
-        </a>
-        
-        <div class="text-center mb-8">
-            <span class="material-symbols-outlined mb-3" style="font-size: 2.5rem; color: var(--primary-jade);">manage_accounts</span>
-            <h1 class="text-3xl font-bold tracking-tight">Mi Cuenta</h1>
-            <p class="text-sm mt-2 opacity-75" style="color: var(--text-muted);">Administra tu perfil, foto y seguridad.</p>
-        </div>
-
-        <!-- Flashes -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-          {% if messages %}
-            {% for category, message in messages %}
-              <div class="p-3 mb-6 rounded-xl text-sm font-medium flex items-center gap-2 
-                {% if category == 'error' %} bg-red-500/10 text-red-400 border border-red-500/20 
-                {% else %} bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 {% endif %}">
-                  <span class="material-symbols-outlined text-[1.1rem]">{% if category == 'error' %}error{% else %}check_circle{% endif %}</span>
-                  {{ message }}
-              </div>
-            {% endfor %}
-          {% endif %}
-        {% endwith %}
-
-        <form method="POST" action="/cuenta" enctype="multipart/form-data" class="space-y-6">
+    <div class="main-wrapper">
+        <div class="glass-card w-full max-w-lg p-8 sm:p-10 relative">
+            <a href="/" class="transition-link absolute top-6 left-6 text-[color:var(--text-muted)] hover:text-[color:var(--text-main)] transition-colors" title="Volver al Traductor">
+                <span class="material-symbols-outlined text-[1.4rem]">arrow_back</span>
+            </a>
             
-            <!-- Avatar Upload -->
-            <div class="text-center">
-                {% if user.profile_image %}
-                    <img id="avatarPreview" src="{{ url_for('static', filename='profiles/' + user.profile_image) }}" alt="Avatar" class="avatar-preview mb-3 cursor-pointer" onclick="document.getElementById('fileInput').click()">
-                {% else %}
-                    <div id="avatarPreviewContainer" class="avatar-preview mb-3 cursor-pointer" onclick="document.getElementById('fileInput').click()">
-                        <span class="material-symbols-outlined" style="font-size: 3rem;">person</span>
+            <div class="text-center mb-8">
+                <span class="material-symbols-outlined mb-3 text-[3rem]" style="color: var(--primary-jade);">manage_accounts</span>
+                <h1 class="text-3xl font-bold tracking-tight text-[color:var(--text-main)]">Mi Cuenta</h1>
+                <p class="text-sm mt-2 text-[color:var(--text-muted)] font-medium">Administra tu perfil, foto y seguridad.</p>
+            </div>
+
+            <form method="POST" action="/cuenta" enctype="multipart/form-data" class="space-y-6 form-submit-anim">
+                
+                <!-- Avatar Upload -->
+                <div class="text-center">
+                    {% if user.profile_image %}
+                        <img id="avatarPreview" src="{{ url_for('static', filename='profiles/' + user.profile_image) }}" alt="Avatar" class="avatar-preview mb-3 cursor-pointer" onclick="document.getElementById('fileInput').click()">
+                    {% else %}
+                        <div id="avatarPreviewContainer" class="avatar-preview mb-3 cursor-pointer" onclick="document.getElementById('fileInput').click()">
+                            <span class="material-symbols-outlined text-[3rem]">person</span>
+                        </div>
+                        <img id="avatarPreview" src="" alt="Avatar" class="avatar-preview mb-3 cursor-pointer hidden" onclick="document.getElementById('fileInput').click()">
+                    {% endif %}
+                    <input type="file" id="fileInput" name="profile_image" accept="image/*" class="hidden" onchange="previewImage(event)">
+                    <label for="fileInput" class="text-xs font-semibold cursor-pointer hover:underline" style="color: var(--primary-jade);">Cambiar Foto</label>
+                </div>
+
+                <!-- Informacion General -->
+                <div class="space-y-4 pt-2">
+                    <div>
+                        <label class="block text-[0.65rem] font-bold uppercase tracking-[1.5px] mb-1.5" style="color: var(--text-muted);">Usuario de Acceso</label>
+                        <input type="text" value="{{ user.username }}" disabled class="w-full px-4 py-3.5 rounded-xl form-input opacity-50 cursor-not-allowed">
                     </div>
-                    <img id="avatarPreview" src="" alt="Avatar" class="avatar-preview mb-3 cursor-pointer hidden" onclick="document.getElementById('fileInput').click()">
-                {% endif %}
-                <input type="file" id="fileInput" name="profile_image" accept="image/*" class="hidden" onchange="previewImage(event)">
-                <label for="fileInput" class="text-xs cursor-pointer hover:underline" style="color: var(--primary-jade);">Cambiar Foto</label>
-            </div>
-
-            <!-- Informacion General -->
-            <div class="space-y-4 pt-2">
-                <div>
-                    <label class="block text-xs font-semibold uppercase tracking-wider mb-1.5" style="color: var(--text-muted);">Usuario de Acceso</label>
-                    <input type="text" value="{{ user.username }}" disabled class="w-full px-4 py-3 rounded-xl form-input opacity-50 cursor-not-allowed">
-                </div>
-                
-                <div>
-                    <label class="block text-xs font-semibold uppercase tracking-wider mb-1.5" style="color: var(--text-muted);">Nombre Completo</label>
-                    <input type="text" name="full_name" value="{{ user.full_name or '' }}" placeholder="Ej. Dr. Juan Pérez" class="w-full px-4 py-3 rounded-xl form-input">
-                </div>
-            </div>
-
-            <div class="w-full h-px my-6" style="background: var(--card-border);"></div>
-
-            <!-- Seguridad -->
-            <div class="space-y-4">
-                <h3 class="text-sm font-semibold mb-3 flex items-center gap-2" style="color: var(--text-main);"><span class="material-symbols-outlined text-[1.1rem]" style="color: var(--primary-jade);">lock</span> Seguridad</h3>
-                
-                <div>
-                    <label class="block text-xs font-semibold uppercase tracking-wider mb-1.5" style="color: var(--text-muted);">Contraseña Actual <span class="text-red-400">*</span></label>
-                    <input type="password" name="current_password" required placeholder="Requerida para guardar cambios" class="w-full px-4 py-3 rounded-xl form-input border-red-500/30">
+                    
+                    <div>
+                        <label class="block text-[0.65rem] font-bold uppercase tracking-[1.5px] mb-1.5" style="color: var(--text-muted);">Nombre Completo</label>
+                        <input type="text" name="full_name" value="{{ user.full_name or '' }}" placeholder="Ej. Dr. Juan Pérez" class="w-full px-4 py-3.5 rounded-xl form-input">
+                    </div>
                 </div>
 
-                <div>
-                    <label class="block text-xs font-semibold uppercase tracking-wider mb-1.5" style="color: var(--text-muted);">Nueva Contraseña (Opcional)</label>
-                    <input type="password" name="new_password" placeholder="Mínimo 4 caracteres" class="w-full px-4 py-3 rounded-xl form-input">
-                </div>
-            </div>
+                <div class="w-full h-px my-6" style="background: var(--card-border);"></div>
 
-            <div class="pt-4">
-                <button type="submit" class="w-full py-3.5 rounded-xl font-bold text-sm tracking-wide btn-primary flex justify-center items-center gap-2">
-                    <span class="material-symbols-outlined text-[1.1rem]">save</span> Guardar Cambios
-                </button>
-            </div>
-        </form>
+                <!-- Seguridad -->
+                <div class="space-y-4">
+                    <h3 class="text-sm font-bold mb-4 flex items-center gap-2" style="color: var(--text-main);"><span class="material-symbols-outlined text-[1.1rem]" style="color: var(--primary-jade);">lock</span> Seguridad</h3>
+                    
+                    <div>
+                        <label class="block text-[0.65rem] font-bold uppercase tracking-[1.5px] mb-1.5" style="color: var(--text-muted);">Contraseña Actual <span style="color: var(--error-red);">*</span></label>
+                        <input type="password" name="current_password" required placeholder="Requerida para guardar cambios" class="w-full px-4 py-3.5 rounded-xl form-input" style="border-left: 2px solid var(--error-red);">
+                    </div>
+
+                    <div>
+                        <label class="block text-[0.65rem] font-bold uppercase tracking-[1.5px] mb-1.5" style="color: var(--text-muted);">Nueva Contraseña (Opcional)</label>
+                        <input type="password" name="new_password" placeholder="Mínimo 4 caracteres" class="w-full px-4 py-3.5 rounded-xl form-input">
+                    </div>
+                </div>
+
+                <div class="pt-4">
+                    <button type="submit" class="w-full py-3.5 rounded-xl font-bold text-sm tracking-wide btn-primary flex justify-center items-center gap-2">
+                        <span class="material-symbols-outlined text-[1.1rem]">save</span> Guardar Cambios
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- TOAST DE NOTIFICACIÓN FLASK (Inferior Izquierda) -->
+    <div id="flashContainer" class="fixed bottom-6 left-6 z-[100] flex flex-col gap-3 pointer-events-none">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert-toast alert-{{ category }} flex items-center gap-3 px-5 py-4 rounded-xl" style="max-width: 350px;">
+                        {% if category == 'success' %}
+                            <span class="material-symbols-outlined text-[1.4rem]" style="color: var(--primary-jade);">check_circle</span>
+                        {% elif category == 'error' %}
+                            <span class="material-symbols-outlined text-[1.4rem]" style="color: var(--error-red);">error</span>
+                        {% else %}
+                            <span class="material-symbols-outlined text-[1.4rem]" style="color: #3b82f6;">info</span>
+                        {% endif %}
+                        <div>
+                            <h4 class="font-bold text-sm m-0 mb-0.5 text-[color:var(--text-main)] leading-[1.2]">
+                                {% if category == 'success' %}Perfil Actualizado{% elif category == 'error' %}Error al Guardar{% else %}Aviso{% endif %}
+                            </h4>
+                            <p class="text-xs m-0 text-[color:var(--text-muted)] leading-[1.2] break-words">{{ message }}</p>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
     </div>
 
     <script>
+        // Previsualizador de foto de perfil (Sin tocar backend/lógica html nativa)
         function previewImage(event) {
             const input = event.target;
             if (input.files && input.files[0]) {
@@ -185,6 +288,50 @@
                 reader.readAsDataURL(input.files[0]);
             }
         }
+
+        // Animación de humo al cambiar de página (enlaces)
+        document.querySelectorAll('.transition-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                if (this.href && !this.href.includes('#') && this.getAttribute('target') !== '_blank') {
+                    e.preventDefault();
+                    const target = this.href;
+                    document.querySelector('.main-wrapper').classList.add('smoke-out');
+                    setTimeout(() => {
+                        window.location.href = target;
+                    }, 400);
+                }
+            });
+        });
+
+        // Animación de humo al enviar el formulario
+        document.querySelectorAll('.form-submit-anim').forEach(form => {
+            form.addEventListener('submit', function(e) {
+                if (this.checkValidity()) {
+                    e.preventDefault();
+                    document.querySelector('.main-wrapper').classList.add('smoke-out');
+                    setTimeout(() => {
+                        HTMLFormElement.prototype.submit.call(this);
+                    }, 400);
+                }
+            });
+        });
+
+        // Animación y ocultamiento automático de Flash Toasts
+        window.addEventListener('DOMContentLoaded', () => {
+            const toasts = document.querySelectorAll('.alert-toast');
+            if (toasts.length > 0) {
+                setTimeout(() => {
+                    toasts.forEach(toast => toast.classList.add('show'));
+                }, 100);
+                
+                setTimeout(() => {
+                    toasts.forEach(toast => {
+                        toast.classList.remove('show');
+                        setTimeout(() => toast.remove(), 500);
+                    });
+                }, 5000);
+            }
+        });
     </script>
 </body>
 </html>

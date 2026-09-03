@@ -81,6 +81,21 @@
         .main-wrapper {
             position: relative;
             z-index: 1;
+            animation: smokeIn 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+        
+        .main-wrapper.smoke-out {
+            animation: smokeOut 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        @keyframes smokeIn {
+            0% { opacity: 0; filter: blur(15px); transform: translateY(10px) scale(0.98); }
+            100% { opacity: 1; filter: blur(0); transform: translateY(0) scale(1); }
+        }
+        
+        @keyframes smokeOut {
+            0% { opacity: 1; filter: blur(0); transform: scale(1); }
+            100% { opacity: 0; filter: blur(15px); transform: translateY(-10px) scale(0.98); }
         }
 
         .container {
@@ -361,18 +376,20 @@
             
             <!-- ADMIN CONTROLS (ICONS ONLY) -->
             <div class="flex gap-2">
-                <a href="/cuenta" title="Mi Cuenta (Perfil)" class="w-9 h-9 flex items-center justify-center rounded-full bg-slate-500/15 border border-slate-500/35 text-slate-400 hover:bg-slate-500/30 transition-colors"><span class="material-symbols-outlined" style="font-size: 1.1rem;">person</span></a>
+                <a href="/cuenta" title="Mi Cuenta (Perfil)" class="transition-link w-9 h-9 flex items-center justify-center rounded-full bg-slate-500/15 border border-slate-500/35 text-slate-400 hover:bg-slate-500/30 transition-colors"><span class="material-symbols-outlined" style="font-size: 1.1rem;">person</span></a>
                 
                 {% if session.get('role') in ['admin', 'entrenador'] %}
-                <a href="/train" title="Modo Entrenamiento" class="w-9 h-9 flex items-center justify-center rounded-full bg-purple-500/15 border border-purple-500/35 text-purple-400 hover:bg-purple-500/30 transition-colors"><span class="material-symbols-outlined" style="font-size: 1.1rem;">school</span></a>
-                <a href="/escritura" title="Práctica de Escritura" class="w-9 h-9 flex items-center justify-center rounded-full bg-green-500/15 border border-green-500/35 text-green-400 hover:bg-green-500/30 transition-colors"><span class="material-symbols-outlined" style="font-size: 1.1rem;">edit_note</span></a>
+                <a href="/train" title="Modo Entrenamiento" class="transition-link w-9 h-9 flex items-center justify-center rounded-full bg-purple-500/15 border border-purple-500/35 text-purple-400 hover:bg-purple-500/30 transition-colors"><span class="material-symbols-outlined" style="font-size: 1.1rem;">school</span></a>
+                <a href="/escritura" title="Práctica de Escritura" class="transition-link w-9 h-9 flex items-center justify-center rounded-full bg-green-500/15 border border-green-500/35 text-green-400 hover:bg-green-500/30 transition-colors"><span class="material-symbols-outlined" style="font-size: 1.1rem;">edit_note</span></a>
                 {% endif %}
                 {% if session.get('role') == 'admin' %}
-                <a href="/admin" title="Administrar Usuarios y Aprobaciones" class="w-9 h-9 flex items-center justify-center rounded-full bg-blue-500/15 border border-blue-500/35 text-blue-400 hover:bg-blue-500/30 transition-colors"><span class="material-symbols-outlined" style="font-size: 1.1rem;">manage_accounts</span></a>
+                <a href="/admin" title="Administrar Usuarios y Aprobaciones" class="transition-link w-9 h-9 flex items-center justify-center rounded-full bg-blue-500/15 border border-blue-500/35 text-blue-400 hover:bg-blue-500/30 transition-colors"><span class="material-symbols-outlined" style="font-size: 1.1rem;">manage_accounts</span></a>
                 {% endif %}
-                <a href="/logout" title="Salir" class="w-9 h-9 flex items-center justify-center rounded-full bg-red-500/15 border border-red-500/35 text-red-400 hover:bg-red-500/30 transition-colors"><span class="material-symbols-outlined" style="font-size: 1.1rem;">logout</span></a>
+                <a href="/logout" title="Salir" class="transition-link w-9 h-9 flex items-center justify-center rounded-full bg-red-500/15 border border-red-500/35 text-red-400 hover:bg-red-500/30 transition-colors"><span class="material-symbols-outlined" style="font-size: 1.1rem;">logout</span></a>
             </div>
         </div>
+
+
 
         <!-- MAIN CARD -->
         <div class="container relative flex flex-col items-center pt-8 pb-8 px-6 sm:px-10" style="padding: 2.5rem 2rem; max-width: 800px; width: 100%;">
@@ -451,7 +468,7 @@
         <span class="material-symbols-outlined" style="font-size: 1.8rem; color: var(--error-red);">warning</span>
         <div class="flex-1">
             <h4 class="font-bold text-sm m-0" style="color: var(--text-main); margin-bottom: 2px;">Error del Sistema</h4>
-            <p id="errorToastMsg" class="text-xs m-0" style="color: var(--text-muted); line-height: 1.2;">No se pudo completar la solicitud.</p>
+            <p id="errorToastMsg" class="text-xs m-0" style="color: var(--text-muted); line-height: 1.2; word-break: break-all; overflow-wrap: anywhere;">No se pudo completar la solicitud.</p>
         </div>
     </div>
 
@@ -1055,6 +1072,21 @@
                 }, 1000);
             }
         }
+
+        // Animación de salida tipo humo
+        document.querySelectorAll('a.transition-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = this.href;
+                const wrapper = document.querySelector('.main-wrapper');
+                if (wrapper) {
+                    wrapper.classList.add('smoke-out');
+                }
+                setTimeout(() => {
+                    window.location.href = target;
+                }, 400); // Esperar animación de humo antes de navegar
+            });
+        });
     </script>
 </body>
 

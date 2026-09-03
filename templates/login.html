@@ -157,7 +157,22 @@
         .alert { padding: 1rem; border-radius: 12px; margin-bottom: 1.5rem; font-size: 0.95rem; text-align: center; font-weight: 500; backdrop-filter: blur(8px); }
         .alert-error { background: rgba(186, 21, 17, 0.2); color: #ff8a87; border: 1px solid rgba(186, 21, 17, 0.4); } /* Rojo Cinabrio */
         .alert-success { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); }
-    </style>
+    
+        .card {
+            animation: smokeIn 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+        .card.smoke-out {
+            animation: smokeOut 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+        @keyframes smokeIn {
+            0% { opacity: 0; filter: blur(15px); transform: translateY(10px) scale(0.98); }
+            100% { opacity: 1; filter: blur(0); transform: translateY(0) scale(1); }
+        }
+        @keyframes smokeOut {
+            0% { opacity: 1; filter: blur(0); transform: scale(1); }
+            100% { opacity: 0; filter: blur(15px); transform: translateY(-10px) scale(0.98); }
+        }
+</style>
 
     <link rel="icon" type="image/png" href="/static/favicon/favicon-96x96.png" sizes="96x96" />
     <link rel="icon" type="image/svg+xml" href="/static/favicon/favicon.svg" />
@@ -239,5 +254,42 @@
             loginBtn.style.pointerEvents = 'none';
         });
     </script>
+
+    <script>
+        // Animación de humo al cambiar de página (enlaces)
+        document.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', function(e) {
+                // If it's a real link inside our site
+                if (this.href && !this.href.includes('#') && this.getAttribute('target') !== '_blank') {
+                    e.preventDefault();
+                    const target = this.href;
+                    const card = document.querySelector('.card');
+                    if (card) card.classList.add('smoke-out');
+                    setTimeout(() => {
+                        window.location.href = target;
+                    }, 400);
+                }
+            });
+        });
+
+        // Animación de humo al enviar el formulario
+        const form = document.querySelector('form');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                // Let the browser validate first. If valid, we intercept.
+                if (this.checkValidity()) {
+                    e.preventDefault();
+                    const card = document.querySelector('.card');
+                    if (card) card.classList.add('smoke-out');
+                    
+                    // We must submit the form properly bypassing the event listener
+                    setTimeout(() => {
+                        HTMLFormElement.prototype.submit.call(this);
+                    }, 400);
+                }
+            });
+        }
+    </script>
 </body>
+
 </html>

@@ -5,366 +5,183 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Modo Entrenamiento — K'iche'</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
+        :root {
+            /* Modo Claro (Default) */
+            --bg-canvas-overlay: rgba(248, 250, 252, 0.65); /* Estuco claro con opacidad para imagen */
+            --primary-jade: #10B981;
+            --text-main: #233B33;
+            --text-muted: rgba(35, 59, 51, 0.65);
+            
+            --card-bg: rgba(255, 255, 255, 0.4);
+            --card-border: rgba(255, 255, 255, 0.5);
+            
+            --card-shadow: rgba(0, 0, 0, 0.1);
+            
+            --btn-mic-grad1: #10B981;
+            --btn-mic-grad2: #059669;
+            --btn-mic-shadow: rgba(16, 185, 129, 0.4);
+            --error-red: #BA1511;
+
+            
+            --input-bg: rgba(255, 255, 255, 0.6);
+            --input-border: rgba(35, 59, 51, 0.2);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                /* Modo Oscuro */
+                --bg-canvas-overlay: rgba(15, 23, 42, 0.75); /* Azul oscuro profundo */
+                --primary-jade: #059669;
+                --text-main: #E2E8F0;
+                --text-muted: rgba(226, 232, 240, 0.65);
+                
+                --card-bg: rgba(51, 65, 85, 0.45); /* Gris Pizarra translúcido */
+                --card-border: rgba(255, 255, 255, 0.15);
+                
+                --card-shadow: rgba(0, 0, 0, 0.35);
+                
+                --btn-mic-grad1: #059669;
+                --btn-mic-grad2: #10B981;
+                --btn-mic-shadow: rgba(5, 150, 105, 0.4);
+                --error-red: #BA1511;
+
+                
+                --input-bg: rgba(15, 23, 42, 0.6);
+                --input-border: rgba(255, 255, 255, 0.15);
+            }
         }
 
         body {
-            font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3e 50%, #0a1a2e 100%);
-            color: white;
+            background: url("{{ url_for('static', filename='backgroundLogin.jpeg') }}") center center / cover no-repeat fixed;
+            color: var(--text-main);
+            font-family: 'Outfit', sans-serif;
             min-height: 100vh;
-            padding: 1.5rem 1rem;
         }
 
-        .header {
-            text-align: center;
-            margin-bottom: 1.5rem;
-        }
-
-        .header h1 {
-            font-size: clamp(1.2rem, 5vw, 1.6rem);
-            font-weight: 700;
-        }
-
-        .header p {
-            color: rgba(255, 255, 255, 0.55);
-            font-size: clamp(0.8rem, 3vw, 0.9rem);
-            margin-top: 0.3rem;
-        }
-
-        .back-link {
-            display: inline-block;
-            color: rgba(255, 255, 255, 0.5);
-            text-decoration: none;
-            font-size: 0.85rem;
-            margin-bottom: 1rem;
-            transition: color 0.2s;
-        }
-
-        .back-link:hover {
-            color: white;
-        }
-
-        /* PROGRESS BAR */
-        .progress-card {
-            background: rgba(255, 255, 255, 0.06);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            padding: 1.2rem 1.5rem;
-            margin-bottom: 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 1.2rem;
-        }
-
-        .progress-circle {
-            width: 64px;
-            height: 64px;
-            border-radius: 50%;
-            background: conic-gradient(#667eea 0%, rgba(255, 255, 255, 0.1) 0%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 1.1rem;
-            flex-shrink: 0;
-            position: relative;
-        }
-
-        .progress-circle::before {
-            content: '';
-            position: absolute;
-            inset: 6px;
-            border-radius: 50%;
-            background: #0a1a2e;
-        }
-
-        .progress-circle span {
-            position: relative;
-            z-index: 1;
-        }
-
-        .progress-info h3 {
-            font-size: 1rem;
-            font-weight: 600;
-        }
-
-        .progress-info p {
-            font-size: 0.8rem;
-            color: rgba(255, 255, 255, 0.5);
-            margin-top: 0.2rem;
-        }
-
-        .progress-bar-wrap {
-            flex: 1;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            height: 8px;
-            overflow: hidden;
-        }
-
-        .progress-bar-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #667eea, #00b09b);
-            border-radius: 10px;
-            transition: width 0.5s ease;
-        }
-
-        /* PHRASE CARD */
-        .phrase-card {
-            background: rgba(102, 126, 234, 0.15);
-            border: 1px solid rgba(102, 126, 234, 0.3);
-            border-radius: 16px;
-            padding: 1.5rem;
-            margin-bottom: 1.2rem;
-            text-align: center;
-        }
-
-        .phrase-label {
-            font-size: 0.72rem;
-            color: rgba(255, 255, 255, 0.45);
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-            margin-bottom: 0.4rem;
-        }
-
-        .phrase-count-badge {
-            display: inline-block;
-            font-size: 0.75rem;
-            padding: 0.2rem 0.6rem;
-            border-radius: 12px;
-            margin-bottom: 0.5rem;
-            font-weight: bold;
-            color: white;
-        }
-        .badge-red { background-color: rgba(220, 38, 38, 0.8); }
-        .badge-orange { background-color: rgba(217, 119, 6, 0.8); }
-        .badge-green { background-color: rgba(5, 150, 105, 0.8); }
-
-        .phrase-kiche {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: #a78bfa;
-            margin-bottom: 0.3rem;
-        }
-
-        .phrase-spanish {
-            font-size: 1rem;
-            color: rgba(255, 255, 255, 0.65);
-            margin-bottom: 1rem;
-        }
-
-        .phrase-nav {
-            display: flex;
-            gap: 0.5rem;
-            justify-content: center;
-        }
-
-        .category-select-wrapper {
-            margin-bottom: 1.5rem;
-            position: relative;
-        }
-
-        .category-select {
-            width: 100%;
-            appearance: none;
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(102, 126, 234, 0.4);
-            border-radius: 8px;
-            color: white;
-            font-family: 'Inter', sans-serif;
-            font-size: 0.95rem;
-            padding: 0.7rem 1rem;
-            cursor: pointer;
-            outline: none;
-            transition: border-color 0.2s;
+        .overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: var(--bg-canvas-overlay);
+            z-index: -1;
         }
         
-        .category-select option {
-            background-color: #1a1a3e;
-            color: white;
+        .main-wrapper {
+            position: relative;
+            z-index: 1;
+            animation: smokeIn 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+        
+        .main-wrapper.smoke-out {
+            animation: smokeOut 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
         }
 
-        .category-select:focus {
-            border-color: #667eea;
+        @keyframes smokeIn {
+            0% { opacity: 0; filter: blur(15px); transform: translateY(10px) scale(0.98); }
+            100% { opacity: 1; filter: blur(0); transform: translateY(0) scale(1); }
+        }
+        
+        @keyframes smokeOut {
+            0% { opacity: 1; filter: blur(0); transform: scale(1); }
+            100% { opacity: 0; filter: blur(15px); transform: translateY(-10px) scale(0.98); }
         }
 
-        .category-select-wrapper::after {
-            content: '▼';
-            position: absolute;
-            right: 1rem;
-            top: 50%;
-            transform: translateY(-50%);
-            font-size: 0.8rem;
-            color: rgba(255, 255, 255, 0.6);
-            pointer-events: none;
+        .glass-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--card-border);
+            border-top: 1px solid rgba(255, 255, 255, 0.3);
+            border-left: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px var(--card-shadow);
+            border-radius: 24px;
         }
 
-        .btn-nav {
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            color: white;
-            border-radius: 8px;
-            padding: 0.4rem 1rem;
-            cursor: pointer;
-            font-size: 0.85rem;
-            font-family: 'Inter', sans-serif;
-            transition: background 0.2s;
+        .form-input {
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            color: var(--text-main);
+            transition: all 0.3s ease;
         }
 
-        .btn-nav:hover {
-            background: rgba(255, 255, 255, 0.15);
-        }
-
-        /* RECORD PANEL */
-        .record-panel {
-            background: rgba(255, 255, 255, 0.06);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            padding: 1.5rem;
-            margin-bottom: 1.2rem;
-        }
-
-        .record-panel h3 {
-            font-size: 0.9rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-            color: rgba(255, 255, 255, 0.7);
-        }
-
-        .btn-mic {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            border: none;
-            background: linear-gradient(135deg, #ff416c, #ff4b2b);
-            color: white;
-            font-size: 32px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 1rem;
-            box-shadow: 0 4px 20px rgba(255, 75, 43, 0.45);
-            transition: transform 0.2s;
-        }
-
-        .btn-mic:hover {
-            transform: scale(1.07);
-        }
-
-        .btn-mic.recording {
-            animation: pulse 1.5s infinite;
-        }
-
-        @keyframes pulse {
-            0% {
-                box-shadow: 0 0 0 0 rgba(255, 65, 108, 0.7);
-            }
-
-            70% {
-                box-shadow: 0 0 0 18px rgba(255, 65, 108, 0);
-            }
-
-            100% {
-                box-shadow: 0 0 0 0 rgba(255, 65, 108, 0);
-            }
-        }
-
-        .mic-status {
-            text-align: center;
-            font-size: 0.9rem;
-            color: rgba(255, 255, 255, 0.6);
-            margin-bottom: 1rem;
-            min-height: 1.3em;
-        }
-
-        /* ASR RESULT */
-        .asr-box {
-            display: none;
-        }
-
-        .field-label {
-            font-size: 0.72rem;
-            color: rgba(255, 255, 255, 0.45);
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-            margin-bottom: 0.3rem;
-            margin-top: 0.8rem;
-        }
-
-        .field-label:first-child {
-            margin-top: 0;
-        }
-
-        .asr-text {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 100, 100, 0.3);
-            border-radius: 8px;
-            padding: 0.6rem 0.8rem;
-            font-size: 1rem;
-            color: rgba(255, 180, 180, 0.9);
-            margin-bottom: 0.3rem;
-        }
-
-        .correct-input {
-            width: 100%;
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(102, 126, 234, 0.4);
-            border-radius: 8px;
-            color: white;
-            font-family: 'Inter', sans-serif;
-            font-size: 1rem;
-            padding: 0.6rem 0.8rem;
+        .form-input:focus {
             outline: none;
-            transition: border-color 0.2s;
+            border-color: var(--primary-jade);
+            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.1);
+        }
+        
+        .form-select {
+            appearance: none;
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            color: var(--text-main);
+            transition: all 0.3s ease;
+        }
+        .form-select:focus {
+            border-color: var(--primary-jade);
+        }
+        .form-select option {
+            background-color: var(--card-bg);
+            color: var(--text-main);
         }
 
-        .correct-input:focus {
-            border-color: #667eea;
+        .btn-primary {
+            background: var(--primary-jade);
+            color: #0F172A;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.2);
         }
-
-        .btn-save {
-            display: block;
-            width: 100%;
-            margin-top: 1rem;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            border: none;
-            border-radius: 50px;
-            padding: 0.75rem;
-            font-size: 1rem;
-            font-weight: 600;
-            font-family: 'Inter', sans-serif;
-            cursor: pointer;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-            transition: transform 0.2s, opacity 0.2s;
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3);
         }
-
-        .btn-save:hover {
-            transform: scale(1.02);
-        }
-
-        .btn-save:disabled {
+        .btn-primary:disabled {
             opacity: 0.4;
             cursor: not-allowed;
             transform: none;
         }
 
-        /* SAVED TOAST */
+        .btn-nav {
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            color: var(--text-main);
+            transition: background 0.2s;
+        }
+        .btn-nav:hover {
+            background: var(--card-bg);
+        }
+
+        /* Microphone styling */
+        .btn-mic {
+            background: linear-gradient(135deg, var(--btn-mic-grad1), var(--btn-mic-grad2));
+            box-shadow: 0 4px 20px var(--btn-mic-shadow);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn-mic:hover {
+            transform: scale(1.08);
+        }
+        .btn-mic.recording {
+            animation: pulse 1.5s infinite;
+            background: var(--error-red);
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(186, 21, 17, 0.7); }
+            70% { box-shadow: 0 0 0 20px rgba(186, 21, 17, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(186, 21, 17, 0); }
+        }
+
+        /* Toast */
         .toast {
             position: fixed;
             bottom: 1.5rem;
             left: 50%;
             transform: translateX(-50%);
-            background: #00b09b;
-            color: white;
+            background: var(--primary-jade);
+            color: #09090b;
             padding: 0.7rem 1.5rem;
             border-radius: 50px;
             font-weight: 600;
@@ -373,77 +190,28 @@
             transition: opacity 0.3s;
             pointer-events: none;
             white-space: nowrap;
+            z-index: 50;
         }
-
         .toast.show {
             opacity: 1;
         }
-
-        /* SAMPLES LIST */
-        .samples-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 0.8rem;
+        
+        .progress-circle {
+            background: conic-gradient(var(--primary-jade) 0%, rgba(255, 255, 255, 0.1) 0%);
         }
-
-        .samples-header h3 {
-            font-size: 0.9rem;
-            color: rgba(255, 255, 255, 0.7);
+        .progress-circle::before {
+            content: '';
+            position: absolute;
+            inset: 6px;
+            border-radius: 50%;
+            background: var(--card-bg);
         }
+        
+        /* Badges */
+        .badge-red { background-color: rgba(239, 68, 68, 0.2); color: var(--text-main); border: 1px solid rgba(239, 68, 68, 0.4); }
+        .badge-orange { background-color: rgba(245, 158, 11, 0.2); color: var(--text-main); border: 1px solid rgba(245, 158, 11, 0.4); }
+        .badge-green { background-color: rgba(16, 185, 129, 0.2); color: var(--text-main); border: 1px solid rgba(16, 185, 129, 0.4); }
 
-        .btn-export {
-            background: rgba(0, 176, 155, 0.2);
-            border: 1px solid rgba(0, 176, 155, 0.4);
-            color: #00b09b;
-            border-radius: 8px;
-            padding: 0.3rem 0.8rem;
-            font-size: 0.78rem;
-            font-family: 'Inter', sans-serif;
-            cursor: pointer;
-            text-decoration: none;
-        }
-
-        .sample-item {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 8px;
-            padding: 0.6rem 0.8rem;
-            margin-bottom: 0.5rem;
-            font-size: 0.85rem;
-            display: flex;
-            gap: 0.5rem;
-            align-items: center;
-        }
-
-        .sample-num {
-            color: rgba(255, 255, 255, 0.3);
-            min-width: 2rem;
-        }
-
-        .sample-text {
-            color: #a78bfa;
-            font-weight: 500;
-        }
-
-        .sample-play {
-            margin-left: auto;
-            background: none;
-            border: none;
-            color: rgba(255, 255, 255, 0.4);
-            cursor: pointer;
-            font-size: 1.1rem;
-        }
-
-        .sample-play:hover {
-            color: white;
-        }
-
-        .empty-msg {
-            text-align: center;
-            color: rgba(255, 255, 255, 0.3);
-            font-size: 0.9rem;
-            padding: 1rem;
-        }
     </style>
 
     <link rel="icon" type="image/png" href="/static/favicon/favicon-96x96.png" sizes="96x96" />
@@ -453,92 +221,125 @@
     <link rel="manifest" href="/static/favicon/site.webmanifest" />
 </head>
 
-<body>
-    <a class="back-link" href="/" style="display: flex; align-items: center; gap: 4px;"><span class="material-symbols-outlined" style="font-size: 1rem;">arrow_back</span> Volver al Traductor</a>
+<body class="p-4 sm:p-8 flex flex-col items-center">
+    <div class="overlay"></div>
+    <div class="main-wrapper w-full max-w-3xl">
+        <a href="/" class="transition-link inline-flex items-center gap-1.5 text-[color:var(--text-muted)] hover:text-[color:var(--text-main)] transition-colors text-sm mb-6 font-medium">
+            <span class="material-symbols-outlined text-[1.1rem]">arrow_back</span> Volver al Traductor
+        </a>
 
-    <div class="header">
-        <h1><span class="material-symbols-outlined" style="vertical-align: middle; font-size: 2rem; margin-right: 8px;">school</span>Modo Entrenamiento</h1>
-        <p>Graba frases en K'iche' para mejorar el reconocimiento automático</p>
-    </div>
-
-
-
-    <!-- PHRASE TO RECORD -->
-    <div class="phrase-card">
-        <div class="category-select-wrapper">
-            <select class="category-select" id="categorySelect" onchange="changeCategory()">
-                <!-- Options populated via JS -->
-            </select>
-        </div>
-        <div id="phraseCountBadge" class="phrase-count-badge"></div>
-        <div class="phrase-label">Di esta frase en K'iche'</div>
-        <div class="phrase-kiche" id="phraseKiche">k'ax waqan</div>
-        <div class="phrase-spanish" id="phraseSpanish">me duele la pierna / el pie</div>
-        <div class="phrase-nav">
-            <button class="btn-nav" onclick="prevPhrase()" style="display: flex; align-items: center; gap: 4px;"><span class="material-symbols-outlined" style="font-size: 1rem;">arrow_back</span> Anterior</button>
-            <button class="btn-nav" onclick="nextPhrase()" style="display: flex; align-items: center; gap: 4px;">Siguiente <span class="material-symbols-outlined" style="font-size: 1rem;">arrow_forward</span></button>
-            <button class="btn-nav" onclick="randomPhrase()" style="display: flex; align-items: center; gap: 4px;"><span class="material-symbols-outlined" style="font-size: 1rem;">shuffle</span> Aleatoria</button>
-        </div>
-        <div style="margin-top: 10px; text-align: center;">
-            <button onclick="eliminarFraseActual()" style="background: transparent; border: 1px solid rgba(255,100,100,0.5); color: #ff6b6b; padding: 4px 10px; border-radius: 4px; font-size: 0.8em; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;"><span class="material-symbols-outlined" style="font-size: 1.2rem;">delete</span> Eliminar frase (basura)</button>
-        </div>
-    </div>
-
-    <!-- RECORD -->
-    <div class="record-panel">
-        <h3>1. Graba tu voz</h3>
-        <button class="btn-mic" id="micBtn"><span class="material-symbols-outlined" style="font-size: 40px;">mic</span></button>
-        <div class="mic-status" id="micStatus">Mantén presionado para grabar</div>
-        
-        <div id="cancelProcessingContainer" style="display: none; text-align: center; margin-bottom: 1rem;">
-            <button class="btn-nav" onclick="cancelProcessing()" style="color: #ff6b6b; border-color: rgba(255,107,107,0.4); background: rgba(255,107,107,0.1); display: inline-flex; align-items: center; gap: 6px;"><span class="material-symbols-outlined" style="font-size: 1.1rem;">cancel</span> Cancelar procesamiento</button>
+        <div class="text-center mb-8">
+            <h1 class="text-2xl sm:text-3xl font-bold tracking-tight flex items-center justify-center gap-2">
+                <span class="material-symbols-outlined text-[2rem] text-[color:var(--primary-jade)]">school</span> Modo Entrenamiento
+            </h1>
+            <p class="text-sm mt-2 opacity-75" style="color: var(--text-muted);">Graba frases en K'iche' para mejorar el reconocimiento automático</p>
         </div>
 
-        <div class="asr-box" id="asrBox">
-            <div class="field-label">Lo que el modelo escuchó (ASR)</div>
-            <div class="asr-text" id="asrText">—</div>
+        <!-- PHRASE TO RECORD -->
+        <div class="glass-card p-6 sm:p-8 mb-6 text-center">
+            <div class="relative mb-6 max-w-sm mx-auto">
+                <select class="form-select w-full rounded-xl py-3 px-4 outline-none text-sm font-medium cursor-pointer" id="categorySelect" onchange="changeCategory()">
+                    <!-- Options populated via JS -->
+                </select>
+                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-[color:var(--text-muted)]">
+                    <span class="material-symbols-outlined text-[1.2rem]">expand_more</span>
+                </div>
+            </div>
+            
+            <div id="phraseCountBadge" class="inline-block text-xs px-3 py-1 rounded-full font-semibold mb-3"></div>
+            <div class="text-[0.72rem] tracking-[1.5px] uppercase text-[color:var(--text-muted)] mb-1">Di esta frase en K'iche'</div>
+            <div class="text-2xl sm:text-3xl font-bold text-[color:var(--primary-jade)] mb-2" id="phraseKiche">k'ax waqan</div>
+            <div class="text-base text-[color:var(--text-main)] mb-6" id="phraseSpanish">me duele la pierna / el pie</div>
+            
+            <div class="flex flex-wrap gap-2 justify-center mb-4">
+                <button class="btn-nav rounded-xl px-4 py-2 text-sm flex items-center gap-1.5" onclick="prevPhrase()"><span class="material-symbols-outlined text-[1.1rem]">arrow_back</span> Anterior</button>
+                <button class="btn-nav rounded-xl px-4 py-2 text-sm flex items-center gap-1.5" onclick="nextPhrase()">Siguiente <span class="material-symbols-outlined text-[1.1rem]">arrow_forward</span></button>
+                <button class="btn-nav rounded-xl px-4 py-2 text-sm flex items-center gap-1.5" onclick="randomPhrase()"><span class="material-symbols-outlined text-[1.1rem]">shuffle</span> Aleatoria</button>
+            </div>
+            
+            <div class="mt-4">
+                <button onclick="eliminarFraseActual()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-500/30 text-red-400 bg-red-500/5 hover:bg-red-500/10 transition-colors text-xs cursor-pointer">
+                    <span class="material-symbols-outlined text-[1.1rem]">delete</span> Eliminar frase (basura)
+                </button>
+            </div>
+        </div>
 
-            <div class="field-label" style="display: flex; align-items: center; gap: 4px;"><span class="material-symbols-outlined" style="font-size: 1.1rem;">edit_note</span> Transcripción CORRECTA en K'iche' (edita si hay errores)</div>
-            <input class="correct-input" id="correctInput" type="text" placeholder="Escribe lo que dijiste..."
-                autocomplete="off">
-
-            <button class="btn-save" id="saveBtn" onclick="saveSample()" disabled style="display: flex; align-items: center; justify-content: center; gap: 8px;">
-                <span class="material-symbols-outlined">save</span> Guardar grabación
+        <!-- RECORD -->
+        <div class="glass-card p-6 sm:p-8 mb-6 text-center">
+            <h3 class="text-sm font-semibold mb-6 text-[color:var(--text-main)] text-left">1. Graba tu voz</h3>
+            
+            <button class="btn-mic w-20 h-20 rounded-full border-none text-white text-3xl flex items-center justify-center mx-auto mb-4 cursor-pointer" id="micBtn">
+                <span class="material-symbols-outlined text-[40px]">mic</span>
             </button>
-        </div>
-    </div>
+            <div class="text-sm text-[color:var(--text-muted)] mb-4 min-h-[1.5rem]" id="micStatus">Mantén presionado para grabar</div>
+            
+            <div id="cancelProcessingContainer" style="display: none;" class="mb-4 text-center">
+                <button class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-red-500/40 text-red-400 bg-red-500/10 hover:bg-red-500/20 transition-colors text-sm cursor-pointer" onclick="cancelProcessing()">
+                    <span class="material-symbols-outlined text-[1.1rem]">cancel</span> Cancelar procesamiento
+                </button>
+            </div>
 
-    </div>
+            <div class="asr-box text-left mt-6 pt-6 border-t border-[color:var(--input-border)]" id="asrBox" style="display: none;">
+                <div class="text-[0.72rem] tracking-[1.5px] uppercase text-[color:var(--text-muted)] mb-2">Lo que el modelo escuchó (ASR)</div>
+                <div class="bg-red-500/5 border border-red-500/20 rounded-xl px-4 py-3 text-red-300 mb-4 text-base" id="asrText">—</div>
 
-    <!-- PROGRESS & SAVED SAMPLES MOVED TO BOTTOM -->
-    <div style="margin-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1.5rem;">
-        <div class="progress-card">
-            <div class="progress-circle" id="progressCircle">
-                <span id="countNum">0</span>
-            </div>
-            <div class="progress-info">
-                <h3 id="progressTitle">Grabaciones guardadas</h3>
-                <p id="progressSubtitle">Meta: 50 grabaciones para entrenar</p>
-            </div>
-            <div class="progress-bar-wrap">
-                <div class="progress-bar-fill" id="progressFill" style="width:0%"></div>
-            </div>
-        </div>
+                <div class="text-[0.72rem] tracking-[1.5px] uppercase text-[color:var(--text-muted)] mb-2 flex items-center gap-1.5">
+                    <span class="material-symbols-outlined text-[1.1rem]">edit_note</span> Transcripción CORRECTA en K'iche'
+                </div>
+                <input class="form-input w-full rounded-xl px-4 py-3 outline-none text-base mb-6" id="correctInput" type="text" placeholder="Escribe lo que dijiste..." autocomplete="off">
 
-        <div>
-            <div class="samples-header">
-                <h3>Grabaciones guardadas</h3>
-                <a class="btn-export" href="/export-dataset" style="display: flex; align-items: center; gap: 4px;"><span class="material-symbols-outlined" style="font-size: 1.1rem;">download</span> Exportar CSV</a>
-            </div>
-            <div id="samplesList">
-                <div class="empty-msg">Aún no hay grabaciones. ¡Empieza grabando!</div>
+                <button class="btn-primary w-full py-3.5 rounded-xl font-bold text-sm tracking-wide flex justify-center items-center gap-2" id="saveBtn" onclick="saveSample()" disabled>
+                    <span class="material-symbols-outlined text-[1.1rem]">save</span> Guardar grabación
+                </button>
             </div>
         </div>
+
+        <!-- PROGRESS & SAVED SAMPLES -->
+        <div class="mt-8 pt-6 border-t border-[color:var(--card-border)]">
+            <div class="glass-card p-6 flex items-center gap-5 mb-6">
+                <div class="progress-circle w-16 h-16 rounded-full flex items-center justify-center font-bold text-lg shrink-0 relative" id="progressCircle">
+                    <span id="countNum" class="relative z-10">0</span>
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-base font-semibold" id="progressTitle">Grabaciones guardadas</h3>
+                    <p class="text-sm text-[color:var(--text-muted)] mt-1" id="progressSubtitle">Meta: 50 grabaciones para entrenar</p>
+                    <div class="w-full bg-black/30 rounded-full h-2 mt-3 overflow-hidden">
+                        <div class="bg-emerald-500 h-full rounded-full transition-all duration-500" id="progressFill" style="width:0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-card p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-sm font-semibold text-[color:var(--text-main)]">Grabaciones guardadas</h3>
+                    <a href="/export-dataset" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-500/30 text-[color:var(--primary-jade)] bg-emerald-500/10 hover:bg-emerald-500/20 transition-colors text-xs font-medium">
+                        <span class="material-symbols-outlined text-[1.1rem]">download</span> Exportar CSV
+                    </a>
+                </div>
+                <div id="samplesList" class="space-y-2">
+                    <div class="text-center text-slate-500 text-sm py-4">Aún no hay grabaciones. ¡Empieza grabando!</div>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <div class="toast" id="toast"></div>
 
     <script>
+        // Animación de salida tipo humo
+        document.querySelectorAll('a.transition-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = this.href;
+                const wrapper = document.querySelector('.main-wrapper');
+                wrapper.classList.add('smoke-out');
+                setTimeout(() => {
+                    window.location.href = target;
+                }, 400); // Wait for smoke animation
+            });
+        });
+
         // ── PHRASES & CATEGORIES ─────────────────────────────────────────────
         const categories = {{ categories | tojson }};
         const phraseCounts = {{ phrase_counts | tojson }};
@@ -768,19 +569,23 @@
                     updateProgress(data.total);
                     renderSamples();
                     resetRecording();
+                    // Update local phrase count and badge
+                    phraseCounts[correctText] = (phraseCounts[correctText] || 0) + 1;
                     
-                    // Scroll up to the phrase card
-                    document.querySelector('.phrase-card').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    // Scroll up to the top card
+                    const topCard = document.querySelector('.glass-card');
+                    if(topCard) topCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     
                     // auto-advance to next phrase
                     setTimeout(() => nextPhrase(), 800);
                 }
             } catch (e) {
+                console.error("Error saving:", e);
                 showToast('❌ Error al guardar');
             }
 
             saveBtn.disabled = false;
-            saveBtn.textContent = '💾 Guardar grabación';
+            saveBtn.textContent = 'Guardar grabación';
         }
 
         function resetRecording() {
@@ -797,7 +602,7 @@
             const pct = Math.min(100, Math.round(count / 50 * 100));
             document.getElementById('progressFill').style.width = pct + '%';
             const circle = document.getElementById('progressCircle');
-            circle.style.background = `conic-gradient(#667eea ${pct * 3.6}deg, rgba(255,255,255,0.1) 0deg)`;
+            circle.style.background = `conic-gradient(var(--primary-jade) ${pct * 3.6}deg, rgba(255,255,255,0.1) 0deg)`;
             if (count >= 50) {
                 document.getElementById('progressTitle').textContent = '🎉 ¡Listo para entrenar!';
                 document.getElementById('progressSubtitle').textContent = 'Descarga el CSV y envíalo para el fine-tuning';
@@ -810,14 +615,16 @@
         function renderSamples() {
             const el = document.getElementById('samplesList');
             if (savedSamples.length === 0) {
-                el.innerHTML = '<div class="empty-msg">Aún no hay grabaciones. ¡Empieza grabando!</div>';
+                el.innerHTML = '<div class="text-center text-slate-500 text-sm py-4">Aún no hay grabaciones. ¡Empieza grabando!</div>';
                 return;
             }
             el.innerHTML = [...savedSamples].reverse().slice(0, 20).map(s =>
-                `<div class="sample-item">
-                    <span class="sample-num">#${s.num}</span>
-                    <span class="sample-text">${s.text}</span>
-                    <button class="sample-play" onclick="playAudio('${s.file}')"><span class="material-symbols-outlined">play_arrow</span></button>
+                `<div class="bg-[color:var(--input-bg)] border border-[color:var(--input-border)] rounded-xl px-4 py-3 text-sm flex items-center gap-3">
+                    <span class="text-slate-500 min-w-[2rem]">#${s.num}</span>
+                    <span class="text-[color:var(--primary-jade)] font-medium">${s.text}</span>
+                    <button class="ml-auto text-[color:var(--text-muted)] hover:text-[color:var(--text-main)] transition-colors cursor-pointer" onclick="playAudio('${s.file}')">
+                        <span class="material-symbols-outlined text-[1.3rem]">play_arrow</span>
+                    </button>
                 </div>`
             ).join('');
         }

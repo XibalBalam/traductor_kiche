@@ -249,6 +249,18 @@ def admin_changerole(user_id):
         flash(f"Rol de {user.username} cambiado a {new_role}.", "success")
     return redirect(url_for('admin_page'))
 
+@app.route('/admin/delete/<int:user_id>', methods=['POST'])
+@role_required('admin')
+def admin_delete(user_id):
+    user = User.query.get(user_id)
+    if user:
+        username = user.username
+        db.session.delete(user)
+        db.session.commit()
+        sync_file_to_s3(DB_PATH, 'app.db')
+        flash(f"Usuario {username} eliminado permanentemente.", "danger")
+    return redirect(url_for('admin_page'))
+
 # --- ESCRITURA TRAINING PAGE ---
 
 # --- ESCRITURA TRAINING PAGE ---
@@ -357,7 +369,8 @@ def escritura_page():
             for row in reader:
                 if row['espanol'] == palabra:
                     kiche_norm = row['kiche'].replace('b', "b'") if 'b' in row['kiche'] and "b'" not in row['kiche'] else row['kiche']
-                    if kiche_norm not in variantes_pendientes_set:
+                    kiche_norm = kiche_norm.strip()
+                    if kiche_norm and any(c.isalnum() for c in kiche_norm) and kiche_norm not in variantes_pendientes_set:
                         variantes_pendientes.append(kiche_norm)
                         variantes_pendientes_set.add(kiche_norm)
                         
@@ -546,7 +559,7 @@ def eliminar_variante():
 
 # ── HUGGINGFACE, GROQ & AWS S3 CONFIG ──────────────────────────────────────────
 # ── HUGGINGFACE, GEMINI & AWS S3 CONFIG ──────────────────────────────────────────
-load_dotenv()
+load_dotenv(override=True)
 
 HF_TOKEN = os.getenv('HF_TOKEN')
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
@@ -1255,7 +1268,7 @@ def generate_summary():
         return jsonify({'summary': 'Síntomas reportados:\n- ' + '\n- '.join(symptoms)})
     
     try:
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={GEMINI_API_KEY}"
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key={GEMINI_API_KEY}"
         headers = {
             "Content-Type": "application/json"
         }
@@ -1367,7 +1380,7 @@ def generar_vocabulario_ia():
         ]
         """
         
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key={api_key}"
         payload = {
             "contents": [{
                 "parts": [{"text": prompt.strip()}]

@@ -4,90 +4,239 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel de Administrador - Traductor Médico K'iche'</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
     <style>
+        :root {
+            /* Modo Claro (Default) */
+            --bg-canvas-overlay: rgba(248, 250, 252, 0.65);
+            --primary-jade: #10B981;
+            --primary-hover: #059669;
+            --text-main: #233B33;
+            --text-muted: rgba(35, 59, 51, 0.65);
+            --accent-terra: #BA5011;
+            --error-red: #BA1511;
+            
+            --card-bg: rgba(255, 255, 255, 0.4);
+            --card-border: rgba(255, 255, 255, 0.5);
+            --card-shadow: rgba(0, 0, 0, 0.1);
+            
+            --input-bg: rgba(255, 255, 255, 0.6);
+            --input-border: rgba(35, 59, 51, 0.2);
+            
+            /* Admin specific */
+            --badge-pending-bg: rgba(245, 158, 11, 0.15);
+            --badge-pending-text: #D97706;
+            --badge-pending-border: rgba(245, 158, 11, 0.3);
+            
+            --badge-approved-bg: rgba(16, 185, 129, 0.15);
+            --badge-approved-text: #059669;
+            --badge-approved-border: rgba(16, 185, 129, 0.3);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                /* Modo Oscuro */
+                --bg-canvas-overlay: rgba(15, 23, 42, 0.75);
+                --primary-jade: #059669;
+                --primary-hover: #10B981;
+                --text-main: #E2E8F0;
+                --text-muted: rgba(226, 232, 240, 0.65);
+                --accent-terra: #BA5011;
+                --error-red: #BA1511;
+                
+                --card-bg: rgba(51, 65, 85, 0.45);
+                --card-border: rgba(255, 255, 255, 0.15);
+                --card-shadow: rgba(0, 0, 0, 0.35);
+                
+                --input-bg: rgba(15, 23, 42, 0.6);
+                --input-border: rgba(255, 255, 255, 0.15);
+                
+                /* Admin specific */
+                --badge-pending-bg: rgba(245, 158, 11, 0.15);
+                --badge-pending-text: #FBBF24;
+                --badge-pending-border: rgba(245, 158, 11, 0.3);
+                
+                --badge-approved-bg: rgba(16, 185, 129, 0.15);
+                --badge-approved-text: #34D399;
+                --badge-approved-border: rgba(16, 185, 129, 0.3);
+            }
+        }
+
         * { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
             font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3e 50%, #0a1a2e 100%);
-            color: white;
+            background: url("{{ url_for('static', filename='backgroundLogin.jpeg') }}") center center / cover no-repeat fixed;
+            color: var(--text-main);
             min-height: 100vh;
-            padding: 2rem 1rem;
         }
-        .container {
-            max-width: 900px;
-            margin: auto;
+
+        .overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: var(--bg-canvas-overlay);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: -1;
+            transition: background 0.3s;
         }
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
+
+        .main-wrapper {
+            animation: smokeIn 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
         }
-        .back-link {
-            display: inline-block;
-            color: rgba(255, 255, 255, 0.5);
-            text-decoration: none;
-            font-size: 0.9rem;
-            transition: color 0.2s;
+
+        .main-wrapper.smoke-out {
+            animation: smokeOut 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
         }
-        .back-link:hover { color: white; }
-        h1 { font-size: 1.8rem; font-weight: 600; }
-        .card {
-            background: rgba(255, 255, 255, 0.06);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+
+        @keyframes smokeIn {
+            0% { opacity: 0; filter: blur(15px); transform: translateY(10px) scale(0.98); }
+            100% { opacity: 1; filter: blur(0); transform: translateY(0) scale(1); }
+        }
+
+        @keyframes smokeOut {
+            0% { opacity: 1; filter: blur(0); transform: scale(1); }
+            100% { opacity: 0; filter: blur(15px); transform: translateY(-10px) scale(0.98); }
+        }
+
+        .glass-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--card-border);
+            border-top: 1px solid rgba(255, 255, 255, 0.3);
+            border-left: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px var(--card-shadow);
+            border-radius: 24px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            right: 0;
+            top: 100%;
+            margin-top: 8px;
+            background: var(--card-bg);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid var(--card-border);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
             border-radius: 12px;
-            padding: 1.5rem;
-            margin-bottom: 1rem;
+            min-width: 220px;
+            z-index: 50;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .dropdown-menu.active {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .dropdown-item {
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
-        .user-info { flex: 1; min-width: 200px; }
-        .user-name { font-size: 1.2rem; font-weight: 600; margin-bottom: 0.3rem; }
-        .badge {
-            display: inline-block;
-            padding: 0.2rem 0.6rem;
-            border-radius: 4px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-        .badge-pending { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); }
-        .badge-approved { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); }
-        
-        .role-form { display: flex; gap: 0.5rem; align-items: center; }
-        select {
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: white;
-            padding: 0.5rem;
-            border-radius: 6px;
-            font-family: 'Inter', sans-serif;
-            outline: none;
-        }
-        select option { background: #1a1a3e; color: white; }
-        
-        button {
-            border: none;
-            padding: 0.6rem 1rem;
-            border-radius: 6px;
-            cursor: pointer;
-            font-family: 'Inter', sans-serif;
+            gap: 10px;
+            padding: 12px 16px;
+            color: var(--text-main);
             font-size: 0.85rem;
             font-weight: 500;
-            transition: all 0.2s;
+            transition: background 0.2s;
+            cursor: pointer;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
         }
-        .btn-primary { background: rgba(102, 126, 234, 0.2); color: #a78bfa; border: 1px solid rgba(102, 126, 234, 0.4); }
-        .btn-primary:hover { background: rgba(102, 126, 234, 0.4); }
-        .btn-success { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); }
-        .btn-success:hover { background: rgba(16, 185, 129, 0.4); }
 
-        .alert { padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; font-size: 0.9rem; text-align: center; }
-        .alert-success { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .dropdown-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .dropdown-item.danger {
+            color: var(--error-red);
+        }
+        .dropdown-item.danger:hover {
+            background: rgba(239, 68, 68, 0.1);
+        }
+        .dropdown-item.success {
+            color: var(--primary-jade);
+        }
+        .dropdown-item.success:hover {
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .form-input {
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            color: var(--text-main);
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary-jade);
+        }
+
+        .form-input option {
+            background: var(--card-bg);
+            color: var(--text-main);
+        }
+
+        .badge-pending {
+            background: var(--badge-pending-bg);
+            color: var(--badge-pending-text);
+            border: 1px solid var(--badge-pending-border);
+        }
+
+        .badge-approved {
+            background: var(--badge-approved-bg);
+            color: var(--badge-approved-text);
+            border: 1px solid var(--badge-approved-border);
+        }
+
+        .menu-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .menu-btn:hover, .menu-btn.active {
+            background: rgba(255, 255, 255, 0.15);
+            color: var(--text-main);
+        }
+
+        /* Flash Toasts */
+        .alert-toast {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--card-border);
+            box-shadow: 0 8px 32px var(--card-shadow);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .alert-toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        
     </style>
 
     <link rel="icon" type="image/png" href="/static/favicon/favicon-96x96.png" sizes="96x96" />
@@ -96,59 +245,226 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/static/favicon/apple-touch-icon.png" />
     <link rel="manifest" href="/static/favicon/site.webmanifest" />
 </head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>Panel de Administrador</h1>
-            <a class="back-link" href="/" style="display: flex; align-items: center; gap: 4px;">
-                <span class="material-symbols-outlined" style="font-size: 1.2rem;">arrow_back</span> Volver al Traductor
+<body class="p-4 sm:p-8 flex flex-col items-center">
+    <div class="overlay"></div>
+    
+    <div class="main-wrapper w-full max-w-4xl">
+        <div class="mb-6">
+            <a href="/" class="transition-link inline-flex items-center gap-1.5 text-[color:var(--text-muted)] hover:text-[color:var(--text-main)] transition-colors text-sm font-medium">
+                <span class="material-symbols-outlined text-[1.1rem]">arrow_back</span> Volver al Traductor
             </a>
         </div>
+        
+        <div class="text-center mb-8">
+            <h1 class="text-2xl sm:text-3xl font-bold tracking-tight flex items-center justify-center gap-2">
+                <span class="material-symbols-outlined text-[2rem] text-[color:var(--primary-jade)]">shield_person</span> Panel de Administrador
+            </h1>
+            <p class="text-[color:var(--text-muted)] mt-2 text-sm">Gestión de Usuarios y Accesos</p>
+        </div>
+        
+        {% if users|length == 0 %}
+            <div class="glass-card p-10 text-center flex flex-col items-center justify-center">
+                <span class="material-symbols-outlined text-[4rem] text-[color:var(--text-muted)] mb-4 opacity-50">group</span>
+                <h3 class="text-xl font-bold text-[color:var(--text-main)] mb-2">Sin Usuarios</h3>
+                <p class="text-sm text-[color:var(--text-muted)] max-w-md mx-auto leading-relaxed">
+                    No hay usuarios registrados en la plataforma.
+                </p>
+            </div>
+        {% else %}
+            <div class="flex flex-col gap-4">
+                {% for user in users %}
+                <div class="glass-card p-5 sm:p-6 flex flex-row gap-4 items-center justify-between">
+                    
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="material-symbols-outlined text-[1.5rem] text-[color:var(--text-main)]">person</span>
+                            <span class="text-lg font-bold text-[color:var(--text-main)]">{{ user.username }}</span>
+                        </div>
+                        
+                        <div class="flex flex-wrap items-center gap-4 mt-3">
+                            <div class="flex items-center gap-2">
+                                {% if user.status == 'pending' %}
+                                    <span class="badge-pending px-2.5 py-0.5 rounded text-[0.7rem] uppercase font-bold tracking-wider flex items-center gap-1">
+                                        <span class="material-symbols-outlined text-[0.9rem]">hourglass_empty</span> Pendiente
+                                    </span>
+                                {% else %}
+                                    <span class="badge-approved px-2.5 py-0.5 rounded text-[0.7rem] uppercase font-bold tracking-wider flex items-center gap-1">
+                                        <span class="material-symbols-outlined text-[0.9rem]">verified_user</span> Aprobado
+                                    </span>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs uppercase tracking-wide font-semibold text-[color:var(--text-muted)]">Rol:</span>
+                                <span class="font-bold text-[color:var(--primary-jade)] text-sm capitalize">{{ user.role }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- MENÚ CONTEXTUAL -->
+                    <div class="relative">
+                        <button class="menu-btn" onclick="toggleMenu('menu-{{ user.id }}', this)">
+                            <span class="material-symbols-outlined">more_vert</span>
+                        </button>
+                        
+                        <div id="menu-{{ user.id }}" class="dropdown-menu">
+                            {% if user.status == 'pending' %}
+                            <form method="POST" action="/admin/approve/{{ user.id }}" class="form-submit-anim">
+                                <button type="submit" class="dropdown-item success">
+                                    <span class="material-symbols-outlined text-[1.1rem]">check_circle</span>
+                                    <span>Aprobar cuenta</span>
+                                </button>
+                            </form>
+                            <div class="h-[1px] w-full bg-[color:var(--card-border)] opacity-30 my-1"></div>
+                            {% endif %}
+                            
+                            <!-- Cambiar Rol (inline selection) -->
+                            <form method="POST" action="/admin/changerole/{{ user.id }}" class="form-submit-anim px-4 py-3 flex flex-col gap-2">
+                                <label class="text-[0.65rem] uppercase tracking-wide font-bold text-[color:var(--text-muted)]">Cambiar Rol</label>
+                                <select name="role" class="form-input rounded-lg px-2 py-1.5 text-xs w-full outline-none" onchange="this.form.submit()">
+                                    <option value="basico" {% if user.role == 'basico' %}selected{% endif %}>Básico (Traductor)</option>
+                                    <option value="entrenador" {% if user.role == 'entrenador' %}selected{% endif %}>Entrenador</option>
+                                    <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>Administrador</option>
+                                </select>
+                            </form>
+                            
+                            <div class="h-[1px] w-full bg-[color:var(--card-border)] opacity-30 my-1"></div>
+                            
+                            <!-- Eliminar Usuario -->
+                            <form method="POST" action="/admin/delete/{{ user.id }}" class="form-submit-anim" onsubmit="return confirm('¿Estás absolutamente seguro de eliminar a {{ user.username }} permanentemente?');">
+                                <button type="submit" class="dropdown-item danger">
+                                    <span class="material-symbols-outlined text-[1.1rem]">person_remove</span>
+                                    <span>Eliminar usuario</span>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    
+                </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
 
+    <!-- TOAST DE NOTIFICACIÓN FLASK (Inferior Izquierda) -->
+    <div id="flashContainer" class="fixed bottom-6 left-6 z-[100] flex flex-col gap-3 pointer-events-none">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
-                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                    <div class="alert-toast alert-{{ category }} flex items-center gap-3 px-5 py-4 rounded-xl" style="max-width: 350px;">
+                        {% if category == 'success' %}
+                            <span class="material-symbols-outlined text-[1.4rem]" style="color: var(--primary-jade);">check_circle</span>
+                        {% elif category == 'danger' %}
+                            <span class="material-symbols-outlined text-[1.4rem]" style="color: var(--error-red);">warning</span>
+                        {% else %}
+                            <span class="material-symbols-outlined text-[1.4rem]" style="color: #3b82f6;">info</span>
+                        {% endif %}
+                        <div>
+                            <h4 class="font-bold text-sm m-0 mb-0.5 text-[color:var(--text-main)] leading-[1.2]">
+                                {% if category == 'success' %}Éxito{% elif category == 'danger' %}Acción Requerida{% else %}Información{% endif %}
+                            </h4>
+                            <p class="text-xs m-0 text-[color:var(--text-muted)] leading-[1.2] break-words">{{ message }}</p>
+                        </div>
+                    </div>
                 {% endfor %}
             {% endif %}
         {% endwith %}
-
-        <h3 style="margin-bottom: 1rem; color: rgba(255,255,255,0.7);">Gestión de Usuarios</h3>
-
-        {% for user in users %}
-        <div class="card">
-            <div class="user-info">
-                <div class="user-name"><span class="material-symbols-outlined" style="vertical-align: middle; margin-right: 4px;">person</span>{{ user.username }}</div>
-                <div style="margin-top: 0.5rem;">
-                    Estado: 
-                    {% if user.status == 'pending' %}
-                        <span class="badge badge-pending">Pendiente</span>
-                    {% else %}
-                        <span class="badge badge-approved">Aprobado</span>
-                    {% endif %}
-                    
-                    <span style="margin-left: 1rem;">Rol Actual: <b style="color: #a78bfa;">{{ user.role }}</b></span>
-                </div>
-            </div>
-
-            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                {% if user.status == 'pending' %}
-                <form method="POST" action="/admin/approve/{{ user.id }}">
-                    <button type="submit" class="btn-success" style="display: flex; align-items: center; gap: 6px;"><span class="material-symbols-outlined">check_circle</span> Aprobar Cuenta</button>
-                </form>
-                {% endif %}
-
-                <form class="role-form" method="POST" action="/admin/changerole/{{ user.id }}">
-                    <select name="role">
-                        <option value="basico" {% if user.role == 'basico' %}selected{% endif %}>Básico (Sólo Traductor)</option>
-                        <option value="entrenador" {% if user.role == 'entrenador' %}selected{% endif %}>Entrenador</option>
-                        <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>Administrador</option>
-                    </select>
-                    <button type="submit" class="btn-primary">Cambiar Rol</button>
-                </form>
-            </div>
-        </div>
-        {% endfor %}
     </div>
+
+    <script>
+        // Lógica de menús contextuales
+        let activeMenu = null;
+        let activeBtn = null;
+
+        function toggleMenu(menuId, btnElement) {
+            const menu = document.getElementById(menuId);
+            const currentCard = btnElement.closest('.glass-card');
+            
+            // Cerrar menú activo anterior si existe y no es el actual
+            if (activeMenu && activeMenu !== menu) {
+                activeMenu.classList.remove('active');
+                if(activeBtn) {
+                    activeBtn.classList.remove('active');
+                    const oldCard = activeBtn.closest('.glass-card');
+                    if(oldCard) oldCard.style.zIndex = '1';
+                }
+            }
+            
+            if (menu.classList.contains('active')) {
+                menu.classList.remove('active');
+                btnElement.classList.remove('active');
+                if(currentCard) currentCard.style.zIndex = '1';
+                activeMenu = null;
+                activeBtn = null;
+            } else {
+                menu.classList.add('active');
+                btnElement.classList.add('active');
+                if(currentCard) currentCard.style.zIndex = '50';
+                activeMenu = menu;
+                activeBtn = btnElement;
+            }
+        }
+
+        // Cerrar menú si se hace clic afuera
+        document.addEventListener('click', function(e) {
+            if (activeMenu && !e.target.closest('.relative')) {
+                activeMenu.classList.remove('active');
+                if(activeBtn) {
+                    activeBtn.classList.remove('active');
+                    const card = activeBtn.closest('.glass-card');
+                    if(card) card.style.zIndex = '1';
+                }
+                activeMenu = null;
+                activeBtn = null;
+            }
+        });
+
+        // Animación de humo al cambiar de página (enlaces)
+        document.querySelectorAll('.transition-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                if (this.href && !this.href.includes('#') && this.getAttribute('target') !== '_blank') {
+                    e.preventDefault();
+                    const target = this.href;
+                    document.querySelector('.main-wrapper').classList.add('smoke-out');
+                    setTimeout(() => {
+                        window.location.href = target;
+                    }, 400);
+                }
+            });
+        });
+
+        // Animación de humo al enviar formularios POST de admin
+        document.querySelectorAll('.form-submit-anim').forEach(form => {
+            form.addEventListener('submit', function(e) {
+                // Si el form fue prevenido por un confirm() que retornó false, no hacemos smokeOut
+                if (e.defaultPrevented) return;
+                
+                // Animamos oscureciendo toda la pantalla
+                document.querySelector('.main-wrapper').classList.add('smoke-out');
+                
+                // Si el evento no ha sido prevenido nativamente, lo dejamos seguir su curso.
+                // Como es sincrónico, el backend tomará el control al recargar la página.
+            });
+        });
+
+        // Animación y ocultamiento automático de Flash Toasts
+        window.addEventListener('DOMContentLoaded', () => {
+            const toasts = document.querySelectorAll('.alert-toast');
+            if (toasts.length > 0) {
+                // Mostrar a los pocos ms para que la animación CSS corra
+                setTimeout(() => {
+                    toasts.forEach(toast => toast.classList.add('show'));
+                }, 100);
+                
+                // Ocultar a los 5 segundos
+                setTimeout(() => {
+                    toasts.forEach(toast => {
+                        toast.classList.remove('show');
+                        setTimeout(() => toast.remove(), 500);
+                    });
+                }, 5000);
+            }
+        });
+    </script>
 </body>
 </html>
