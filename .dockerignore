@@ -1,0 +1,13 @@
+venv/
+.git/
+scratch/
+__pycache__/
+*.zip
+*.db
+.env
+*.pem
+.DS_Store
+outputs/
+uploads/
+*.wav
+*.mp3
