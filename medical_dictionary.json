@@ -1,4 +1,4 @@
-﻿{
+{
     "_info": "Diccionario médico K'iche' → Español. Construido con hablante nativo (Lorenzo Chox).",
     "_version": "2.1",
     "partes_del_cuerpo_pie": {
@@ -557,7 +557,22 @@
         "ka lemlot anma alaq?": "¿tiene mareos?",
         "k'ax ar chi k'a ch'awla'": "¿tiene dificultad para hablar?",
         "tajin ka tijla knab'al": "¿Toma alguna pastilla o medicamento?",
-        "jampa q'ij q'oxownaq": "¿cuántos días te ha dolido?"
+        "jampa q'ij q'oxownaq": "¿cuántos días te ha dolido?",
+        "Etam alaq ri numero rech alaxik?": "Sabe el numero de algún familiar?",
+        "Etam alaq le ch'aweb'al rech jun alaxik?": "Sabe algun numero de telefono de algun familiar?",
+        "Alaq": "Usted",
+        "Jas k'ax che alaq?": "Qué le duele?",
+        "K'o achalal alaq?": "Tiene familiares?",
+        "K'o achil alaq?": "Tiene familiares?",
+        "Jas xriq alaq?": "Qué le pasó?",
+        "Jawi Servicio rech kunanel k'owi le yowab' alaq": "En que servicio esta su paciente?",
+        "K'o yowab' achi'l alaq waral?": "Tiene paciente hospitalizado?",
+        "K'o yowab' alaq waral?": "Tiene paciente hospitalizado?",
+        "Jas a b'i'": "Como te llamas?",
+        "Jas b'i' alaq?": "Cual es su nombre?",
+        "Jawi ka pewi alaq?": "De donde viene?",
+        "Jas ka tzkuj alaq": "Que necesita?",
+        "Jas rajawaxik che alaq": "Que necesita?"
     },
     "respuestas_basicas": {
         "je'": "sí",
@@ -1206,6 +1221,21 @@
         "re": "suyo",
         "a we": "tuyos",
         "at": "tú",
-        "xoj": "nos"
+        "xoj": "nos",
+        "Etam alaq ri numero rech alaxik?": "Sabe el numero de algún familiar?",
+        "Etam alaq le ch'aweb'al rech jun alaxik?": "Sabe algun numero de telefono de algun familiar?",
+        "Alaq": "Usted",
+        "Jas k'ax che alaq?": "Qué le duele?",
+        "K'o achalal alaq?": "Tiene familiares?",
+        "K'o achil alaq?": "Tiene familiares?",
+        "Jas xriq alaq?": "Qué le pasó?",
+        "Jawi Servicio rech kunanel k'owi le yowab' alaq": "En que servicio esta su paciente?",
+        "K'o yowab' achi'l alaq waral?": "Tiene paciente hospitalizado?",
+        "K'o yowab' alaq waral?": "Tiene paciente hospitalizado?",
+        "Jas a b'i'": "Como te llamas?",
+        "Jas b'i' alaq?": "Cual es su nombre?",
+        "Jawi ka pewi alaq?": "De donde viene?",
+        "Jas ka tzkuj alaq": "Que necesita?",
+        "Jas rajawaxik che alaq": "Que necesita?"
     }
 }

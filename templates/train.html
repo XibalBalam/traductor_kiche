@@ -8,6 +8,11 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <script src="{{ url_for('static', filename='js/wavesurfer.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/regions.min.js') }}"></script>
+    <script>
+        window.RegionsPlugin = (window.WaveSurfer && window.WaveSurfer.Regions) || window.RegionsPlugin;
+    </script>
     <style>
         :root {
             /* Modo Claro (Default) */
@@ -212,8 +217,87 @@
         .badge-orange { background-color: rgba(245, 158, 11, 0.2); color: var(--text-main); border: 1px solid rgba(245, 158, 11, 0.4); }
         .badge-green { background-color: rgba(16, 185, 129, 0.2); color: var(--text-main); border: 1px solid rgba(16, 185, 129, 0.4); }
 
-    </style>
+        /* Liquid Glass Progress Bar */
+        .liquid-glass-container {
+            position: relative;
+            width: 100%;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+        }
+        
+        .liquid-glass-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, rgba(16, 185, 129, 0.6), rgba(52, 211, 153, 0.8));
+            border-radius: 20px;
+            transition: width 0.3s ease-in-out;
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
+            overflow: hidden;
+        }
 
+        /* Wave animation */
+        .liquid-glass-bar::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 200%;
+            height: 100%;
+            background: linear-gradient(
+                to right,
+                rgba(255, 255, 255, 0) 0%,
+                rgba(255, 255, 255, 0.2) 50%,
+                rgba(255, 255, 255, 0) 100%
+            );
+            animation: liquid-wave 2s linear infinite;
+        }
+
+        @keyframes liquid-wave {
+            0% { transform: translateX(-50%); }
+            100% { transform: translateX(0%); }
+        }
+
+        /* Estilos para WaveSurfer v7 y Regiones interactivas (Shadow DOM parts) */
+        #expertWaveform::part(region) {
+            border-left: 4px solid #10B981 !important;
+            border-right: 4px solid #10B981 !important;
+            border-top: 2px dashed rgba(16, 185, 129, 0.65) !important;
+            border-bottom: 2px dashed rgba(16, 185, 129, 0.65) !important;
+            background-color: rgba(16, 185, 129, 0.28) !important;
+            box-sizing: border-box !important;
+            box-shadow: 0 0 16px rgba(16, 185, 129, 0.3) inset, 0 0 8px rgba(16, 185, 129, 0.25) !important;
+        }
+
+        #expertWaveform::part(region-handle) {
+            width: 14px !important;
+            background: rgba(16, 185, 129, 0.75) !important;
+            cursor: col-resize !important;
+            z-index: 10 !important;
+            transition: background 0.15s ease !important;
+        }
+
+        #expertWaveform::part(region-handle):hover {
+            background: #10B981 !important;
+        }
+
+        #expertWaveform::part(region-handle-left) {
+            border-left: 4px solid #34D399 !important;
+            border-radius: 4px 0 0 4px !important;
+        }
+
+        #expertWaveform::part(region-handle-right) {
+            border-right: 4px solid #34D399 !important;
+            border-radius: 0 4px 4px 0 !important;
+        }
+    </style>
     <link rel="icon" type="image/png" href="/static/favicon/favicon-96x96.png" sizes="96x96" />
     <link rel="icon" type="image/svg+xml" href="/static/favicon/favicon.svg" />
     <link rel="shortcut icon" href="/static/favicon/favicon.ico" />
@@ -235,62 +319,234 @@
             <p class="text-sm mt-2 opacity-75" style="color: var(--text-muted);">Graba frases en K'iche' para mejorar el reconocimiento automático</p>
         </div>
 
-        <!-- PHRASE TO RECORD -->
-        <div class="glass-card p-6 sm:p-8 mb-6 text-center">
-            <div class="relative mb-6 max-w-sm mx-auto">
-                <select class="form-select w-full rounded-xl py-3 px-4 outline-none text-sm font-medium cursor-pointer" id="categorySelect" onchange="changeCategory()">
-                    <!-- Options populated via JS -->
-                </select>
-                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-[color:var(--text-muted)]">
-                    <span class="material-symbols-outlined text-[1.2rem]">expand_more</span>
+        <!-- TABS DE SELECCIÓN DE MODO -->
+        <div class="flex p-1.5 glass-card mb-6 rounded-2xl max-w-md mx-auto" style="background: var(--input-bg);">
+            <button id="tabGuidedBtn" type="button" onclick="switchTrainingMode('guided')" class="flex-1 py-2.5 px-4 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer bg-[color:var(--primary-jade)] text-slate-900 shadow-md">
+                <span class="material-symbols-outlined text-[1.2rem]">record_voice_over</span> Modo Guiado
+            </button>
+            <button id="tabExpertBtn" type="button" onclick="switchTrainingMode('expert')" class="flex-1 py-2.5 px-4 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer text-[color:var(--text-muted)] hover:text-[color:var(--text-main)]">
+                <span class="material-symbols-outlined text-[1.2rem]">psychology</span> Modo Experto Bilingüe
+            </button>
+        </div>
+
+        <!-- MODO GUIADO (EXISTENTE) -->
+        <div id="guidedModeSection">
+            <!-- PHRASE TO RECORD -->
+            <div class="glass-card p-6 sm:p-8 mb-6 text-center">
+                <div class="relative mb-6 max-w-sm mx-auto">
+                    <select class="form-select w-full rounded-xl py-3 px-4 outline-none text-sm font-medium cursor-pointer" id="categorySelect" onchange="changeCategory()">
+                        <!-- Options populated via JS -->
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-[color:var(--text-muted)]">
+                        <span class="material-symbols-outlined text-[1.2rem]">expand_more</span>
+                    </div>
+                </div>
+                
+                <div id="phraseCountBadge" class="inline-block text-xs px-3 py-1 rounded-full font-semibold mb-3"></div>
+                <div class="text-[0.72rem] tracking-[1.5px] uppercase text-[color:var(--text-muted)] mb-1">Di esta frase en K'iche'</div>
+                <div class="text-2xl sm:text-3xl font-bold text-[color:var(--primary-jade)] mb-2" id="phraseKiche">k'ax waqan</div>
+                <div class="text-base text-[color:var(--text-main)] mb-6" id="phraseSpanish">me duele la pierna / el pie</div>
+                
+                <div class="flex flex-wrap gap-2 justify-center mb-4">
+                    <button class="btn-nav rounded-xl px-4 py-2 text-sm flex items-center gap-1.5" onclick="prevPhrase()"><span class="material-symbols-outlined text-[1.1rem]">arrow_back</span> Anterior</button>
+                    <button class="btn-nav rounded-xl px-4 py-2 text-sm flex items-center gap-1.5" onclick="nextPhrase()">Siguiente <span class="material-symbols-outlined text-[1.1rem]">arrow_forward</span></button>
+                    <button class="btn-nav rounded-xl px-4 py-2 text-sm flex items-center gap-1.5" onclick="randomPhrase()"><span class="material-symbols-outlined text-[1.1rem]">shuffle</span> Aleatoria</button>
+                </div>
+                
+                <div class="mt-4">
+                    <button onclick="eliminarFraseActual()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-500/30 text-red-400 bg-red-500/5 hover:bg-red-500/10 transition-colors text-xs cursor-pointer">
+                        <span class="material-symbols-outlined text-[1.1rem]">delete</span> Eliminar frase (basura)
+                    </button>
                 </div>
             </div>
-            
-            <div id="phraseCountBadge" class="inline-block text-xs px-3 py-1 rounded-full font-semibold mb-3"></div>
-            <div class="text-[0.72rem] tracking-[1.5px] uppercase text-[color:var(--text-muted)] mb-1">Di esta frase en K'iche'</div>
-            <div class="text-2xl sm:text-3xl font-bold text-[color:var(--primary-jade)] mb-2" id="phraseKiche">k'ax waqan</div>
-            <div class="text-base text-[color:var(--text-main)] mb-6" id="phraseSpanish">me duele la pierna / el pie</div>
-            
-            <div class="flex flex-wrap gap-2 justify-center mb-4">
-                <button class="btn-nav rounded-xl px-4 py-2 text-sm flex items-center gap-1.5" onclick="prevPhrase()"><span class="material-symbols-outlined text-[1.1rem]">arrow_back</span> Anterior</button>
-                <button class="btn-nav rounded-xl px-4 py-2 text-sm flex items-center gap-1.5" onclick="nextPhrase()">Siguiente <span class="material-symbols-outlined text-[1.1rem]">arrow_forward</span></button>
-                <button class="btn-nav rounded-xl px-4 py-2 text-sm flex items-center gap-1.5" onclick="randomPhrase()"><span class="material-symbols-outlined text-[1.1rem]">shuffle</span> Aleatoria</button>
-            </div>
-            
-            <div class="mt-4">
-                <button onclick="eliminarFraseActual()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-500/30 text-red-400 bg-red-500/5 hover:bg-red-500/10 transition-colors text-xs cursor-pointer">
-                    <span class="material-symbols-outlined text-[1.1rem]">delete</span> Eliminar frase (basura)
+
+            <!-- RECORD -->
+            <div class="glass-card p-6 sm:p-8 mb-6 text-center">
+                <h3 class="text-sm font-semibold mb-6 text-[color:var(--text-main)] text-left">1. Graba tu voz</h3>
+                
+                <button class="btn-mic w-20 h-20 rounded-full border-none text-white text-3xl flex items-center justify-center mx-auto mb-4 cursor-pointer" id="micBtn">
+                    <span class="material-symbols-outlined text-[40px]">mic</span>
                 </button>
+                <div class="text-sm text-[color:var(--text-muted)] mb-4 min-h-[1.5rem]" id="micStatus">Mantén presionado para grabar</div>
+                
+                <div id="cancelProcessingContainer" style="display: none;" class="mb-4 text-center">
+                    <button class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-red-500/40 text-red-400 bg-red-500/10 hover:bg-red-500/20 transition-colors text-sm cursor-pointer" onclick="cancelProcessing()">
+                        <span class="material-symbols-outlined text-[1.1rem]">cancel</span> Cancelar procesamiento
+                    </button>
+                </div>
+
+                <div class="asr-box text-left mt-6 pt-6 border-t border-[color:var(--input-border)]" id="asrBox" style="display: none;">
+                    <div class="text-[0.72rem] tracking-[1.5px] uppercase text-[color:var(--text-muted)] mb-2">Lo que el modelo escuchó (ASR)</div>
+                    <div class="bg-red-500/5 border border-red-500/20 rounded-xl px-4 py-3 text-red-300 mb-4 text-base" id="asrText">—</div>
+
+                    <div class="text-[0.72rem] tracking-[1.5px] uppercase text-[color:var(--text-muted)] mb-2 flex items-center gap-1.5">
+                        <span class="material-symbols-outlined text-[1.1rem]">edit_note</span> Transcripción CORRECTA en K'iche'
+                    </div>
+                    <input class="form-input w-full rounded-xl px-4 py-3 outline-none text-base mb-6" id="correctInput" type="text" placeholder="Escribe lo que dijiste..." autocomplete="off">
+
+                    <button class="btn-primary w-full py-3.5 rounded-xl font-bold text-sm tracking-wide flex justify-center items-center gap-2" id="saveBtn" onclick="saveSample()" disabled>
+                        <span class="material-symbols-outlined text-[1.1rem]">save</span> Guardar grabación
+                    </button>
+                </div>
             </div>
         </div>
 
-        <!-- RECORD -->
-        <div class="glass-card p-6 sm:p-8 mb-6 text-center">
-            <h3 class="text-sm font-semibold mb-6 text-[color:var(--text-main)] text-left">1. Graba tu voz</h3>
-            
-            <button class="btn-mic w-20 h-20 rounded-full border-none text-white text-3xl flex items-center justify-center mx-auto mb-4 cursor-pointer" id="micBtn">
-                <span class="material-symbols-outlined text-[40px]">mic</span>
-            </button>
-            <div class="text-sm text-[color:var(--text-muted)] mb-4 min-h-[1.5rem]" id="micStatus">Mantén presionado para grabar</div>
-            
-            <div id="cancelProcessingContainer" style="display: none;" class="mb-4 text-center">
-                <button class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-red-500/40 text-red-400 bg-red-500/10 hover:bg-red-500/20 transition-colors text-sm cursor-pointer" onclick="cancelProcessing()">
-                    <span class="material-symbols-outlined text-[1.1rem]">cancel</span> Cancelar procesamiento
-                </button>
-            </div>
-
-            <div class="asr-box text-left mt-6 pt-6 border-t border-[color:var(--input-border)]" id="asrBox" style="display: none;">
-                <div class="text-[0.72rem] tracking-[1.5px] uppercase text-[color:var(--text-muted)] mb-2">Lo que el modelo escuchó (ASR)</div>
-                <div class="bg-red-500/5 border border-red-500/20 rounded-xl px-4 py-3 text-red-300 mb-4 text-base" id="asrText">—</div>
-
-                <div class="text-[0.72rem] tracking-[1.5px] uppercase text-[color:var(--text-muted)] mb-2 flex items-center gap-1.5">
-                    <span class="material-symbols-outlined text-[1.1rem]">edit_note</span> Transcripción CORRECTA en K'iche'
+        <!-- MODO EXPERTO BILINGÜE (NUEVO APARTADO) -->
+        <div id="expertModeSection" style="display: none;">
+            <div class="glass-card p-6 sm:p-8 mb-6">
+                <div class="flex items-start gap-3.5 mb-6 text-left">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0 text-[color:var(--primary-jade)]">
+                        <span class="material-symbols-outlined text-[1.5rem]">psychology</span>
+                    </div>
+                    <div>
+                        <h2 class="text-lg sm:text-xl font-bold text-[color:var(--text-main)]">Entrenamiento para Expertos Bilingües</h2>
+                        <p class="text-xs sm:text-sm mt-0.5 text-[color:var(--text-muted)]">Diseñado para personas que dominan K'iche' y Español. Ingresa una nueva frase médica o cotidiana en ambos idiomas y graba tu pronunciación en K'iche' para alimentar el dataset.</p>
+                    </div>
                 </div>
-                <input class="form-input w-full rounded-xl px-4 py-3 outline-none text-base mb-6" id="correctInput" type="text" placeholder="Escribe lo que dijiste..." autocomplete="off">
 
-                <button class="btn-primary w-full py-3.5 rounded-xl font-bold text-sm tracking-wide flex justify-center items-center gap-2" id="saveBtn" onclick="saveSample()" disabled>
-                    <span class="material-symbols-outlined text-[1.1rem]">save</span> Guardar grabación
-                </button>
+                <div class="space-y-5 text-left">
+                    <!-- 1. CAMPO ESPAÑOL -->
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-[color:var(--text-muted)] mb-2 flex items-center gap-1.5">
+                            <span class="material-symbols-outlined text-[1.1rem] text-[color:var(--primary-jade)]">translate</span>
+                            1. Frase o Síntoma en Español
+                        </label>
+                        <input type="text" id="expertSpanishInput" oninput="checkExpertFormValidity()" class="form-input w-full rounded-xl px-4 py-3 outline-none text-base" placeholder="Ej: Me duele mucho la garganta al tragar" autocomplete="off">
+                    </div>
+
+                    <!-- 2. CAMPO K'ICHE' -->
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-[color:var(--text-muted)] flex items-center gap-1.5">
+                                <span class="material-symbols-outlined text-[1.1rem] text-[color:var(--primary-jade)]">edit_note</span>
+                                2. Escritura Oficial en K'iche' (Norma ALMG)
+                            </label>
+                        </div>
+                        <input type="text" id="expertKicheInput" oninput="checkExpertFormValidity()" class="form-input w-full rounded-xl px-4 py-3 outline-none text-base mb-2" placeholder="Ej: k'ax nu qul chi' kin b'iq'ik" autocomplete="off">
+                        
+                        <!-- BOTONES RÁPIDOS DE GLOTALES -->
+                        <div class="flex flex-wrap items-center gap-1.5 pt-1">
+                            <span class="text-xs text-[color:var(--text-muted)] mr-1">Insertar glotal:</span>
+                            <button type="button" onclick="insertGlottal('k\'')" class="px-2.5 py-1 rounded-lg border border-[color:var(--input-border)] bg-[color:var(--input-bg)] text-xs font-semibold hover:border-[color:var(--primary-jade)] hover:text-[color:var(--primary-jade)] transition-colors cursor-pointer">k'</button>
+                            <button type="button" onclick="insertGlottal('q\'')" class="px-2.5 py-1 rounded-lg border border-[color:var(--input-border)] bg-[color:var(--input-bg)] text-xs font-semibold hover:border-[color:var(--primary-jade)] hover:text-[color:var(--primary-jade)] transition-colors cursor-pointer">q'</button>
+                            <button type="button" onclick="insertGlottal('t\'')" class="px-2.5 py-1 rounded-lg border border-[color:var(--input-border)] bg-[color:var(--input-bg)] text-xs font-semibold hover:border-[color:var(--primary-jade)] hover:text-[color:var(--primary-jade)] transition-colors cursor-pointer">t'</button>
+                            <button type="button" onclick="insertGlottal('ch\'')" class="px-2.5 py-1 rounded-lg border border-[color:var(--input-border)] bg-[color:var(--input-bg)] text-xs font-semibold hover:border-[color:var(--primary-jade)] hover:text-[color:var(--primary-jade)] transition-colors cursor-pointer">ch'</button>
+                            <button type="button" onclick="insertGlottal('tz\'')" class="px-2.5 py-1 rounded-lg border border-[color:var(--input-border)] bg-[color:var(--input-bg)] text-xs font-semibold hover:border-[color:var(--primary-jade)] hover:text-[color:var(--primary-jade)] transition-colors cursor-pointer">tz'</button>
+                            <button type="button" onclick="insertGlottal('b\'')" class="px-2.5 py-1 rounded-lg border border-[color:var(--input-border)] bg-[color:var(--input-bg)] text-xs font-semibold hover:border-[color:var(--primary-jade)] hover:text-[color:var(--primary-jade)] transition-colors cursor-pointer">b'</button>
+                            <button type="button" onclick="insertGlottal('\'')" class="px-2.5 py-1 rounded-lg border border-[color:var(--input-border)] bg-[color:var(--input-bg)] text-xs font-semibold hover:border-[color:var(--primary-jade)] hover:text-[color:var(--primary-jade)] transition-colors cursor-pointer">'</button>
+                        </div>
+                    </div>
+
+                    <!-- 3. AUDIO EN K'ICHE' (GRABAR O CARGAR ARCHIVO CON RECORTE) -->
+                    <div class="pt-5 border-t border-[color:var(--input-border)] text-center">
+                        <div class="flex justify-between items-center mb-4 text-left">
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-[color:var(--text-muted)] flex items-center gap-1.5">
+                                <span class="material-symbols-outlined text-[1.1rem] text-[color:var(--primary-jade)]">graphic_eq</span>
+                                3. Audio de la frase en K'iche'
+                            </label>
+                            <!-- SELECTOR DE MÉTODO: GRABAR O CARGAR -->
+                            <div class="inline-flex p-1 rounded-xl bg-black/10 border border-[color:var(--card-border)]">
+                                <button type="button" id="audioSourceRecordBtn" onclick="setAudioSourceMode('record')" class="px-3 py-1 rounded-lg text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer bg-[color:var(--primary-jade)] text-slate-900 shadow-sm">
+                                    <span class="material-symbols-outlined text-[0.95rem]">mic</span> Grabar
+                                </button>
+                                <button type="button" id="audioSourceUploadBtn" onclick="setAudioSourceMode('upload')" class="px-3 py-1 rounded-lg text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer text-[color:var(--text-muted)] hover:text-[color:var(--text-main)]">
+                                    <span class="material-symbols-outlined text-[0.95rem]">upload_file</span> Cargar archivo
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- PANEL A: GRABAR VOZ -->
+                        <div id="expertMicContainer" class="flex flex-col items-center mb-4">
+                            <button type="button" class="btn-mic w-20 h-20 rounded-full border-none text-white text-3xl flex items-center justify-center mx-auto mb-3 cursor-pointer transition-transform hover:scale-105" id="expertMicBtn">
+                                <span class="material-symbols-outlined text-[40px]" id="expertMicIcon">mic</span>
+                            </button>
+                            <div class="text-sm text-[color:var(--text-muted)] mb-2 min-h-[1.5rem]" id="expertMicStatus">Toca o mantén presionado para grabar</div>
+                        </div>
+
+                        <!-- PANEL B: CARGAR ARCHIVO DE AUDIO -->
+                        <div id="expertUploadContainer" class="w-full mb-4" style="display: none;">
+                            <label for="expertFileInput" class="flex flex-col items-center justify-center border-2 border-dashed border-[color:var(--input-border)] hover:border-[color:var(--primary-jade)] rounded-2xl p-6 cursor-pointer transition-all bg-[color:var(--input-bg)] hover:bg-emerald-500/5 group">
+                                <span class="material-symbols-outlined text-4xl text-[color:var(--text-muted)] group-hover:text-[color:var(--primary-jade)] group-hover:scale-110 transition-all mb-2">audio_file</span>
+                                <span class="text-sm font-semibold text-[color:var(--text-main)] mb-1">Haz clic para seleccionar o arrastra tu archivo de audio</span>
+                                <span class="text-xs text-[color:var(--text-muted)]">Formatos admitidos: .wav, .mp3, .m4a, .webm, .ogg, .aac</span>
+                                <input type="file" id="expertFileInput" accept="audio/*,.wav,.mp3,.m4a,.webm,.ogg,.aac" class="hidden" onchange="handleExpertFileUpload(this.files[0])">
+                            </label>
+                            <div id="uploadedFileName" class="text-xs font-medium text-[color:var(--primary-jade)] mt-2" style="display: none;"></div>
+                        </div>
+
+                        <!-- PANEL C: VISUALIZADOR DE ESPECTRO Y RECORTADOR (WAVESURFER) -->
+                        <div id="expertWaveformWrapper" class="w-full mb-5 text-left" style="display: none;">
+                            <div class="p-4 sm:p-5 rounded-2xl border border-[color:var(--card-border)] bg-black/15 backdrop-blur-sm">
+                                <div class="flex justify-between items-center mb-3">
+                                    <div class="flex items-center gap-2">
+                                        <span class="material-symbols-outlined text-[1.2rem] text-[color:var(--primary-jade)]">content_cut</span>
+                                        <span class="text-xs sm:text-sm font-bold text-[color:var(--text-main)]">Recortar audio con espectro (onda)</span>
+                                    </div>
+                                    <div class="flex items-center gap-1.5">
+                                        <button type="button" onclick="selectAllWaveform()" class="px-2.5 py-1 rounded-lg border border-[color:var(--input-border)] text-xs text-[color:var(--text-muted)] hover:text-[color:var(--text-main)] transition-colors cursor-pointer" title="Seleccionar todo el audio">
+                                            Todo
+                                        </button>
+                                        <button type="button" onclick="resetExpertAudio()" class="px-2.5 py-1 rounded-lg border border-red-500/30 text-xs text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer" title="Descartar audio">
+                                            Descartar
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <p class="text-[0.75rem] text-[color:var(--text-muted)] mb-3">Arrastra los bordes de la zona verde para recortar silencios o seleccionar la frase exacta:</p>
+
+                                <!-- CONTENEDOR DONDE SE RENDERIZA EL CANVAS DE WAVESURFER -->
+                                <div id="expertWaveform" class="w-full rounded-xl overflow-hidden mb-3 bg-black/20" style="min-height: 80px;"></div>
+
+                                <!-- TIEMPOS DE LA SELECCIÓN -->
+                                <div class="grid grid-cols-3 gap-2 text-center text-xs mb-4">
+                                    <div class="p-2 rounded-xl bg-black/20 border border-[color:var(--input-border)]">
+                                        <div class="text-[0.68rem] uppercase text-[color:var(--text-muted)] font-semibold">Inicio</div>
+                                        <div id="regionStartTime" class="font-mono text-sm font-bold text-[color:var(--text-main)] mt-0.5">0.00s</div>
+                                    </div>
+                                    <div class="p-2 rounded-xl bg-black/20 border border-[color:var(--input-border)]">
+                                        <div class="text-[0.68rem] uppercase text-[color:var(--text-muted)] font-semibold">Fin</div>
+                                        <div id="regionEndTime" class="font-mono text-sm font-bold text-[color:var(--text-main)] mt-0.5">0.00s</div>
+                                    </div>
+                                    <div class="p-2 rounded-xl bg-black/20 border border-[color:var(--input-border)]">
+                                        <div class="text-[0.68rem] uppercase text-[color:var(--text-muted)] font-semibold">Duración</div>
+                                        <div id="regionDurationTime" class="font-mono text-sm font-bold text-[color:var(--primary-jade)] mt-0.5">0.00s</div>
+                                    </div>
+                                </div>
+
+                                <!-- BOTONES DE REPRODUCCIÓN Y RECORTE -->
+                                <div class="flex flex-col sm:flex-row gap-2">
+                                    <button type="button" id="btnPlayRegion" onclick="playWaveformRegion()" class="flex-1 py-2.5 px-4 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 border border-[color:var(--card-border)] bg-[color:var(--input-bg)] hover:bg-emerald-500/10 transition-all cursor-pointer">
+                                        <span class="material-symbols-outlined text-[1.1rem]" id="playRegionIcon">play_arrow</span> Escuchar Selección
+                                    </button>
+                                    <button type="button" id="btnTrimAndProcess" onclick="trimAndProcessWithMMS()" class="flex-1 py-2.5 px-4 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer bg-[color:var(--primary-jade)] text-slate-900 shadow-md hover:scale-[1.02]">
+                                        <span class="material-symbols-outlined text-[1.1rem]">content_cut</span> Recortar y Enviar a MMS
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- RESULTADO DEL RECORTE Y EVALUACIÓN MMS -->
+                        <div id="expertAudioPreviewContainer" class="w-full max-w-md mx-auto mb-4" style="display: none;">
+                            <div class="p-3 rounded-2xl bg-black/10 border border-[color:var(--card-border)] flex items-center gap-3 mb-3">
+                                <audio id="expertAudioPlayer" controls class="w-full h-9 outline-none"></audio>
+                            </div>
+
+                            <!-- LO QUE ESCUCHÓ EL MODELO MMS -->
+                            <div id="expertAsrBox" class="text-left p-3.5 rounded-xl border border-red-500/20 bg-red-500/5">
+                                <div class="text-[0.72rem] tracking-[1.5px] uppercase text-[color:var(--text-muted)] mb-1 flex items-center gap-1.5">
+                                    <span class="material-symbols-outlined text-[1rem] text-red-400">graphic_eq</span>
+                                    Lo que el modelo MMS escuchó (ASR Raw)
+                                </div>
+                                <div class="text-sm font-semibold text-red-300 min-h-[1.2rem]" id="expertAsrText">—</div>
+                            </div>
+                        </div>
+
+                        <!-- BOTÓN GUARDAR -->
+                        <button type="button" class="btn-primary w-full py-3.5 rounded-xl font-bold text-sm tracking-wide flex justify-center items-center gap-2 mt-2" id="saveExpertBtn" onclick="saveExpertSample()" disabled>
+                            <span class="material-symbols-outlined text-[1.1rem]">cloud_upload</span> Guardar Frase y Audio en el Dataset
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -312,9 +568,14 @@
             <div class="glass-card p-6">
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="text-sm font-semibold text-[color:var(--text-main)]">Grabaciones guardadas</h3>
-                    <a href="/export-dataset" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-500/30 text-[color:var(--primary-jade)] bg-emerald-500/10 hover:bg-emerald-500/20 transition-colors text-xs font-medium">
-                        <span class="material-symbols-outlined text-[1.1rem]">download</span> Exportar CSV
-                    </a>
+                    <div class="flex gap-2">
+                        <button onclick="openManagerModal()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-blue-500/30 text-blue-500 bg-blue-500/10 hover:bg-blue-500/20 transition-colors text-xs font-medium cursor-pointer">
+                            <span class="material-symbols-outlined text-[1.1rem]">list_alt</span> Gestionar Dataset
+                        </button>
+                        <button onclick="startExport()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-500/30 text-[color:var(--primary-jade)] bg-emerald-500/10 hover:bg-emerald-500/20 transition-colors text-xs font-medium cursor-pointer">
+                            <span class="material-symbols-outlined text-[1.1rem]">download</span> Descargar Dataset (.zip)
+                        </button>
+                    </div>
                 </div>
                 <div id="samplesList" class="space-y-2">
                     <div class="text-center text-slate-500 text-sm py-4">Aún no hay grabaciones. ¡Empieza grabando!</div>
@@ -322,6 +583,65 @@
             </div>
         </div>
 
+    </div>
+
+    <!-- Liquid Glass Export Modal -->
+    <div id="exportModal" class="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-md opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="glass-card w-full max-w-md p-8 flex flex-col items-center relative transform scale-95 transition-transform duration-300 text-center" id="exportModalContent">
+            <span class="material-symbols-outlined text-[3rem] text-[color:var(--primary-jade)] mb-4 animate-bounce">cloud_download</span>
+            <h2 class="text-xl font-bold text-[color:var(--text-main)] mb-2">Preparando Descarga</h2>
+            <p id="exportStatusText" class="text-sm text-[color:var(--text-muted)] mb-6">Iniciando...</p>
+            
+            <div class="liquid-glass-container mb-2">
+                <div id="exportProgressBar" class="liquid-glass-bar"></div>
+            </div>
+            
+            <div class="flex justify-between w-full text-xs font-medium text-[color:var(--text-muted)] mb-8">
+                <span id="exportCountText">0 / 0</span>
+                <span id="exportPctText">0%</span>
+            </div>
+            
+            <button id="cancelExportBtn" onclick="cancelExport()" class="px-6 py-2 rounded-full border border-red-500/50 text-red-400 bg-red-500/10 hover:bg-red-500/20 transition-colors text-sm font-semibold cursor-pointer">
+                Cancelar Descarga
+            </button>
+        </div>
+    </div>
+
+    <!-- Dataset Manager Modal -->
+    <div id="managerModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="glass-card w-full max-w-5xl h-[85vh] m-4 flex flex-col relative transform scale-95 transition-transform duration-300" id="managerModalContent">
+            <!-- Header -->
+            <div class="p-6 border-b border-[color:var(--card-border)] flex justify-between items-center">
+                <h2 class="text-xl font-bold flex items-center gap-2 text-[color:var(--text-main)]">
+                    <span class="material-symbols-outlined text-[1.8rem] text-[color:var(--primary-jade)]">database</span> Gestor del Dataset
+                </h2>
+                <button onclick="closeManagerModal()" class="text-[color:var(--text-muted)] hover:text-red-500 transition-colors cursor-pointer rounded-full p-1 hover:bg-red-500/10">
+                    <span class="material-symbols-outlined text-[1.5rem]">close</span>
+                </button>
+            </div>
+            
+            <!-- Body: Table -->
+            <div class="flex-1 overflow-auto p-4 sm:p-6 relative">
+                <div id="managerLoading" class="absolute inset-0 flex flex-col items-center justify-center bg-[color:var(--bg-canvas-overlay)] z-10 hidden">
+                    <span class="material-symbols-outlined text-4xl text-[color:var(--primary-jade)] animate-spin">refresh</span>
+                    <p class="mt-2 text-sm font-medium">Cargando dataset...</p>
+                </div>
+                
+                <table class="w-full text-left border-collapse text-sm">
+                    <thead>
+                        <tr class="border-b border-[color:var(--card-border)] text-[color:var(--text-muted)]">
+                            <th class="py-3 px-4 font-semibold w-16">Archivo</th>
+                            <th class="py-3 px-4 font-semibold w-24">Audio</th>
+                            <th class="py-3 px-4 font-semibold min-w-[200px]">Transcripción (K'iche')</th>
+                            <th class="py-3 px-4 font-semibold text-right w-48">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="managerTableBody" class="divide-y divide-[color:var(--card-border)] text-[color:var(--text-main)]">
+                        <!-- Rows populated via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
     <div class="toast" id="toast"></div>
@@ -441,7 +761,7 @@
 
         // ── RECORDING ─────────────────────────────────────────────────────────
         let isRecording = false;
-        let audioContext, mediaStream, processor, inputNode, audioData = [];
+        let mediaRecorder = null, mediaStream = null, audioChunks = [];
 
         let isProcessing = false;
         let currentAbortController = null;
@@ -460,16 +780,15 @@
 
         async function startRecording() {
             if (isProcessing) return;
-            audioData = [];
+            audioChunks = [];
             currentAudioBlob = null;
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             mediaStream = stream;
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            inputNode = audioContext.createMediaStreamSource(stream);
-            processor = audioContext.createScriptProcessor(4096, 1, 1);
-            processor.onaudioprocess = e => audioData.push(new Float32Array(e.inputBuffer.getChannelData(0)));
-            inputNode.connect(processor);
-            processor.connect(audioContext.destination);
+            mediaRecorder = new MediaRecorder(stream);
+            mediaRecorder.ondataavailable = e => {
+                if (e.data.size > 0) audioChunks.push(e.data);
+            };
+            mediaRecorder.start();
             isRecording = true;
             micBtn.classList.add('recording');
             micStatus.textContent = '🔴 Grabando... (suelta para procesar)';
@@ -481,11 +800,16 @@
             isRecording = false;
             micBtn.classList.remove('recording');
             micStatus.textContent = 'Procesando con el modelo...';
-            if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
-            if (inputNode) inputNode.disconnect();
-            if (processor) processor.disconnect();
-            if (audioContext) audioContext.close();
-            sendForASR();
+            
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.onstop = () => {
+                    if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
+                    sendForASR();
+                };
+                mediaRecorder.stop();
+            } else {
+                if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
+            }
         }
 
         async function sendForASR() {
@@ -497,15 +821,10 @@
             // Keep screen awake while processing
             await requestWakeLock();
 
-            const len = audioData.reduce((a, b) => a + b.length, 0);
-            const samples = new Float32Array(len);
-            let off = 0;
-            for (const b of audioData) { samples.set(b, off); off += b.length; }
-            const wavBlob = new Blob([encodeWAV(samples, audioContext.sampleRate)], { type: 'audio/wav' });
-            currentAudioBlob = wavBlob;
+            currentAudioBlob = new Blob(audioChunks);
 
             const fd = new FormData();
-            fd.append('audio', wavBlob);
+            fd.append('audio', currentAudioBlob, 'sample_capture');
 
             try {
                 const res = await fetch('/translate', { 
@@ -596,6 +915,613 @@
             micStatus.textContent = 'Mantén presionado para grabar';
         }
 
+        // ── MODO EXPERTO BILINGÜE ─────────────────────────────────────────────
+        function switchTrainingMode(mode) {
+            const guidedSection = document.getElementById('guidedModeSection');
+            const expertSection = document.getElementById('expertModeSection');
+            const tabGuidedBtn = document.getElementById('tabGuidedBtn');
+            const tabExpertBtn = document.getElementById('tabExpertBtn');
+
+            if (mode === 'guided') {
+                guidedSection.style.display = 'block';
+                expertSection.style.display = 'none';
+
+                tabGuidedBtn.className = "flex-1 py-2.5 px-4 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer bg-[color:var(--primary-jade)] text-slate-900 shadow-md";
+                tabExpertBtn.className = "flex-1 py-2.5 px-4 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer text-[color:var(--text-muted)] hover:text-[color:var(--text-main)]";
+            } else {
+                guidedSection.style.display = 'none';
+                expertSection.style.display = 'block';
+
+                tabExpertBtn.className = "flex-1 py-2.5 px-4 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer bg-[color:var(--primary-jade)] text-slate-900 shadow-md";
+                tabGuidedBtn.className = "flex-1 py-2.5 px-4 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer text-[color:var(--text-muted)] hover:text-[color:var(--text-main)]";
+            }
+        }
+
+        function insertGlottal(char) {
+            const input = document.getElementById('expertKicheInput');
+            const start = input.selectionStart !== null ? input.selectionStart : input.value.length;
+            const end = input.selectionEnd !== null ? input.selectionEnd : input.value.length;
+            const text = input.value;
+            input.value = text.substring(0, start) + char + text.substring(end);
+            input.focus();
+            const newPos = start + char.length;
+            input.setSelectionRange(newPos, newPos);
+            checkExpertFormValidity();
+        }
+
+        // ── CONTROL DE FUENTE DE AUDIO Y RECORTADOR (WAVESURFER) ─────────────
+        let wavesurfer = null;
+        let wsRegions = null;
+        let currentRegion = null;
+        let activeRawAudioBuffer = null;
+        let expertAudioBlob = null;
+        let expertAsrRaw = '';
+        let audioSourceMode = 'record'; // 'record' o 'upload'
+
+        function setAudioSourceMode(mode) {
+            audioSourceMode = mode;
+            const recBtn = document.getElementById('audioSourceRecordBtn');
+            const upBtn = document.getElementById('audioSourceUploadBtn');
+            const micContainer = document.getElementById('expertMicContainer');
+            const upContainer = document.getElementById('expertUploadContainer');
+
+            if (mode === 'record') {
+                micContainer.style.display = 'flex';
+                upContainer.style.display = 'none';
+                recBtn.className = "px-3 py-1 rounded-lg text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer bg-[color:var(--primary-jade)] text-slate-900 shadow-sm";
+                upBtn.className = "px-3 py-1 rounded-lg text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer text-[color:var(--text-muted)] hover:text-[color:var(--text-main)]";
+            } else {
+                micContainer.style.display = 'none';
+                upContainer.style.display = 'block';
+                upBtn.className = "px-3 py-1 rounded-lg text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer bg-[color:var(--primary-jade)] text-slate-900 shadow-sm";
+                recBtn.className = "px-3 py-1 rounded-lg text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer text-[color:var(--text-muted)] hover:text-[color:var(--text-main)]";
+            }
+        }
+
+        function styleRegionHandles(region) {
+            if (!region || !region.element) return;
+            try {
+                region.element.style.borderLeft = '4px solid #10B981';
+                region.element.style.borderRight = '4px solid #10B981';
+                region.element.style.borderTop = '2px dashed rgba(16, 185, 129, 0.65)';
+                region.element.style.borderBottom = '2px dashed rgba(16, 185, 129, 0.65)';
+                region.element.style.boxSizing = 'border-box';
+                region.element.style.backgroundColor = 'rgba(16, 185, 129, 0.28)';
+
+                const handles = region.element.querySelectorAll('[part*="region-handle"]');
+                handles.forEach(h => {
+                    h.style.width = '14px';
+                    h.style.background = 'rgba(16, 185, 129, 0.75)';
+                    h.style.cursor = 'col-resize';
+                    h.style.zIndex = '10';
+                    const part = h.getAttribute('part') || '';
+                    if (part.includes('left')) {
+                        h.style.borderLeft = '4px solid #34D399';
+                        h.style.borderRadius = '4px 0 0 4px';
+                    }
+                    if (part.includes('right')) {
+                        h.style.borderRight = '4px solid #34D399';
+                        h.style.borderRadius = '0 4px 4px 0';
+                    }
+                });
+            } catch (e) {
+                console.warn("Estilo inline handles:", e);
+            }
+        }
+
+        function initWaveSurfer() {
+            if (wavesurfer) return;
+            const container = document.getElementById('expertWaveform');
+            if (!container || typeof WaveSurfer === 'undefined') return;
+
+            wavesurfer = WaveSurfer.create({
+                container: '#expertWaveform',
+                waveColor: 'rgba(16, 185, 129, 0.45)',
+                progressColor: '#10B981',
+                cursorColor: '#34D399',
+                cursorWidth: 2,
+                barWidth: 3,
+                barGap: 2,
+                barRadius: 3,
+                height: 80,
+                normalize: true
+            });
+
+            const RegionsClass = (window.WaveSurfer && window.WaveSurfer.Regions) || window.RegionsPlugin;
+            if (RegionsClass && !wsRegions) {
+                wsRegions = wavesurfer.registerPlugin(RegionsClass.create());
+
+                if (typeof wsRegions.enableDragSelection === 'function') {
+                    wsRegions.enableDragSelection({
+                        color: 'rgba(16, 185, 129, 0.28)'
+                    });
+                }
+
+                wsRegions.on('region-created', (region) => {
+                    const all = wsRegions.getRegions();
+                    all.forEach(r => {
+                        if (r !== region) r.remove();
+                    });
+                    currentRegion = region;
+                    styleRegionHandles(region);
+                    updateRegionDisplay(region);
+                });
+
+                wsRegions.on('region-update', (region) => {
+                    currentRegion = region;
+                    styleRegionHandles(region);
+                    updateRegionDisplay(region);
+                });
+
+                wsRegions.on('region-updated', (region) => {
+                    currentRegion = region;
+                    styleRegionHandles(region);
+                    updateRegionDisplay(region);
+                });
+
+                wsRegions.on('region-clicked', (region, e) => {
+                    e.stopPropagation();
+                    currentRegion = region;
+                    styleRegionHandles(region);
+                    updateRegionDisplay(region);
+                });
+            }
+
+            wavesurfer.on('ready', (duration) => {
+                const totalDuration = duration || wavesurfer.getDuration() || 0;
+                const decoded = wavesurfer.getDecodedData();
+                if (decoded) {
+                    activeRawAudioBuffer = decoded;
+                }
+
+                if (wsRegions) {
+                    wsRegions.clearRegions();
+                    currentRegion = wsRegions.addRegion({
+                        start: 0,
+                        end: totalDuration,
+                        color: 'rgba(16, 185, 129, 0.28)',
+                        drag: true,
+                        resize: true
+                    });
+                    styleRegionHandles(currentRegion);
+                    updateRegionDisplay(currentRegion);
+                } else {
+                    updateTimeDisplayDirect(0, totalDuration);
+                }
+            });
+
+            wavesurfer.on('pause', () => {
+                const icon = document.getElementById('playRegionIcon');
+                if (icon) icon.textContent = 'play_arrow';
+            });
+
+            wavesurfer.on('finish', () => {
+                const icon = document.getElementById('playRegionIcon');
+                if (icon) icon.textContent = 'play_arrow';
+            });
+        }
+
+        function formatTimeSeconds(seconds) {
+            if (isNaN(seconds) || seconds === null) return '0.00s';
+            const s = Math.max(0, seconds);
+            return s.toFixed(2) + 's';
+        }
+
+        function updateTimeDisplayDirect(start, end) {
+            const startEl = document.getElementById('regionStartTime');
+            const endEl = document.getElementById('regionEndTime');
+            const durEl = document.getElementById('regionDurationTime');
+            if (startEl) startEl.textContent = formatTimeSeconds(start);
+            if (endEl) endEl.textContent = formatTimeSeconds(end);
+            if (durEl) durEl.textContent = formatTimeSeconds(Math.max(0, end - start));
+        }
+
+        function updateRegionDisplay(region) {
+            if (!region) return;
+            updateTimeDisplayDirect(region.start, region.end);
+        }
+
+        function playWaveformRegion() {
+            if (!wavesurfer) return;
+            const icon = document.getElementById('playRegionIcon');
+            if (wavesurfer.isPlaying()) {
+                wavesurfer.pause();
+                if (icon) icon.textContent = 'play_arrow';
+                return;
+            }
+
+            if (currentRegion && typeof currentRegion.start === 'number' && typeof currentRegion.end === 'number' && currentRegion.end > currentRegion.start) {
+                wavesurfer.play(currentRegion.start, currentRegion.end);
+            } else {
+                wavesurfer.play();
+            }
+            if (icon) icon.textContent = 'pause';
+        }
+
+        function selectAllWaveform() {
+            if (!wavesurfer) return;
+            const duration = wavesurfer.getDuration() || (activeRawAudioBuffer ? activeRawAudioBuffer.duration : 0);
+            if (!duration || duration <= 0) return;
+
+            if (wsRegions) {
+                wsRegions.clearRegions();
+                currentRegion = wsRegions.addRegion({
+                    start: 0,
+                    end: duration,
+                    color: 'rgba(16, 185, 129, 0.28)',
+                    drag: true,
+                    resize: true
+                });
+                styleRegionHandles(currentRegion);
+                updateRegionDisplay(currentRegion);
+            } else {
+                updateTimeDisplayDirect(0, duration);
+            }
+        }
+
+        async function loadAudioIntoWaveSurfer(blobOrFile) {
+            try {
+                initWaveSurfer();
+                document.getElementById('expertWaveformWrapper').style.display = 'block';
+
+                const blobUrl = URL.createObjectURL(blobOrFile);
+                wavesurfer.load(blobUrl);
+
+                // Decodificación de respaldo en background con Web Audio API
+                try {
+                    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    const arrayBuffer = await blobOrFile.arrayBuffer();
+                    audioCtx.decodeAudioData(arrayBuffer, (decoded) => {
+                        activeRawAudioBuffer = decoded;
+                    }, (err) => {
+                        console.warn("Web Audio API decode fallback:", err);
+                    });
+                } catch (e) {
+                    console.warn("AudioContext fallback:", e);
+                }
+
+                setTimeout(() => {
+                    document.getElementById('expertWaveformWrapper').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 150);
+            } catch (err) {
+                console.error("Error cargando audio en WaveSurfer:", err);
+                showToast("❌ No se pudo decodificar el audio: " + err.message);
+            }
+        }
+
+        async function handleExpertFileUpload(file) {
+            if (!file) return;
+            const nameLabel = document.getElementById('uploadedFileName');
+            if (nameLabel) {
+                nameLabel.textContent = `📁 Archivo: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+                nameLabel.style.display = 'block';
+            }
+            await loadAudioIntoWaveSurfer(file);
+        }
+
+        function audioBufferToWav(buffer) {
+            const numOfChan = buffer.numberOfChannels;
+            const length = buffer.length * numOfChan * 2 + 44;
+            const outBuffer = new ArrayBuffer(length);
+            const view = new DataView(outBuffer);
+            const channels = [];
+            const sampleRate = buffer.sampleRate;
+            let offset = 0;
+            let pos = 0;
+
+            function setUint16(data) { view.setUint16(pos, data, true); pos += 2; }
+            function setUint32(data) { view.setUint32(pos, data, true); pos += 4; }
+
+            setUint32(0x46464952); // "RIFF"
+            setUint32(length - 8); // file length - 8
+            setUint32(0x45564157); // "WAVE"
+            setUint32(0x20746d66); // "fmt " chunk
+            setUint32(16); // length = 16
+            setUint16(1); // PCM (uncompressed)
+            setUint16(numOfChan);
+            setUint32(sampleRate);
+            setUint32(sampleRate * 2 * numOfChan); // byte rate
+            setUint16(numOfChan * 2); // block align
+            setUint16(16); // bits per sample
+            setUint32(0x61746164); // "data" chunk
+            setUint32(length - pos - 4); // chunk length
+
+            for (let i = 0; i < buffer.numberOfChannels; i++) {
+                channels.push(buffer.getChannelData(i));
+            }
+
+            while (pos < length) {
+                for (let i = 0; i < numOfChan; i++) {
+                    let sample = Math.max(-1, Math.min(1, channels[i][offset]));
+                    sample = (sample < 0 ? sample * 32768 : sample * 32767) | 0;
+                    view.setInt16(pos, sample, true);
+                    pos += 2;
+                }
+                offset++;
+            }
+
+            return new Blob([outBuffer], { type: 'audio/wav' });
+        }
+
+        function sliceAudioBuffer(audioBuffer, startTime, endTime) {
+            const sampleRate = audioBuffer.sampleRate;
+            const startOffset = Math.max(0, Math.floor(startTime * sampleRate));
+            const endOffset = Math.min(audioBuffer.length, Math.floor(endTime * sampleRate));
+            const frameCount = Math.max(1, endOffset - startOffset);
+
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const slicedBuffer = audioCtx.createBuffer(
+                audioBuffer.numberOfChannels,
+                frameCount,
+                sampleRate
+            );
+
+            for (let channel = 0; channel < audioBuffer.numberOfChannels; channel++) {
+                const fromData = audioBuffer.getChannelData(channel);
+                const toData = slicedBuffer.getChannelData(channel);
+                for (let i = 0; i < frameCount; i++) {
+                    toData[i] = fromData[startOffset + i];
+                }
+            }
+            return slicedBuffer;
+        }
+
+        async function trimAndProcessWithMMS() {
+            if (!activeRawAudioBuffer && wavesurfer) {
+                activeRawAudioBuffer = wavesurfer.getDecodedData();
+            }
+            if (!activeRawAudioBuffer) {
+                showToast("⚠️ Espera un momento a que termine de cargar el audio.");
+                return;
+            }
+
+            const totalDuration = wavesurfer ? (wavesurfer.getDuration() || activeRawAudioBuffer.duration) : activeRawAudioBuffer.duration;
+            const start = (currentRegion && typeof currentRegion.start === 'number') ? Math.max(0, currentRegion.start) : 0;
+            const end = (currentRegion && typeof currentRegion.end === 'number' && currentRegion.end > start) ? Math.min(totalDuration, currentRegion.end) : totalDuration;
+
+            if (end <= start) {
+                showToast("⚠️ La región de recorte debe durar más de 0 segundos.");
+                return;
+            }
+
+            const btn = document.getElementById('btnTrimAndProcess');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="material-symbols-outlined text-[1rem] animate-spin">refresh</span> Procesando con MMS...';
+
+            try {
+                const slicedBuffer = sliceAudioBuffer(
+                    activeRawAudioBuffer,
+                    start,
+                    end
+                );
+                expertAudioBlob = audioBufferToWav(slicedBuffer);
+
+                // Actualizar reproductor de preview con el audio recortado
+                const audioUrl = URL.createObjectURL(expertAudioBlob);
+                const player = document.getElementById('expertAudioPlayer');
+                player.src = audioUrl;
+                document.getElementById('expertAudioPreviewContainer').style.display = 'block';
+
+                // Consultar modelo MMS
+                const asrBox = document.getElementById('expertAsrText');
+                if (asrBox) asrBox.innerHTML = '<span class="inline-flex items-center gap-1.5"><span class="material-symbols-outlined text-[1rem] animate-spin">refresh</span> Analizando lo que escuchó MMS...</span>';
+
+                const asrFd = new FormData();
+                asrFd.append('audio', expertAudioBlob, 'expert_trimmed.wav');
+                const res = await fetch('/translate', { method: 'POST', body: asrFd });
+                if (res.ok) {
+                    const data = await res.json();
+                    expertAsrRaw = data.transcription || '(sin voz detectada)';
+                    if (asrBox) asrBox.textContent = expertAsrRaw;
+                    showToast(`✂️ Audio recortado (${(end - start).toFixed(2)}s) y evaluado por MMS`);
+                } else {
+                    expertAsrRaw = '(sin transcripción)';
+                    if (asrBox) asrBox.textContent = expertAsrRaw;
+                }
+                checkExpertFormValidity();
+            } catch (err) {
+                console.error("Error al recortar:", err);
+                showToast("❌ Error al recortar: " + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span class="material-symbols-outlined text-[1.1rem]">content_cut</span> Recortar y Enviar a MMS';
+            }
+        }
+
+        // ── GRABACIÓN DE VOZ EXPERTO ─────────────────────────────────────────
+        let isExpertRecording = false;
+        let expertMediaRecorder = null;
+        let expertMediaStream = null;
+        let expertAudioChunks = [];
+
+        const expertMicBtn = document.getElementById('expertMicBtn');
+        const expertMicStatus = document.getElementById('expertMicStatus');
+        const expertMicIcon = document.getElementById('expertMicIcon');
+
+        let expertIsHolding = false;
+
+        expertMicBtn.addEventListener('mousedown', async (e) => {
+            e.preventDefault();
+            expertIsHolding = true;
+            if (!isExpertRecording) {
+                await startExpertRecording();
+            }
+        });
+
+        expertMicBtn.addEventListener('touchstart', async (e) => {
+            e.preventDefault();
+            expertIsHolding = true;
+            if (!isExpertRecording) {
+                await startExpertRecording();
+            }
+        }, { passive: false });
+
+        window.addEventListener('mouseup', () => {
+            if (isExpertRecording && expertIsHolding) {
+                stopExpertRecording();
+                expertIsHolding = false;
+            }
+        });
+
+        window.addEventListener('touchend', () => {
+            if (isExpertRecording && expertIsHolding) {
+                stopExpertRecording();
+                expertIsHolding = false;
+            }
+        });
+
+        async function startExpertRecording() {
+            expertAudioChunks = [];
+            expertAudioBlob = null;
+            expertAsrRaw = '';
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                expertMediaStream = stream;
+                expertMediaRecorder = new MediaRecorder(stream);
+                expertMediaRecorder.ondataavailable = e => {
+                    if (e.data.size > 0) expertAudioChunks.push(e.data);
+                };
+                expertMediaRecorder.start();
+                isExpertRecording = true;
+                expertMicBtn.classList.add('recording');
+                if (expertMicIcon) expertMicIcon.textContent = 'stop';
+                expertMicStatus.textContent = '🔴 Grabando tu voz... (suelta para finalizar)';
+                document.getElementById('expertWaveformWrapper').style.display = 'none';
+                document.getElementById('expertAudioPreviewContainer').style.display = 'none';
+                checkExpertFormValidity();
+            } catch (err) {
+                console.error("Error micrófono experto:", err);
+                expertMicStatus.textContent = '❌ Error al acceder al micrófono: ' + err.message;
+            }
+        }
+
+        function stopExpertRecording() {
+            if (!isExpertRecording) return;
+            isExpertRecording = false;
+            expertMicBtn.classList.remove('recording');
+            if (expertMicIcon) expertMicIcon.textContent = 'mic';
+            expertMicStatus.textContent = 'Cargando espectro para recorte...';
+
+            if (expertMediaRecorder && expertMediaRecorder.state !== 'inactive') {
+                expertMediaRecorder.onstop = async () => {
+                    if (expertMediaStream) expertMediaStream.getTracks().forEach(t => t.stop());
+                    const rawBlob = new Blob(expertAudioChunks, { type: 'audio/webm' });
+                    expertMicStatus.textContent = '✅ Grabación lista. Puedes recortarla abajo antes de guardar.';
+                    await loadAudioIntoWaveSurfer(rawBlob);
+                };
+                expertMediaRecorder.stop();
+            } else {
+                if (expertMediaStream) expertMediaStream.getTracks().forEach(t => t.stop());
+            }
+        }
+
+        function resetExpertAudio() {
+            expertAudioBlob = null;
+            expertAudioChunks = [];
+            expertAsrRaw = '';
+            activeRawAudioBuffer = null;
+
+            if (wavesurfer) {
+                wavesurfer.stop();
+                if (wsRegions) wsRegions.clearRegions();
+            }
+            currentRegion = null;
+            updateTimeDisplayDirect(0, 0);
+
+            const waveformWrapper = document.getElementById('expertWaveformWrapper');
+            if (waveformWrapper) waveformWrapper.style.display = 'none';
+
+            const container = document.getElementById('expertAudioPreviewContainer');
+            if (container) container.style.display = 'none';
+
+            const asrBox = document.getElementById('expertAsrText');
+            if (asrBox) asrBox.textContent = '—';
+
+            const player = document.getElementById('expertAudioPlayer');
+            if (player) {
+                player.pause();
+                player.src = '';
+            }
+
+            const fileInput = document.getElementById('expertFileInput');
+            if (fileInput) fileInput.value = '';
+
+            const nameLabel = document.getElementById('uploadedFileName');
+            if (nameLabel) {
+                nameLabel.textContent = '';
+                nameLabel.style.display = 'none';
+            }
+
+            if (expertMicStatus) expertMicStatus.textContent = 'Toca o mantén presionado para grabar';
+            if (expertMicBtn) expertMicBtn.classList.remove('recording');
+            if (expertMicIcon) expertMicIcon.textContent = 'mic';
+
+            checkExpertFormValidity();
+        }
+
+        function checkExpertFormValidity() {
+            const spanish = document.getElementById('expertSpanishInput').value.trim();
+            const kiche = document.getElementById('expertKicheInput').value.trim();
+            const btn = document.getElementById('saveExpertBtn');
+            if (spanish && kiche && expertAudioBlob) {
+                btn.disabled = false;
+            } else {
+                btn.disabled = true;
+            }
+        }
+
+        function resetExpertForm() {
+            document.getElementById('expertSpanishInput').value = '';
+            document.getElementById('expertKicheInput').value = '';
+            resetExpertAudio();
+            checkExpertFormValidity();
+        }
+
+        async function saveExpertSample() {
+            const spanish = document.getElementById('expertSpanishInput').value.trim();
+            const kiche = document.getElementById('expertKicheInput').value.trim();
+            if (!spanish || !kiche || !expertAudioBlob) {
+                showToast('⚠️ Ingresa la frase en español, en K\'iche\' y procesa el audio con MMS.');
+                return;
+            }
+
+            const btn = document.getElementById('saveExpertBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="material-symbols-outlined text-[1.1rem] animate-spin">refresh</span> Guardando en el dataset...';
+
+            const fd = new FormData();
+            fd.append('audio', expertAudioBlob, 'expert_sample.wav');
+            fd.append('correct_text', kiche);
+            fd.append('spanish_text', spanish);
+            // Mandamos lo que escuchó el modelo MMS a asr_raw, o el fallback si no hubo transcripción
+            fd.append('asr_raw', expertAsrRaw || `[Experto] ${spanish}`);
+
+            try {
+                const res = await fetch('/save-training-sample', { method: 'POST', body: fd });
+                const data = await res.json();
+                if (data.status === 'saved') {
+                    showToast(`✅ Grabación #${data.total} guardada con éxito`);
+                    savedSamples.push({ num: data.total, text: kiche, file: data.file });
+                    updateProgress(data.total);
+                    renderSamples();
+                    resetExpertForm();
+                    
+                    // Desplazarse suavemente a la tarjeta de progreso
+                    const progressCard = document.querySelector('.progress-circle');
+                    if (progressCard) progressCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                } else {
+                    showToast('❌ ' + (data.error || 'Error al guardar'));
+                }
+            } catch (err) {
+                console.error("Error guardando muestra experta:", err);
+                showToast('❌ Error de conexión al guardar');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span class="material-symbols-outlined text-[1.1rem]">cloud_upload</span> Guardar Frase y Audio en el Dataset';
+                checkExpertFormValidity();
+            }
+        }
+
         // ── PROGRESS ─────────────────────────────────────────────────────────
         function updateProgress(count) {
             document.getElementById('countNum').textContent = count;
@@ -641,22 +1567,255 @@
             setTimeout(() => t.classList.remove('show'), 2500);
         }
 
-        // ── WAV ENCODER ───────────────────────────────────────────────────────
-        function encodeWAV(samples, sampleRate) {
-            const buf = new ArrayBuffer(44 + samples.length * 2);
-            const view = new DataView(buf);
-            const ws = (o, s) => { for (let i = 0; i < s.length; i++) view.setUint8(o + i, s.charCodeAt(i)); };
-            ws(0, 'RIFF'); view.setUint32(4, 36 + samples.length * 2, true); ws(8, 'WAVE');
-            ws(12, 'fmt '); view.setUint32(16, 16, true); view.setUint16(20, 1, true);
-            view.setUint16(22, 1, true); view.setUint32(24, sampleRate, true);
-            view.setUint32(28, sampleRate * 2, true); view.setUint16(32, 2, true);
-            view.setUint16(34, 16, true); ws(36, 'data'); view.setUint32(40, samples.length * 2, true);
-            let off = 44;
-            for (let i = 0; i < samples.length; i++, off += 2) {
-                const s = Math.max(-1, Math.min(1, samples[i]));
-                view.setInt16(off, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+        // ── MANAGER MODAL ─────────────────────────────────────────────────────
+        const managerModal = document.getElementById('managerModal');
+        const managerModalContent = document.getElementById('managerModalContent');
+        const managerTableBody = document.getElementById('managerTableBody');
+        const managerLoading = document.getElementById('managerLoading');
+
+        function openManagerModal() {
+            managerModal.classList.remove('opacity-0', 'pointer-events-none');
+            managerModalContent.classList.remove('scale-95');
+            loadManagerData();
+        }
+
+        function closeManagerModal() {
+            managerModal.classList.add('opacity-0', 'pointer-events-none');
+            managerModalContent.classList.add('scale-95');
+        }
+
+        async function loadManagerData() {
+            managerLoading.classList.remove('hidden');
+            try {
+                const res = await fetch('/api/training-samples');
+                const data = await res.json();
+                renderManagerTable(data);
+            } catch (err) {
+                console.error("Error loading dataset:", err);
+                showToast("Error al cargar el dataset");
+            } finally {
+                managerLoading.classList.add('hidden');
             }
-            return view;
+        }
+
+        function renderManagerTable(samples) {
+            if (!samples || samples.length === 0) {
+                managerTableBody.innerHTML = '<tr><td colspan="4" class="py-8 text-center text-[color:var(--text-muted)]">No hay grabaciones en el dataset.</td></tr>';
+                return;
+            }
+            // Reverse so newest are on top
+            const html = samples.reverse().map(s => {
+                // Generar un ID único basado en el nombre de archivo
+                const safeId = s.file_name.replace(/[^a-zA-Z0-9]/g, '_');
+                return `
+                <tr class="hover:bg-black/5 transition-colors group" id="row-${safeId}">
+                    <td class="py-3 px-4 text-xs font-mono text-slate-500 whitespace-nowrap">${s.file_name.split('/').pop()}</td>
+                    <td class="py-3 px-4">
+                        <button onclick="playAudio('${s.file_name.replace('audio/', '')}')" class="text-[color:var(--primary-jade)] hover:text-emerald-400 cursor-pointer p-1 rounded-full hover:bg-emerald-500/10">
+                            <span class="material-symbols-outlined text-[1.4rem]">play_circle</span>
+                        </button>
+                    </td>
+                    <td class="py-3 px-4">
+                        <div class="relative">
+                            <input type="text" id="input-${safeId}" value="${s.transcription.replace(/"/g, '&quot;')}" 
+                                class="w-full bg-transparent border-b border-transparent focus:border-[color:var(--primary-jade)] focus:bg-[color:var(--input-bg)] px-2 py-1 outline-none transition-all"
+                                onchange="showSaveButton('${safeId}')" onkeyup="showSaveButton('${safeId}')" />
+                            <div class="text-[10px] text-slate-400 mt-1 pl-2">ASR: ${s.asr_raw || '-'}</div>
+                        </div>
+                    </td>
+                    <td class="py-3 px-4 text-right">
+                        <div class="flex items-center justify-end gap-2">
+                            <button id="saveBtn-${safeId}" onclick="updateSample('${s.file_name}', '${safeId}')" class="hidden items-center gap-1 text-xs px-2 py-1 rounded bg-emerald-500/20 text-[color:var(--primary-jade)] hover:bg-emerald-500/30 cursor-pointer transition-colors">
+                                <span class="material-symbols-outlined text-[1rem]">save</span> Guardar
+                            </button>
+                            <button onclick="deleteSample('${s.file_name}', '${safeId}')" class="items-center gap-1 text-xs px-2 py-1 rounded border border-red-500/30 text-red-500 hover:bg-red-500/10 cursor-pointer transition-colors opacity-50 group-hover:opacity-100 flex">
+                                <span class="material-symbols-outlined text-[1rem]">delete</span>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                `;
+            }).join('');
+            managerTableBody.innerHTML = html;
+        }
+
+        function showSaveButton(safeId) {
+            const btn = document.getElementById(`saveBtn-${safeId}`);
+            if (btn) {
+                btn.style.display = 'inline-flex';
+            }
+        }
+
+        async function updateSample(fileName, safeId) {
+            const input = document.getElementById(`input-${safeId}`);
+            const btn = document.getElementById(`saveBtn-${safeId}`);
+            if (!input) return;
+            const newTranscription = input.value.trim();
+            if (!newTranscription) {
+                showToast("La transcripción no puede estar vacía");
+                return;
+            }
+            
+            btn.innerHTML = '<span class="material-symbols-outlined text-[1rem] animate-spin">sync</span>';
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/update-training-sample', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ file_name: fileName, transcription: newTranscription })
+                });
+                
+                if (res.ok) {
+                    showToast("¡Actualizado y guardado en S3!");
+                    btn.style.display = 'none'; // hide until changed again
+                } else {
+                    const data = await res.json();
+                    showToast("Error: " + (data.error || "Desconocido"));
+                }
+            } catch (err) {
+                showToast("Error de conexión");
+            } finally {
+                btn.innerHTML = '<span class="material-symbols-outlined text-[1rem]">save</span> Guardar';
+                btn.disabled = false;
+            }
+        }
+
+        async function deleteSample(fileName, safeId) {
+            if (!confirm(`¿Seguro que quieres eliminar la grabación ${fileName}? Esto la borrará del servidor y de S3 permanentemente.`)) {
+                return;
+            }
+            
+            try {
+                const res = await fetch('/api/delete-training-sample', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ file_name: fileName })
+                });
+                
+                if (res.ok) {
+                    showToast("Grabación eliminada");
+                    const row = document.getElementById(`row-${safeId}`);
+                    if (row) row.remove();
+                    // Update global count
+                    fetch('/training-stats').then(r => r.json()).then(d => updateProgress(d.total_samples));
+                } else {
+                    const data = await res.json();
+                    showToast("Error: " + (data.error || "Desconocido"));
+                }
+            } catch (err) {
+                showToast("Error de conexión");
+            }
+        }
+
+        // ── EXPORT DATASET (LIQUID GLASS) ─────────────────────────────────────
+        const exportModal = document.getElementById('exportModal');
+        const exportModalContent = document.getElementById('exportModalContent');
+        const exportStatusText = document.getElementById('exportStatusText');
+        const exportCountText = document.getElementById('exportCountText');
+        const exportPctText = document.getElementById('exportPctText');
+        const exportProgressBar = document.getElementById('exportProgressBar');
+        const cancelExportBtn = document.getElementById('cancelExportBtn');
+        
+        let currentExportTaskId = null;
+        let exportPollInterval = null;
+
+        async function startExport() {
+            // Open modal
+            exportModal.classList.remove('opacity-0', 'pointer-events-none');
+            exportModalContent.classList.remove('scale-95');
+            exportProgressBar.style.width = '0%';
+            exportPctText.innerText = '0%';
+            exportCountText.innerText = 'Iniciando...';
+            exportStatusText.innerText = 'Conectando con S3...';
+            cancelExportBtn.disabled = false;
+            cancelExportBtn.style.opacity = '1';
+
+            try {
+                const res = await fetch('/api/start-export', { method: 'POST' });
+                const data = await res.json();
+                if (data.task_id) {
+                    currentExportTaskId = data.task_id;
+                    exportPollInterval = setInterval(pollExportProgress, 500);
+                } else {
+                    closeExportModal();
+                    showToast("Error al iniciar exportación");
+                }
+            } catch (err) {
+                closeExportModal();
+                showToast("Error de conexión");
+            }
+        }
+
+        async function pollExportProgress() {
+            if (!currentExportTaskId) return;
+            try {
+                const res = await fetch(`/api/export-progress/${currentExportTaskId}`);
+                const data = await res.json();
+                
+                if (data.error) {
+                    clearInterval(exportPollInterval);
+                    closeExportModal();
+                    showToast("Error: " + data.error);
+                    return;
+                }
+
+                exportStatusText.innerText = data.status;
+                const total = Math.max(data.total, 1);
+                const progress = data.progress;
+                let pct = Math.floor((progress / total) * 100);
+                if (pct > 100) pct = 100;
+                
+                exportProgressBar.style.width = `${pct}%`;
+                exportPctText.innerText = `${pct}%`;
+                if (progress > 0) {
+                    exportCountText.innerText = `${progress} / ${total} archivos`;
+                }
+
+                if (data.status === 'Done') {
+                    clearInterval(exportPollInterval);
+                    exportStatusText.innerText = '¡Descarga lista!';
+                    cancelExportBtn.disabled = true;
+                    cancelExportBtn.style.opacity = '0.5';
+                    
+                    // Trigger download
+                    window.location.href = `/download-export/${currentExportTaskId}`;
+                    
+                    setTimeout(() => {
+                        closeExportModal();
+                    }, 2000);
+                } else if (data.status.startsWith('Error')) {
+                    clearInterval(exportPollInterval);
+                    showToast(data.status);
+                    setTimeout(closeExportModal, 2000);
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function cancelExport() {
+            if (!currentExportTaskId) return;
+            cancelExportBtn.disabled = true;
+            exportStatusText.innerText = 'Cancelando...';
+            try {
+                await fetch(`/api/cancel-export/${currentExportTaskId}`, { method: 'POST' });
+                clearInterval(exportPollInterval);
+                setTimeout(() => {
+                    closeExportModal();
+                    showToast("Descarga cancelada");
+                }, 500);
+            } catch (err) {
+                console.error(err);
+                closeExportModal();
+            }
+        }
+
+        function closeExportModal() {
+            exportModal.classList.add('opacity-0', 'pointer-events-none');
+            exportModalContent.classList.add('scale-95');
+            if (exportPollInterval) clearInterval(exportPollInterval);
+            currentExportTaskId = null;
         }
 
         // ── INIT ──────────────────────────────────────────────────────────────

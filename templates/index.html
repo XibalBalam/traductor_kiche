@@ -476,7 +476,7 @@
         // ── STATE ──────────────────────────────────────────────────────────
         let currentMode = 'kiche-es'; // 'kiche-es' or 'es-kiche'
         let isRecording = false;
-        let audioContext, mediaStream, processor, inputNode, audioData = [];
+        let mediaRecorder = null, mediaStream = null, audioChunks = [];
         let recognition = null;
         let lastSpanishText = '';
         let sessionTranslations = []; // Almacena el historial de síntomas traducidos
@@ -697,7 +697,7 @@
         // ── MODE: K'ICHE' → ES (WAV via MMS server) ───────────────────────
         async function startKicheRecording() {
             try {
-                audioData = [];
+                audioChunks = [];
                 // Desactivar filtros del navegador que destruyen los saltillos (q', k') del K'iche'
                 const stream = await navigator.mediaDevices.getUserMedia({ 
                     audio: {
@@ -707,14 +707,11 @@
                     } 
                 });
                 mediaStream = stream;
-                audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
-                inputNode = audioContext.createMediaStreamSource(stream);
-                processor = audioContext.createScriptProcessor(4096, 1, 1);
-                processor.onaudioprocess = e => {
-                    audioData.push(new Float32Array(e.inputBuffer.getChannelData(0)));
+                mediaRecorder = new MediaRecorder(stream);
+                mediaRecorder.ondataavailable = e => {
+                    if (e.data.size > 0) audioChunks.push(e.data);
                 };
-                inputNode.connect(processor);
-                processor.connect(audioContext.destination);
+                mediaRecorder.start();
 
                 isRecording = true;
                 micBtn.classList.add('recording');
@@ -731,22 +728,23 @@
             isRecording = false;
             micBtn.classList.remove('recording');
             statusEl.textContent = "Procesando con modelo MMS...";
-            if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
-            if (inputNode) inputNode.disconnect();
-            if (processor) processor.disconnect();
-            if (audioContext) audioContext.close();
-            sendKicheAudio();
+            
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.onstop = () => {
+                    if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
+                    sendKicheAudio();
+                };
+                mediaRecorder.stop();
+            } else {
+                if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
+            }
         }
 
         async function sendKicheAudio() {
-            const len = audioData.reduce((a, b) => a + b.length, 0);
-            const samples = new Float32Array(len);
-            let offset = 0;
-            for (const buf of audioData) { samples.set(buf, offset); offset += buf.length; }
-
-            const wavBlob = new Blob([encodeWAV(samples, audioContext ? audioContext.sampleRate : 44100)], { type: 'audio/wav' });
+            const audioBlob = new Blob(audioChunks);
             const formData = new FormData();
-            formData.append("audio", wavBlob);
+            formData.append("audio", audioBlob, "audio_capture");
+
 
             progressContainer.style.display = 'block';
             simulateProgress();
@@ -958,24 +956,7 @@
             }
         }
 
-        // ── WAV ENCODING UTILS ─────────────────────────────────────────────
-        function encodeWAV(samples, sampleRate) {
-            const buf = new ArrayBuffer(44 + samples.length * 2);
-            const view = new DataView(buf);
-            const ws = (off, str) => { for (let i = 0; i < str.length; i++) view.setUint8(off + i, str.charCodeAt(i)); };
-            ws(0, 'RIFF'); view.setUint32(4, 36 + samples.length * 2, true); ws(8, 'WAVE');
-            ws(12, 'fmt '); view.setUint32(16, 16, true); view.setUint16(20, 1, true);
-            view.setUint16(22, 1, true); view.setUint32(24, sampleRate, true);
-            view.setUint32(28, sampleRate * 2, true); view.setUint16(32, 2, true);
-            view.setUint16(34, 16, true); ws(36, 'data'); view.setUint32(40, samples.length * 2, true);
-            let off = 44;
-            for (let i = 0; i < samples.length; i++, off += 2) {
-                const s = Math.max(-1, Math.min(1, samples[i]));
-                view.setInt16(off, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
-            }
-            return view;
-        }
-
+        // ── UTILS ─────────────────────────────────────────────
         function simulateProgress() {
             let w = 0;
             const iv = setInterval(() => {

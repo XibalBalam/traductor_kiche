@@ -614,22 +614,84 @@ def sync_file_to_s3(filepath, filename):
 
 # ── MEDICAL DICTIONARY ─────────────────────────────────────────────────────────
 DICT_PATH = os.path.join(os.path.dirname(__file__), 'medical_dictionary.json')
+ESCRITURA_CSV = os.path.join(os.path.dirname(__file__), 'escritura_dataset.csv')
 _medical_dict = {}  # flat key → translation
+_es_to_kiche_dict = {} # flat spanish -> kiche
 
 def load_medical_dict():
-    global _medical_dict
+    global _medical_dict, _es_to_kiche_dict
     if not os.path.exists(DICT_PATH):
         return
     with open(DICT_PATH, encoding='utf-8-sig') as f:
         raw = json.load(f)
     flat = {}
+    es_to_kiche = {}
+    
+    # Add from main dictionary
     for section, entries in raw.items():
-        if section.startswith('_'):
+        if section.startswith('_') and section != '_escritura_aprobada':
             continue
         for kiche, spanish in entries.items():
-            flat[kiche.lower()] = spanish
+            if not section.startswith('_'):
+                flat[kiche.lower()] = spanish
+            
+            # Prepare reverse lookup
+            base_esp = spanish.split('(')[0].strip().lower()
+            if base_esp and base_esp not in es_to_kiche:
+                es_to_kiche[base_esp] = kiche
+            if '/' in base_esp:
+                for p in base_esp.split('/'):
+                    p = p.strip()
+                    if p and p not in es_to_kiche:
+                        es_to_kiche[p] = kiche
+                        
+    # Add from escritura_dataset if exists
+    if os.path.exists(ESCRITURA_CSV):
+        import csv
+        with open(ESCRITURA_CSV, encoding='utf-8') as f:
+            reader = csv.reader(f)
+            next(reader, None)
+            for r in reader:
+                if len(r) >= 2:
+                    esp, kich = r[0].split('(')[0].strip().lower(), r[1].strip()
+                    if esp and esp not in es_to_kiche:
+                        es_to_kiche[esp] = kich
+                        
     _medical_dict = flat
-    print(f"[Dict] Loaded {len(_medical_dict)} medical entries.")
+    _es_to_kiche_dict = es_to_kiche
+    print(f"[Dict] Loaded {len(_medical_dict)} medical entries. Reverse entries: {len(_es_to_kiche_dict)}")
+
+def load_audio_file(filepath, target_sr=16000):
+    """Load any audio file (.wav, .webm, etc.) cleanly into 16kHz mono float32 numpy array."""
+    import numpy as np
+    try:
+        import soundfile as sf
+        data, sr = sf.read(filepath)
+        if data.ndim > 1:
+            data = np.mean(data, axis=1)
+        if sr != target_sr:
+            data = librosa.resample(data.astype(np.float32), orig_sr=sr, target_sr=target_sr)
+        return data.astype(np.float32)
+    except Exception:
+        pass
+    
+    try:
+        import av
+        container = av.open(filepath)
+        resampler = av.AudioResampler(format='fltp', layout='mono', rate=target_sr)
+        audio_frames = []
+        for frame in container.decode(audio=0):
+            frame.pts = None
+            resampled_frames = resampler.resample(frame)
+            for rf in resampled_frames:
+                audio_frames.append(rf.to_ndarray())
+        if audio_frames:
+            return np.concatenate(audio_frames, axis=1).squeeze(0)
+    except Exception:
+        pass
+        
+    data, _ = librosa.load(filepath, sr=target_sr)
+    return data
 
 # ── NORMALIZATION RULES ────────────────────────────────────────────────────────
 RULES_PATH = os.path.join(os.path.dirname(__file__), 'normalization_rules.json')
@@ -664,11 +726,21 @@ sync_file_from_s3('training_data/metadata.csv', TRAINING_CSV)
 load_medical_dict()
 load_normalization_rules()
 
+import re
+
 def apply_normalization_rules(text):
     if not text: return text
-    words = text.split()
-    normalized_words = [NORMALIZATION_RULES.get(w.lower(), w) for w in words]
-    return ' '.join(normalized_words)
+    
+    # Ordenar reglas por longitud descendente para aplicar frases largas primero
+    sorted_rules = sorted(NORMALIZATION_RULES.items(), key=lambda x: len(x[0]), reverse=True)
+    
+    for bad_text, good_text in sorted_rules:
+        # Usar lookarounds (?<!\w) y (?!\w) asegura que solo reemplace palabras completas o frases,
+        # sin afectar letras en el interior de otras palabras.
+        pattern = re.compile(r'(?<!\w)' + re.escape(bad_text) + r'(?!\w)', re.IGNORECASE)
+        text = pattern.sub(good_text, text)
+            
+    return ' '.join(text.split())
 
 def _normalize(text):
     """Normalize K'iche' text for dictionary matching.
@@ -719,9 +791,7 @@ def to_almg_display(text):
     text = text.replace("<unk>", "'")
     text = text.replace("c'", "k'")
 
-    # 4. kꞌ → q'  only when followed by a vowel (glottalized q/uvular)
-    text = re.sub(r"k'([aeiou])", r"q'\1", text)
-
+    # (La regla que convertía k' a q' ciegamente se ha eliminado porque arruinaba palabras como k'ax)
     # 5. Capitalize first letter
     if text:
         text = text[0].upper() + text[1:]
@@ -793,7 +863,7 @@ def translate_kiche_to_spanish(text):
     print(f"[NLLB] '{text}' not in dictionary, using NLLB API...")
     if not HF_TOKEN:
         print("[NLLB] No token, skipping NLLB.")
-        return f"[Sin traducción: {text}]"
+        return f"[Sin traducción en diccionario: {text}]"
     headers = {
         "Authorization": f"Bearer {HF_TOKEN}",
         "Content-Type": "application/json"
@@ -814,22 +884,53 @@ def translate_kiche_to_spanish(text):
                 return result[0].get('translation_text', text)
             elif isinstance(result, dict) and 'translation_text' in result:
                 return result['translation_text']
-        # Any error → fallback
-        print(f"[NLLB] Non-200 response, falling back.")
-        fallback_text = GoogleTranslator(source='auto', target='es').translate(text)
-        if "Error 500" in fallback_text or "That’s an error" in fallback_text or "<html" in fallback_text.lower():
-            raise Exception("El servicio de traducción no está disponible temporalmente.")
-        return fallback_text
+                
+        # API Error, return friendly message instead of 500
+        print(f"[NLLB] Non-200 response, returning fallback message.")
+        return f"[Sin traducción en diccionario: {text}]"
     except Exception as e:
         print(f"[NLLB] Exception: {e}")
-        try:
-            fallback_text = GoogleTranslator(source='auto', target='es').translate(text)
-            if "Error 500" in fallback_text or "That’s an error" in fallback_text or "<html" in fallback_text.lower():
-                raise Exception("El servicio de traducción no está disponible temporalmente.")
-            return fallback_text
-        except:
-            raise Exception("El servicio de traducción falló (Error 500).")
+        return f"[Sin traducción en diccionario: {text}]"
 
+
+def translate_spanish_to_kiche(spanish_text):
+    """Translate Spanish → K'iche' using reverse dictionary and fuzzy matching."""
+    if not spanish_text or not spanish_text.strip():
+        return spanish_text
+        
+    def strip_accents(text):
+        text = text.lower().strip()
+        text = unicodedata.normalize('NFD', text)
+        return ''.join(c for c in text if unicodedata.category(c) != 'Mn')
+        
+    norm_input = strip_accents(spanish_text)
+    
+    # 1. Exact or normalized match
+    if norm_input in _es_to_kiche_dict:
+        return _es_to_kiche_dict[norm_input]
+        
+    # 2. Partial / Word overlap match
+    best_match = None
+    best_score = 0
+    for k, v in _es_to_kiche_dict.items():
+        if k and f" {k} " in f" {norm_input} ":
+            score = len(k.split())
+            if score > best_score:
+                best_score = score
+                best_match = v
+    if best_match:
+        return best_match
+        
+    # 3. Fuzzy match (Levenshtein) via rapidfuzz
+    try:
+        match_key, score, _ = rapidfuzz.process.extractOne(norm_input, _es_to_kiche_dict.keys(), scorer=rapidfuzz.fuzz.ratio)
+        # Require higher score for Spanish->Kiche to avoid wrong medical translations
+        if score >= 82:
+            return _es_to_kiche_dict[match_key]
+    except Exception as e:
+        print(f"[RapidFuzz es->kiche] Error: {e}")
+        
+    return f"[Sin traducción: '{spanish_text}']"
 
 
 UPLOAD_FOLDER = 'uploads'
@@ -934,13 +1035,13 @@ def translate():
         return jsonify({'error': 'No audio file provided'}), 400
     
     audio_file = request.files['audio']
-    filename = f"{uuid.uuid4()}.wav"
+    filename = f"{uuid.uuid4()}.webm"
     filepath = os.path.join(UPLOAD_FOLDER, filename)
     audio_file.save(filepath)
     
     try:
-        # ASR
-        audio_input, _ = librosa.load(filepath, sr=16000)
+        # ASR using load_audio_file to handle WAV and WEBM robustly
+        audio_input = load_audio_file(filepath, target_sr=16000)
         
         # Eliminar silencios al principio y al final para evitar alucinaciones (q'axax...)
         audio_input, _ = librosa.effects.trim(audio_input, top_db=30)
@@ -966,6 +1067,7 @@ def translate():
         
         # Convert raw ASR output to ALMG standard K'iche' for display
         display_transcription = to_almg_display(transcription)
+        display_transcription = apply_normalization_rules(display_transcription)
 
         if not transcription:
             return jsonify({
@@ -974,22 +1076,28 @@ def translate():
                 'audio_url': None
             })
 
-        # Translation using NLLB-200 (proper K'iche' support)
+        # Translation using Dict / NLLB-200 / Fallback
         translation = translate_kiche_to_spanish(display_transcription)
         
-        # TTS
-        output_filename = f"{uuid.uuid4()}.mp3"
-        output_path = os.path.join(OUTPUT_FOLDER, output_filename)
-        tts = gTTS(text=translation, lang='es')
-        tts.save(output_path)
-        
+        # TTS - always wrap in try-except so failure doesn't break transcription
+        audio_url = None
+        try:
+            output_filename = f"{uuid.uuid4()}.mp3"
+            output_path = os.path.join(OUTPUT_FOLDER, output_filename)
+            tts = gTTS(text=translation, lang='es')
+            tts.save(output_path)
+            audio_url = f"/audio/{output_filename}"
+        except Exception as e:
+            print(f"[TTS Español] Error: {e}")
+            
         return jsonify({
             'transcription': display_transcription,
             'translation': translation,
-            'audio_url': f"/audio/{output_filename}"
+            'audio_url': audio_url
         })
         
     except Exception as e:
+        print(f"[/translate] Fatal Error: {e}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/audio/<filename>')
@@ -1003,7 +1111,7 @@ def get_training_audio(filepath):
 @app.route('/reload-dict')
 def reload_dict():
     load_medical_dict()
-    return jsonify({'status': 'ok', 'entries': len(_medical_dict)})
+    return jsonify({'status': 'ok', 'entries': len(_medical_dict), 'reverse_entries': len(_es_to_kiche_dict)})
 
 @app.route('/translate-text', methods=['POST'])
 def translate_text():
@@ -1014,17 +1122,25 @@ def translate_text():
     if not text:
         return jsonify({'error': 'Empty text'}), 400
     try:
-        # Use NLLB for K'iche'→Spanish retranslation
+        # Use Dict/NLLB for K'iche'→Spanish retranslation
         translation = translate_kiche_to_spanish(text)
-        output_filename = f"{uuid.uuid4()}.mp3"
-        output_path = os.path.join(OUTPUT_FOLDER, output_filename)
-        tts = gTTS(text=translation, lang='es')
-        tts.save(output_path)
+        
+        audio_url = None
+        try:
+            output_filename = f"{uuid.uuid4()}.mp3"
+            output_path = os.path.join(OUTPUT_FOLDER, output_filename)
+            tts = gTTS(text=translation, lang='es')
+            tts.save(output_path)
+            audio_url = f"/audio/{output_filename}"
+        except Exception as e:
+            print(f"[TTS Español text] Error: {e}")
+            
         return jsonify({
             'translation': translation,
-            'audio_url': f"/audio/{output_filename}"
+            'audio_url': audio_url
         })
     except Exception as e:
+        print(f"[/translate-text] Error: {e}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/translate-to-kiche', methods=['POST'])
@@ -1038,34 +1154,34 @@ def translate_to_kiche():
         return jsonify({'error': 'Empty text'}), 400
 
     try:
-        translator = GoogleTranslator(source='es', target='qu')
-        kiche_translation = translator.translate(spanish_text)
-        
-        if "Error 500" in kiche_translation or "That’s an error" in kiche_translation or "<html" in kiche_translation.lower():
-            raise Exception("El servicio de traducción hacia K'iche' no está disponible.")
+        kiche_translation = translate_spanish_to_kiche(spanish_text)
         
         response_data = {
             'original': spanish_text,
             'translation': kiche_translation
         }
 
-        # Generar TTS si el modelo está disponible
-        if tts_model is not None and tts_tokenizer is not None:
-            import scipy.io.wavfile as wavfile
-            inputs = tts_tokenizer(kiche_translation, return_tensors="pt")
-            with torch.no_grad():
-                output = tts_model(**inputs)
-            waveform = output.waveform[0].cpu().numpy()
-            sr = tts_model.config.sampling_rate
-            
-            output_filename = f"{uuid.uuid4()}.wav"
-            output_path = os.path.join(OUTPUT_FOLDER, output_filename)
-            wavfile.write(output_path, sr, waveform)
-            
-            response_data['audio_url'] = f"/audio/{output_filename}"
+        # Generar TTS K'iche' si el modelo está disponible y se logró traducir
+        if tts_model is not None and tts_tokenizer is not None and not kiche_translation.startswith("[Sin traducción"):
+            try:
+                import scipy.io.wavfile as wavfile
+                inputs = tts_tokenizer(kiche_translation, return_tensors="pt")
+                with torch.no_grad():
+                    output = tts_model(**inputs)
+                waveform = output.waveform[0].cpu().numpy()
+                sr = tts_model.config.sampling_rate
+                
+                output_filename = f"{uuid.uuid4()}.wav"
+                output_path = os.path.join(OUTPUT_FOLDER, output_filename)
+                wavfile.write(output_path, sr, waveform)
+                
+                response_data['audio_url'] = f"/audio/{output_filename}"
+            except Exception as e:
+                print(f"[TTS K'iche'] Error: {e}")
 
         return jsonify(response_data)
     except Exception as e:
+        print(f"[/translate-to-kiche] Error: {e}")
         return jsonify({'error': str(e)}), 500
 
 
@@ -1167,13 +1283,21 @@ def save_training_sample():
     audio_file = request.files['audio']
     correct_text = request.form.get('correct_text', '').strip()
     asr_raw = request.form.get('asr_raw', '').strip()
+    spanish_text = request.form.get('spanish_text', '').strip()
 
     if not correct_text:
         return jsonify({'error': 'No transcription provided'}), 400
 
+    # Normalizar b con apóstrofe si es necesario
+    if 'b' in correct_text and "b'" not in correct_text:
+        correct_text = correct_text.replace('b', "b'")
+
+    if not asr_raw and spanish_text:
+        asr_raw = f"[Experto] {spanish_text}"
+
     # Generate filename
     count = get_training_count() + 1
-    filename = f"sample_{count:04d}.wav"
+    filename = f"sample_{count:04d}.webm"
     audio_path = os.path.join(TRAINING_AUDIO_FOLDER, filename)
     audio_file.save(audio_path)
 
@@ -1185,6 +1309,47 @@ def save_training_sample():
         if write_header:
             writer.writerow(['file_name', 'transcription', 'asr_raw'])
         writer.writerow([f"audio/{filename}", correct_text, asr_raw])
+
+    # Si viene del modo experto con traducción en español, guardarlo también en el dataset de escritura/diccionario
+    if spanish_text:
+        try:
+            variantes_existentes = set()
+            if os.path.exists(ESCRITURA_CSV):
+                with open(ESCRITURA_CSV, encoding='utf-8') as f:
+                    import csv
+                    reader = csv.DictReader(f)
+                    for row in reader:
+                        if row.get('espanol') == spanish_text:
+                            variantes_existentes.add(row.get('kiche'))
+            if correct_text not in variantes_existentes:
+                write_escritura_header = not os.path.exists(ESCRITURA_CSV)
+                with open(ESCRITURA_CSV, 'a', encoding='utf-8', newline='') as f:
+                    import csv
+                    writer = csv.writer(f)
+                    if write_escritura_header:
+                        writer.writerow(['espanol', 'kiche'])
+                    writer.writerow([spanish_text, correct_text])
+                sync_file_to_s3(ESCRITURA_CSV, 'escritura_dataset.csv')
+
+            # Si existía en pendientes_traduccion en el diccionario, removerlo
+            if os.path.exists(DICT_PATH):
+                import collections
+                with open(DICT_PATH, 'r', encoding='utf-8-sig') as f:
+                    diccionario = json.load(f, object_pairs_hook=collections.OrderedDict)
+                if '_pendientes_traduccion' in diccionario:
+                    keys_to_delete = [
+                        k for k, v in diccionario['_pendientes_traduccion'].items()
+                        if (v.split('(')[0].strip() if '(' in v and ')' in v else v.strip()) == spanish_text
+                    ]
+                    if keys_to_delete:
+                        for k in keys_to_delete:
+                            del diccionario['_pendientes_traduccion'][k]
+                        with open(DICT_PATH, 'w', encoding='utf-8-sig') as f:
+                            json.dump(diccionario, f, ensure_ascii=False, indent=4)
+                        sync_file_to_s3(DICT_PATH, 'medical_dictionary.json')
+            load_medical_dict()
+        except Exception as e:
+            print(f"[Expert Save] Error updating dictionary/escritura: {e}")
 
     # Sync to S3 if configured
     if s3_client and S3_BUCKET_NAME:
@@ -1209,49 +1374,228 @@ def training_stats():
                     'ready_for_training': count >= 50,
                     'progress_pct': min(100, int(count / 50 * 100))})
 
-@app.route('/export-dataset')
-def export_dataset():
-    from flask import send_file
-    if s3_client and S3_BUCKET_NAME:
-        try:
-            memory_file = io.BytesIO()
-            with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zf:
+import uuid
+import threading
+import tempfile
+import time
+
+export_jobs = {}
+
+def bg_export_task(task_id):
+    job = export_jobs[task_id]
+    
+    try:
+        if s3_client and S3_BUCKET_NAME:
+            job['status'] = 'Contando archivos...'
+            # 1. First count total files to give a proper progress total
+            paginator = s3_client.get_paginator('list_objects_v2')
+            total_files = 1 # metadata.csv
+            audio_keys = []
+            
+            # Count audio files and store keys
+            for page in paginator.paginate(Bucket=S3_BUCKET_NAME, Prefix="training_data/audio/"):
+                if 'Contents' in page:
+                    for obj in page['Contents']:
+                        if not obj['Key'].endswith('/'):
+                            audio_keys.append(obj['Key'])
+                            total_files += 1
+                            
+            job['total'] = total_files
+            job['status'] = 'Descargando desde S3...'
+            
+            tmp_zip = tempfile.NamedTemporaryFile(delete=False, suffix=".zip")
+            tmp_zip.close()
+            
+            with zipfile.ZipFile(tmp_zip.name, 'w', zipfile.ZIP_DEFLATED) as zf:
                 # Add metadata.csv
+                if job['cancel']: raise Exception("Cancelado por el usuario")
                 try:
                     csv_obj = s3_client.get_object(Bucket=S3_BUCKET_NAME, Key="training_data/metadata.csv")
-                    zf.writestr("metadata.csv", csv_obj['Body'].read())
+                    zf.writestr("training_data/metadata.csv", csv_obj['Body'].read())
                 except Exception as e:
                     print(f"No metadata.csv in S3: {e}")
+                job['progress'] += 1
                 
                 # Add audio files
-                paginator = s3_client.get_paginator('list_objects_v2')
-                for page in paginator.paginate(Bucket=S3_BUCKET_NAME, Prefix="training_data/audio/"):
-                    if 'Contents' in page:
-                        for obj in page['Contents']:
-                            file_key = obj['Key']
-                            # Skip if it's just the folder itself
-                            if file_key.endswith('/'): continue
-                            
-                            audio_obj = s3_client.get_object(Bucket=S3_BUCKET_NAME, Key=file_key)
-                            file_name = file_key.split('/')[-1]
-                            zf.writestr(f"audio/{file_name}", audio_obj['Body'].read())
+                for key in audio_keys:
+                    if job['cancel']: raise Exception("Cancelado por el usuario")
+                    try:
+                        audio_obj = s3_client.get_object(Bucket=S3_BUCKET_NAME, Key=key)
+                        file_name = key.split('/')[-1]
+                        zf.writestr(f"training_data/audio/{file_name}", audio_obj['Body'].read())
+                    except Exception as e:
+                        print(f"Error downloading {key}: {e}")
+                    job['progress'] += 1
             
-            memory_file.seek(0)
-            return send_file(memory_file, as_attachment=True, download_name='kiche_dataset_s3.zip', mimetype='application/zip')
+            job['file_path'] = tmp_zip.name
+            job['status'] = 'Done'
+        else:
+            if os.path.exists(TRAINING_CSV):
+                job['status'] = 'Empaquetando local...'
+                tmp_zip = tempfile.NamedTemporaryFile(delete=False, suffix=".zip")
+                tmp_zip.close()
+                with zipfile.ZipFile(tmp_zip.name, 'w', zipfile.ZIP_DEFLATED) as zf:
+                    zf.write(TRAINING_CSV, "training_data/metadata.csv")
+                    job['progress'] += 1
+                    files = [f for f in os.listdir(TRAINING_AUDIO_FOLDER) if f.endswith('.wav') or f.endswith('.webm')]
+                    job['total'] = 1 + len(files)
+                    for f in files:
+                        if job['cancel']: raise Exception("Cancelado por el usuario")
+                        zf.write(os.path.join(TRAINING_AUDIO_FOLDER, f), f"training_data/audio/{f}")
+                        job['progress'] += 1
+                        time.sleep(0.05) # Pequeño delay artificial para ver progreso si es local
+                job['file_path'] = tmp_zip.name
+                job['status'] = 'Done'
+            else:
+                job['status'] = 'Error: No dataset yet'
+    except Exception as e:
+        job['status'] = f'Error: {str(e)}'
+        if job.get('file_path') and os.path.exists(job['file_path']):
+            os.remove(job['file_path'])
+
+@app.route('/api/start-export', methods=['POST'])
+@role_required('admin', 'entrenador')
+def start_export():
+    task_id = str(uuid.uuid4())
+    export_jobs[task_id] = {
+        'task_id': task_id,
+        'status': 'Iniciando...',
+        'progress': 0,
+        'total': 1, # avoid div/0
+        'cancel': False,
+        'file_path': None
+    }
+    
+    thread = threading.Thread(target=bg_export_task, args=(task_id,))
+    thread.daemon = True
+    thread.start()
+    
+    return jsonify({'task_id': task_id})
+
+@app.route('/api/export-progress/<task_id>')
+@role_required('admin', 'entrenador')
+def export_progress(task_id):
+    job = export_jobs.get(task_id)
+    if not job:
+        return jsonify({'error': 'Job not found'}), 404
+    return jsonify(job)
+
+@app.route('/api/cancel-export/<task_id>', methods=['POST'])
+@role_required('admin', 'entrenador')
+def cancel_export(task_id):
+    job = export_jobs.get(task_id)
+    if job:
+        job['cancel'] = True
+        return jsonify({'status': 'cancelling'})
+    return jsonify({'error': 'Not found'}), 404
+
+@app.route('/download-export/<task_id>')
+def download_export(task_id):
+    from flask import send_file
+    job = export_jobs.get(task_id)
+    if not job or job['status'] != 'Done' or not job['file_path']:
+        return "Not ready or not found", 404
+        
+    return send_file(job['file_path'], as_attachment=True, download_name='kiche_dataset.zip', mimetype='application/zip')
+
+@app.route('/api/training-samples')
+@role_required('admin', 'entrenador')
+def api_training_samples():
+    if not os.path.exists(TRAINING_CSV):
+        return jsonify([])
+    samples = []
+    import csv
+    with open(TRAINING_CSV, 'r', encoding='utf-8') as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            samples.append(row)
+    return jsonify(samples)
+
+@app.route('/api/update-training-sample', methods=['POST'])
+@role_required('admin', 'entrenador')
+def api_update_training_sample():
+    data = request.get_json()
+    file_name = data.get('file_name')
+    new_transcription = data.get('transcription')
+    if not file_name or not new_transcription:
+        return jsonify({'error': 'Faltan datos'}), 400
+
+    if not os.path.exists(TRAINING_CSV):
+        return jsonify({'error': 'No hay dataset'}), 404
+
+    import csv
+    rows = []
+    updated = False
+    with open(TRAINING_CSV, 'r', encoding='utf-8') as f:
+        reader = csv.DictReader(f)
+        fieldnames = reader.fieldnames
+        for row in reader:
+            if row['file_name'] == file_name:
+                row['transcription'] = new_transcription
+                updated = True
+            rows.append(row)
+
+    if not updated:
+        return jsonify({'error': 'Registro no encontrado'}), 404
+
+    with open(TRAINING_CSV, 'w', encoding='utf-8', newline='') as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(rows)
+
+    if s3_client and S3_BUCKET_NAME:
+        try:
+            s3_client.upload_file(TRAINING_CSV, S3_BUCKET_NAME, "training_data/metadata.csv")
         except Exception as e:
-            print(f"[S3] Export error: {e}")
-            return jsonify({'error': str(e)}), 500
-    else:
-        if os.path.exists(TRAINING_CSV):
-            memory_file = io.BytesIO()
-            with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zf:
-                zf.write(TRAINING_CSV, "metadata.csv")
-                for f in os.listdir(TRAINING_AUDIO_FOLDER):
-                    if f.endswith('.wav'):
-                        zf.write(os.path.join(TRAINING_AUDIO_FOLDER, f), f"audio/{f}")
-            memory_file.seek(0)
-            return send_file(memory_file, as_attachment=True, download_name='kiche_dataset_local.zip', mimetype='application/zip')
-        return jsonify({'error': 'No dataset yet'}), 404
+            print(f"[S3] Upload error: {e}")
+
+    return jsonify({'status': 'ok'})
+
+@app.route('/api/delete-training-sample', methods=['POST'])
+@role_required('admin', 'entrenador')
+def api_delete_training_sample():
+    data = request.get_json()
+    file_name = data.get('file_name')
+    if not file_name:
+        return jsonify({'error': 'Faltan datos'}), 400
+
+    if not os.path.exists(TRAINING_CSV):
+        return jsonify({'error': 'No hay dataset'}), 404
+
+    import csv
+    rows = []
+    deleted = False
+    with open(TRAINING_CSV, 'r', encoding='utf-8') as f:
+        reader = csv.DictReader(f)
+        fieldnames = reader.fieldnames
+        for row in reader:
+            if row['file_name'] == file_name:
+                deleted = True
+            else:
+                rows.append(row)
+
+    if not deleted:
+        return jsonify({'error': 'Registro no encontrado'}), 404
+
+    with open(TRAINING_CSV, 'w', encoding='utf-8', newline='') as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(rows)
+
+    # Eliminar archivo de audio local
+    audio_path = os.path.join(TRAINING_AUDIO_FOLDER, os.path.basename(file_name))
+    if os.path.exists(audio_path):
+        os.remove(audio_path)
+
+    if s3_client and S3_BUCKET_NAME:
+        try:
+            s3_client.upload_file(TRAINING_CSV, S3_BUCKET_NAME, "training_data/metadata.csv")
+            # Eliminar de S3
+            s3_client.delete_object(Bucket=S3_BUCKET_NAME, Key=f"training_data/{file_name}")
+        except Exception as e:
+            print(f"[S3] Upload/Delete error: {e}")
+
+    return jsonify({'status': 'ok'})
 
 @app.route('/generate-summary', methods=['POST'])
 def generate_summary():
