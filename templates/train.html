@@ -15,30 +15,7 @@
     </script>
     <style>
         :root {
-            /* Modo Claro (Default) */
-            --bg-canvas-overlay: rgba(248, 250, 252, 0.65); /* Estuco claro con opacidad para imagen */
-            --primary-jade: #10B981;
-            --text-main: #233B33;
-            --text-muted: rgba(35, 59, 51, 0.65);
-            
-            --card-bg: rgba(255, 255, 255, 0.4);
-            --card-border: rgba(255, 255, 255, 0.5);
-            
-            --card-shadow: rgba(0, 0, 0, 0.1);
-            
-            --btn-mic-grad1: #10B981;
-            --btn-mic-grad2: #059669;
-            --btn-mic-shadow: rgba(16, 185, 129, 0.4);
-            --error-red: #BA1511;
-
-            
-            --input-bg: rgba(255, 255, 255, 0.6);
-            --input-border: rgba(35, 59, 51, 0.2);
-        }
-
-        @media (prefers-color-scheme: dark) {
-            :root {
-                /* Modo Oscuro */
+                /* Modo Oscuro (Default) */
                 --bg-canvas-overlay: rgba(15, 23, 42, 0.75); /* Azul oscuro profundo */
                 --primary-jade: #059669;
                 --text-main: #E2E8F0;
@@ -58,6 +35,26 @@
                 --input-bg: rgba(15, 23, 42, 0.6);
                 --input-border: rgba(255, 255, 255, 0.15);
             }
+        :root.light-mode {
+            /* Modo Claro */
+            --bg-canvas-overlay: rgba(248, 250, 252, 0.65); /* Estuco claro con opacidad para imagen */
+            --primary-jade: #10B981;
+            --text-main: #233B33;
+            --text-muted: rgba(35, 59, 51, 0.65);
+            
+            --card-bg: rgba(255, 255, 255, 0.4);
+            --card-border: rgba(255, 255, 255, 0.5);
+            
+            --card-shadow: rgba(0, 0, 0, 0.1);
+            
+            --btn-mic-grad1: #10B981;
+            --btn-mic-grad2: #059669;
+            --btn-mic-shadow: rgba(16, 185, 129, 0.4);
+            --error-red: #BA1511;
+
+            
+            --input-bg: rgba(255, 255, 255, 0.6);
+            --input-border: rgba(35, 59, 51, 0.2);
         }
 
         body {
@@ -1823,6 +1820,38 @@
         updatePhrase();
         // Load initial stats
         fetch('/training-stats').then(r => r.json()).then(d => updateProgress(d.total_samples));
+    </script>
+
+    <!-- Theme Toggle -->
+    <button id="themeToggleBtn" onclick="toggleTheme()" class="fixed bottom-4 right-4 bg-white/20 hover:bg-white/30 backdrop-blur-md p-3 rounded-full shadow-lg border border-white/20 transition-all z-50 flex items-center justify-center group" title="Cambiar Tema">
+        <span class="material-symbols-outlined text-[var(--text-main)] group-hover:scale-110 transition-transform">light_mode</span>
+    </button>
+    <script>
+        function applyTheme(isLight) {
+            const icon = document.querySelector('#themeToggleBtn span');
+            if (isLight) {
+                document.documentElement.classList.add('light-mode');
+                if (icon) icon.textContent = 'dark_mode';
+            } else {
+                document.documentElement.classList.remove('light-mode');
+                if (icon) icon.textContent = 'light_mode';
+            }
+        }
+        
+        function toggleTheme() {
+            const isLight = !document.documentElement.classList.contains('light-mode');
+            localStorage.setItem('theme', isLight ? 'light' : 'dark');
+            applyTheme(isLight);
+        }
+        
+        // Initial load
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'light') {
+            applyTheme(true);
+        } else {
+            // Default is dark
+            applyTheme(false);
+        }
     </script>
 </body>
 
