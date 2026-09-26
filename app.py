@@ -612,11 +612,30 @@ def sync_file_to_s3(filepath, filename):
     except Exception as e:
         print(f"[S3] Failed to upload {filename}: {e}")
 
-# ── MEDICAL DICTIONARY ─────────────────────────────────────────────────────────
+# ── MEDICAL DICTIONARY & NATIVE AUDIO CACHE ────────────────────────────────────
 DICT_PATH = os.path.join(os.path.dirname(__file__), 'medical_dictionary.json')
 ESCRITURA_CSV = os.path.join(os.path.dirname(__file__), 'escritura_dataset.csv')
 _medical_dict = {}  # flat key → translation
 _es_to_kiche_dict = {} # flat spanish -> kiche
+_native_audio_cache = {} # flat kiche -> audio filepath
+
+def load_native_audio_cache():
+    global _native_audio_cache
+    import csv
+    _native_audio_cache = {}
+    if os.path.exists(TRAINING_CSV):
+        try:
+            with open(TRAINING_CSV, 'r', encoding='utf-8') as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    trans = row.get('transcription', '').strip().lower()
+                    audio_path = row.get('file_name', '').strip()
+                    if trans and audio_path:
+                        trans = trans.replace("ꞌ", "'").replace("’", "'")
+                        _native_audio_cache[trans] = audio_path
+            print(f"[Dict] Loaded {len(_native_audio_cache)} native audio mappings from dataset.")
+        except Exception as e:
+            print(f"[Dict] Error loading native audio cache: {e}")
 
 def load_medical_dict():
     global _medical_dict, _es_to_kiche_dict
@@ -724,6 +743,7 @@ os.makedirs(TRAINING_FOLDER, exist_ok=True)
 sync_file_from_s3('training_data/metadata.csv', TRAINING_CSV)
 
 load_medical_dict()
+load_native_audio_cache()
 load_normalization_rules()
 
 import re
@@ -993,19 +1013,26 @@ def load_model():
             torch.set_num_threads(8)
 
         # Cargar TTS K'iche'
-        print("Loading TTS model...")
-        tts_dir = os.path.join(os.path.dirname(__file__), 'models', 'mms_tts_kiche')
-        if os.path.exists(os.path.join(tts_dir, 'config.json')):
+        print("Loading custom TTS K'iche' model...")
+        tts_dir = os.path.join(os.path.dirname(__file__), 'models', 'custom_kiche_tts')
+        if os.path.exists(os.path.join(tts_dir, 'best_model.pth')) and os.path.exists(os.path.join(tts_dir, 'config.json')):
             try:
-                from transformers import VitsModel, AutoTokenizer
-                tts_model = VitsModel.from_pretrained(tts_dir)
-                tts_tokenizer = AutoTokenizer.from_pretrained(tts_dir)
-                tts_model.eval()
-                print("✅ Modelo TTS K'iche' cargado exitosamente.")
+                from TTS.utils.synthesizer import Synthesizer
+                # Use Synthesizer directly because the high-level TTS API has an 'is_multi_lingual' bug for custom models
+                tts_model = Synthesizer(
+                    tts_checkpoint=os.path.join(tts_dir, 'best_model.pth'),
+                    tts_config_path=os.path.join(tts_dir, 'config.json'),
+                    use_cuda=(device == "cuda")
+                )
+                # Force to FP32 to avoid precision issues on CPU/MPS which cause corruption
+                tts_model.tts_model.float()
+                print("✅ Modelo TTS K'iche' personalizado cargado exitosamente.")
             except Exception as e:
-                print(f"❌ Error cargando modelo TTS: {e}")
+                print(f"❌ Error cargando modelo TTS K'iche' personalizado: {e}")
+                tts_model = None
         else:
-            print("❌ No se encontró modelo TTS en models/mms_tts_kiche. Ejecuta download_tts.py")
+            print("❌ No se encontró modelo TTS en models/custom_kiche_tts. Asegúrate de colocar best_model.pth y config.json allí.")
+            tts_model = None
     finally:
         with model_lock:
             is_loading = False
@@ -1106,7 +1133,10 @@ def get_audio(filename):
 
 @app.route('/training-audio/<path:filepath>')
 def get_training_audio(filepath):
-    return send_from_directory(TRAINING_FOLDER, filepath)
+    # Support subdirectories if filepath already includes audio/
+    if filepath.startswith('audio/'):
+        filepath = filepath[len('audio/'):]
+    return send_from_directory(os.path.join(TRAINING_FOLDER, 'audio'), filepath)
 
 @app.route('/reload-dict')
 def reload_dict():
@@ -1162,22 +1192,51 @@ def translate_to_kiche():
         }
 
         # Generar TTS K'iche' si el modelo está disponible y se logró traducir
-        if tts_model is not None and tts_tokenizer is not None and not kiche_translation.startswith("[Sin traducción"):
-            try:
-                import scipy.io.wavfile as wavfile
-                inputs = tts_tokenizer(kiche_translation, return_tensors="pt")
-                with torch.no_grad():
-                    output = tts_model(**inputs)
-                waveform = output.waveform[0].cpu().numpy()
-                sr = tts_model.config.sampling_rate
+        if tts_model is not None and not kiche_translation.startswith("[Sin traducción"):
+            check_trans = kiche_translation.strip().lower().replace("ꞌ", "'").replace("’", "'")
+            
+            # 1. Intentar usar el audio original del dataset
+            if check_trans in _native_audio_cache:
+                native_file = _native_audio_cache[check_trans]
+                check_path = os.path.join(TRAINING_FOLDER, native_file)
+                if os.path.exists(check_path):
+                    audio_url = f"/training-audio/{native_file}"
+                    response_data['audio_url'] = audio_url
+                    print(f"[TTS] Using NATIVE AUDIO for: {check_trans}")
+            
+            if not response_data.get('audio_url'):
+                try:
+                    import torch
+                    
+                    # Custom VITS K'iche' TTS was trained converting Saltillo ꞌ to apostrophe '
+                    def normalize_for_custom_tts(t):
+                        t = t.lower()
+                        t = t.replace("ꞌ", "'").replace("’", "'")
+                        return t.strip()
+                    
+                    normalized_text = normalize_for_custom_tts(kiche_translation)
                 
-                output_filename = f"{uuid.uuid4()}.wav"
-                output_path = os.path.join(OUTPUT_FOLDER, output_filename)
-                wavfile.write(output_path, sr, waveform)
-                
-                response_data['audio_url'] = f"/audio/{output_filename}"
-            except Exception as e:
-                print(f"[TTS K'iche'] Error: {e}")
+                    output_filename = f"{uuid.uuid4()}.wav"
+                    output_path = os.path.join(OUTPUT_FOLDER, output_filename)
+                    
+                    # Synthesizer synthesis to file
+                    with torch.no_grad():
+                        torch.manual_seed(0)  # Make generation deterministic
+                        
+                        # Forzar los parámetros directamente en el modelo base VITS para asegurar que surtan efecto
+                        tts_model.tts_model.length_scale = 0.85
+                        tts_model.tts_model.inference_noise_scale = 0.667
+                        tts_model.tts_model.inference_noise_scale_dp = 0.8
+                        
+                        wav = tts_model.tts(
+                            normalized_text, 
+                            split_sentences=False
+                        )
+                    tts_model.save_wav(wav, output_path)
+                    
+                    response_data['audio_url'] = f"/audio/{output_filename}"
+                except Exception as e:
+                    print(f"[TTS K'iche'] Error: {e}")
 
         return jsonify(response_data)
     except Exception as e:
@@ -1226,6 +1285,55 @@ TRAINING_PHRASES = [
     ("jas k'o awe", "¿qué tienes? / ¿qué te pasa?"),
     ("jas ana'om", "¿cómo te sientes?"),
 ]
+
+@app.route('/tts-playground')
+def tts_playground():
+    return render_template('tts_playground.html')
+
+@app.route('/api/tts-test', methods=['POST'])
+def api_tts_test():
+    try:
+        data = request.json
+        text = data.get('text', '')
+        noise_scale = float(data.get('noise_scale', 0.667))
+        noise_scale_dp = float(data.get('noise_scale_dp', 0.8))
+        length_scale = float(data.get('length_scale', 0.85))
+        
+        if not text:
+            return jsonify({'error': 'No text provided'}), 400
+            
+        if tts_model is None:
+            return jsonify({'error': 'TTS model not loaded'}), 500
+            
+        import torch
+        
+        def normalize_for_custom_tts(t):
+            t = t.lower()
+            t = t.replace("ꞌ", "'").replace("’", "'")
+            return t.strip()
+            
+        normalized_text = normalize_for_custom_tts(text)
+        
+        output_filename = f"test_{uuid.uuid4()}.wav"
+        output_path = os.path.join(OUTPUT_FOLDER, output_filename)
+        
+        with torch.no_grad():
+            torch.manual_seed(0)
+            
+            # Forzar los parámetros directamente en el modelo base VITS
+            tts_model.tts_model.length_scale = length_scale
+            tts_model.tts_model.inference_noise_scale = noise_scale
+            tts_model.tts_model.inference_noise_scale_dp = noise_scale_dp
+            
+            wav = tts_model.tts(
+                normalized_text, 
+                split_sentences=False
+            )
+        tts_model.save_wav(wav, output_path)
+        
+        return jsonify({'audio_url': f"/audio/{output_filename}"})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 def get_training_count():
     if not os.path.exists(TRAINING_CSV):
@@ -1359,6 +1467,9 @@ def save_training_sample():
             print(f"[S3] Synced {filename} and metadata.csv to S3")
         except Exception as e:
             print(f"[S3] Upload error: {e}")
+
+    # Update the native audio cache so it is instantly available for TTS translation
+    load_native_audio_cache()
 
     return jsonify({
         'status': 'saved',

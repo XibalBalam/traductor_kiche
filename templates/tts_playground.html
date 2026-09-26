@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TTS Playground - Traductor K'iche'</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Outfit', sans-serif; background-color: #0F172A; color: #F1F5F9; }
+        .glass-panel { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-6">
+    <div class="glass-panel p-8 rounded-2xl w-full max-w-2xl shadow-2xl">
+        <h1 class="text-3xl font-bold mb-2 text-center text-emerald-400">Laboratorio TTS K'iche'</h1>
+        <p class="text-sm text-slate-400 text-center mb-6">Ajusta los parámetros de la Inteligencia Artificial para encontrar la voz perfecta.</p>
+
+        <div class="space-y-5">
+            <div>
+                <label class="block text-sm font-semibold mb-2">Texto en K'iche' a Sintetizar</label>
+                <textarea id="tts-text" rows="2" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-white focus:outline-none focus:border-emerald-500" placeholder="Escribe aquí... (ej. k'ax waqan)"></textarea>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Noise Scale -->
+                <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
+                    <label class="block text-xs font-bold text-slate-300 mb-1 flex justify-between">
+                        <span>Noise Scale (Ruido/Emoción)</span>
+                        <span id="val-ns" class="text-emerald-400">0.667</span>
+                    </label>
+                    <input type="range" id="param-ns" min="0.0" max="1.0" step="0.01" value="0.667" class="w-full accent-emerald-500" oninput="document.getElementById('val-ns').innerText = this.value">
+                    <p class="text-[0.65rem] text-slate-500 mt-1">Controla la naturalidad. Muy bajo suena robótico.</p>
+                </div>
+
+                <!-- Noise Scale DP -->
+                <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
+                    <label class="block text-xs font-bold text-slate-300 mb-1 flex justify-between">
+                        <span>Noise DP (Varianza fonemas)</span>
+                        <span id="val-dp" class="text-emerald-400">0.800</span>
+                    </label>
+                    <input type="range" id="param-dp" min="0.0" max="1.0" step="0.01" value="0.800" class="w-full accent-emerald-500" oninput="document.getElementById('val-dp').innerText = this.value">
+                    <p class="text-[0.65rem] text-slate-500 mt-1">Varianza de duración de consonantes/vocales.</p>
+                </div>
+
+                <!-- Length Scale -->
+                <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
+                    <label class="block text-xs font-bold text-slate-300 mb-1 flex justify-between">
+                        <span>Length Scale (Velocidad)</span>
+                        <span id="val-ls" class="text-emerald-400">0.850</span>
+                    </label>
+                    <input type="range" id="param-ls" min="0.5" max="1.5" step="0.01" value="0.850" class="w-full accent-emerald-500" oninput="document.getElementById('val-ls').innerText = this.value">
+                    <p class="text-[0.65rem] text-slate-500 mt-1">Menor a 1.0 = más rápido. Mayor = más lento.</p>
+                </div>
+            </div>
+
+            <button onclick="generateAudio()" id="btn-generate" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-900 font-bold py-3 px-4 rounded-xl transition-all shadow-lg shadow-emerald-500/30">
+                Generar Audio de Prueba
+            </button>
+
+            <div id="audio-container" class="hidden mt-6 bg-slate-800 p-4 rounded-xl border border-slate-700 flex flex-col items-center">
+                <p class="text-sm text-emerald-400 mb-2 font-semibold">Resultado:</p>
+                <audio id="audio-player" controls class="w-full h-10 opacity-90"></audio>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function generateAudio() {
+            const btn = document.getElementById('btn-generate');
+            const text = document.getElementById('tts-text').value.trim();
+            if (!text) return alert("Escribe un texto primero.");
+
+            const ns = parseFloat(document.getElementById('param-ns').value);
+            const dp = parseFloat(document.getElementById('param-dp').value);
+            const ls = parseFloat(document.getElementById('param-ls').value);
+
+            btn.innerText = "Generando (puede tardar unos segundos)...";
+            btn.disabled = true;
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
+
+            try {
+                const res = await fetch('/api/tts-test', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text, noise_scale: ns, noise_scale_dp: dp, length_scale: ls })
+                });
+                
+                const data = await res.json();
+                if (data.error) throw new Error(data.error);
+
+                const container = document.getElementById('audio-container');
+                const player = document.getElementById('audio-player');
+                
+                container.classList.remove('hidden');
+                player.src = data.audio_url + "?t=" + Date.now();
+                player.play();
+
+            } catch (err) {
+                alert("Error: " + err.message);
+            } finally {
+                btn.innerText = "Generar Audio de Prueba";
+                btn.disabled = false;
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        }
+    </script>
+</body>
+</html>

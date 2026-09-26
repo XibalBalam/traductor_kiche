@@ -414,8 +414,11 @@
 
                     <div class="result-text text-2xl font-bold mb-5 w-full leading-tight" id="translationText" style="min-height: 1.5em; color: var(--text-main);"></div>
                     
-                    <div id="audioSection" class="w-full max-w-sm mb-2 transition-opacity duration-700 opacity-0">
+                    <div id="audioSection" class="w-full max-w-sm mb-2 transition-opacity duration-700 opacity-0 flex flex-col items-center gap-3">
                         <audio id="audioPlayer" controls class="h-10 opacity-70 w-full"></audio>
+                        <button onclick="document.getElementById('audioPlayer').currentTime = 0; document.getElementById('audioPlayer').play()" class="rounded-full px-5 py-2 text-sm font-bold transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2 shadow-lg" style="background: var(--primary-jade); color: #0F172A; width: 100%;">
+                            <span class="material-symbols-outlined">replay</span> Reproducir de nuevo
+                        </button>
                     </div>
                 </div>
 
@@ -542,7 +545,7 @@
                 btnKicheToEs.classList.add('active');
                 btnEsToKiche.classList.remove('active');
                 statusEl.textContent = "Mantén presionado para hablar en K'iche'";
-                audioSection.style.display = 'block';
+                audioSection.style.display = 'flex';
             } else {
                 modeSlider.classList.add('right');
                 btnEsToKiche.classList.add('active');
@@ -926,6 +929,7 @@
                     audioPlayer.src = data.audio_url + "?t=" + Date.now();
                     audioPlayer.play();
                     
+                    document.getElementById('audioSection').style.display = 'flex';
                     document.getElementById('audioSection').classList.remove('opacity-0');
                     document.getElementById('audioSection').classList.add('opacity-100');
                 }
