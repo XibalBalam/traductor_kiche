@@ -45,3 +45,6 @@ scratch/
 *.csv
 *.json
 *.pem
+
+training_data/audio/
+

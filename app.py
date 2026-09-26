@@ -1136,7 +1136,20 @@ def get_training_audio(filepath):
     # Support subdirectories if filepath already includes audio/
     if filepath.startswith('audio/'):
         filepath = filepath[len('audio/'):]
-    return send_from_directory(os.path.join(TRAINING_FOLDER, 'audio'), filepath)
+        
+    local_audio_dir = os.path.join(TRAINING_FOLDER, 'audio')
+    full_path = os.path.join(local_audio_dir, filepath)
+    
+    # If file doesn't exist locally, try downloading it from S3
+    if not os.path.exists(full_path):
+        if s3_client and S3_BUCKET_NAME:
+            try:
+                s3_client.download_file(S3_BUCKET_NAME, f"training_data/audio/{filepath}", full_path)
+                print(f"[S3] Downloaded missing audio {filepath} from S3")
+            except Exception as e:
+                print(f"[S3] Could not download {filepath}: {e}")
+                
+    return send_from_directory(local_audio_dir, filepath)
 
 @app.route('/reload-dict')
 def reload_dict():
