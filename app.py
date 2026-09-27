@@ -1012,9 +1012,21 @@ def load_model():
             print("Optimizing for CPU: limiting threads...")
             torch.set_num_threads(8)
 
-        # Cargar TTS K'iche'
         print("Loading custom TTS K'iche' model...")
         tts_dir = os.path.join(os.path.dirname(__file__), 'models', 'custom_kiche_tts')
+        os.makedirs(tts_dir, exist_ok=True)
+        
+        # Download from S3 if missing
+        if s3_client and S3_BUCKET_NAME:
+            for file in ["best_model.pth", "config.json", "vocab.txt"]:
+                path = os.path.join(tts_dir, file)
+                if not os.path.exists(path):
+                    try:
+                        print(f"[S3] Downloading {file} for custom TTS K'iche' model...")
+                        s3_client.download_file(S3_BUCKET_NAME, f"models/custom_kiche_tts/{file}", path)
+                    except Exception as e:
+                        print(f"Error downloading {file}: {e}")
+                        
         if os.path.exists(os.path.join(tts_dir, 'best_model.pth')) and os.path.exists(os.path.join(tts_dir, 'config.json')):
             try:
                 from TTS.utils.synthesizer import Synthesizer
