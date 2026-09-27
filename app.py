@@ -1106,17 +1106,8 @@ def translate():
         # Translation using Dict / NLLB-200 / Fallback
         translation = translate_kiche_to_spanish(display_transcription)
         
-        # TTS - always wrap in try-except so failure doesn't break transcription
+        # TTS moved to frontend for faster text response
         audio_url = None
-        try:
-            output_filename = f"{uuid.uuid4()}.mp3"
-            output_path = os.path.join(OUTPUT_FOLDER, output_filename)
-            tts = gTTS(text=translation, lang='es')
-            tts.save(output_path)
-            audio_url = f"/audio/{output_filename}"
-        except Exception as e:
-            print(f"[TTS Español] Error: {e}")
-            
         return jsonify({
             'transcription': display_transcription,
             'translation': translation,
@@ -1125,6 +1116,57 @@ def translate():
         
     except Exception as e:
         print(f"[/translate] Fatal Error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/tts/es', methods=['POST'])
+def tts_es():
+    data = request.get_json()
+    text = data.get('text', '').strip()
+    if not text:
+        return jsonify({'error': 'No text provided'}), 400
+    try:
+        output_filename = f"{uuid.uuid4()}.mp3"
+        output_path = os.path.join(OUTPUT_FOLDER, output_filename)
+        tts = gTTS(text=text, lang='es')
+        tts.save(output_path)
+        return jsonify({'audio_url': f"/audio/{output_filename}"})
+    except Exception as e:
+        print(f"[/tts/es] Error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/tts/quc', methods=['POST'])
+def tts_quc():
+    data = request.get_json()
+    kiche_translation = data.get('text', '').strip()
+    if not kiche_translation:
+        return jsonify({'error': 'No text provided'}), 400
+    
+    if tts_model is None:
+        return jsonify({'error': 'TTS model not loaded'}), 500
+        
+    try:
+        import torch
+        def normalize_for_custom_tts(t):
+            t = t.lower()
+            t = t.replace("ꞌ", "'").replace("’", "'")
+            return t.strip()
+            
+        normalized_text = normalize_for_custom_tts(kiche_translation)
+        output_filename = f"{uuid.uuid4()}.wav"
+        output_path = os.path.join(OUTPUT_FOLDER, output_filename)
+        
+        with model_lock:
+            wav = tts_model.tts(
+                text=normalized_text, 
+                speaker_name=None, 
+                language_name=None
+            )
+        tts_model.save_wav(wav=wav, path=output_path)
+        return jsonify({'audio_url': f"/audio/{output_filename}"})
+    except Exception as e:
+        print(f"[/tts/quc] Error: {e}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/audio/<filename>')
@@ -1169,15 +1211,6 @@ def translate_text():
         translation = translate_kiche_to_spanish(text)
         
         audio_url = None
-        try:
-            output_filename = f"{uuid.uuid4()}.mp3"
-            output_path = os.path.join(OUTPUT_FOLDER, output_filename)
-            tts = gTTS(text=translation, lang='es')
-            tts.save(output_path)
-            audio_url = f"/audio/{output_filename}"
-        except Exception as e:
-            print(f"[TTS Español text] Error: {e}")
-            
         return jsonify({
             'translation': translation,
             'audio_url': audio_url
@@ -1217,39 +1250,7 @@ def translate_to_kiche():
                     response_data['audio_url'] = audio_url
                     print(f"[TTS] Using NATIVE AUDIO for: {check_trans}")
             
-            if not response_data.get('audio_url'):
-                try:
-                    import torch
-                    
-                    # Custom VITS K'iche' TTS was trained converting Saltillo ꞌ to apostrophe '
-                    def normalize_for_custom_tts(t):
-                        t = t.lower()
-                        t = t.replace("ꞌ", "'").replace("’", "'")
-                        return t.strip()
-                    
-                    normalized_text = normalize_for_custom_tts(kiche_translation)
-                
-                    output_filename = f"{uuid.uuid4()}.wav"
-                    output_path = os.path.join(OUTPUT_FOLDER, output_filename)
-                    
-                    # Synthesizer synthesis to file
-                    with torch.no_grad():
-                        torch.manual_seed(0)  # Make generation deterministic
-                        
-                        # Forzar los parámetros directamente en el modelo base VITS para asegurar que surtan efecto
-                        tts_model.tts_model.length_scale = 0.85
-                        tts_model.tts_model.inference_noise_scale = 0.667
-                        tts_model.tts_model.inference_noise_scale_dp = 0.8
-                        
-                        wav = tts_model.tts(
-                            normalized_text, 
-                            split_sentences=False
-                        )
-                    tts_model.save_wav(wav, output_path)
-                    
-                    response_data['audio_url'] = f"/audio/{output_filename}"
-                except Exception as e:
-                    print(f"[TTS K'iche'] Error: {e}")
+
 
         return jsonify(response_data)
     except Exception as e:

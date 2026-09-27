@@ -8,6 +8,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.js.iife.js"></script>
     <style>
         :root {
                 /* Modo Oscuro (Default) */
@@ -38,8 +40,8 @@
             --accent-terra: #BA5011;
             --error-red: #BA1511;
             
-            --card-bg: rgba(255, 255, 255, 0.4);
-            --card-border: rgba(255, 255, 255, 0.5);
+            --card-bg: rgba(255, 255, 255, 0.65);
+            --card-border: rgba(255, 255, 255, 0.7);
             --card-shadow: rgba(0, 0, 0, 0.1);
             
             --btn-mic-grad1: #10B981;
@@ -50,6 +52,44 @@
             --input-border: rgba(35, 59, 51, 0.2);
         }
 
+        /* ── LIGHT MODE MENU VISIBILITY OVERRIDES ── */
+        :root.light-mode .transition-link {
+            background-color: rgba(255, 255, 255, 0.9) !important;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15) !important;
+        }
+        :root.light-mode .transition-link[href="/cuenta"] { color: #475569 !important; border-color: #94A3B8 !important; }
+        :root.light-mode .transition-link[href="/train"] { color: #7E22CE !important; border-color: #A855F7 !important; }
+        :root.light-mode .transition-link[href="/escritura"] { color: #15803D !important; border-color: #22C55E !important; }
+        :root.light-mode .transition-link[href="/admin"] { color: #1D4ED8 !important; border-color: #3B82F6 !important; }
+        :root.light-mode .transition-link[href="/logout"] { color: #B91C1C !important; border-color: #EF4444 !important; }
+
+        :root.light-mode #themeToggleBtn {
+            background-color: rgba(255, 255, 255, 0.9) !important;
+            border-color: rgba(0,0,0,0.15) !important;
+            color: #334155 !important;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1) !important;
+        }
+
+        :root.light-mode .mode-toggle {
+            background: rgba(255, 255, 255, 0.8) !important;
+            border-color: rgba(0,0,0,0.15) !important;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05), 0 2px 8px rgba(0,0,0,0.05) !important;
+        }
+
+        :root.light-mode .mode-btn {
+            color: #334155 !important;
+            font-weight: 700 !important;
+        }
+
+        :root.light-mode .mode-btn.active {
+            color: #fff !important;
+        }
+
+        :root.light-mode .material-symbols-outlined[title*="Ayuda"] {
+            opacity: 0.8 !important;
+            color: #334155 !important;
+        }
+
         * {
             box-sizing: border-box;
             margin: 0;
@@ -58,7 +98,7 @@
 
         body {
             font-family: 'Inter', 'Segoe UI', sans-serif;
-            background: url("{{ url_for('static', filename='backgroundLogin.jpeg') }}") center center / cover no-repeat fixed;
+            background-color: #0F172A;
             color: var(--text-main);
             min-height: 100vh;
             display: flex;
@@ -66,6 +106,13 @@
             align-items: center;
             justify-content: center;
             padding: 1rem;
+        }
+
+        .bg-image {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: url("{{ url_for('static', filename='backgroundLogin.jpeg') }}") center center / cover no-repeat;
+            z-index: -1;
         }
 
         .overlay {
@@ -153,10 +200,15 @@
             left: 4px;
             width: calc(50% - 4px);
             height: calc(100% - 8px);
-            background: var(--accent-terra);
+            background: var(--primary-jade);
             border-radius: 50px;
-            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 4px 15px rgba(186, 80, 17, 0.4);
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.35s, box-shadow 0.35s;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+        }
+
+        body.mode-es .mode-slider {
+            background: var(--accent-terra) !important;
+            box-shadow: 0 4px 15px rgba(186, 80, 17, 0.4) !important;
         }
 
         .mode-slider.right {
@@ -178,7 +230,12 @@
             justify-content: center;
             margin: 0 auto 1.5rem;
             box-shadow: 0 4px 20px var(--btn-mic-shadow);
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: transform 0.2s, box-shadow 0.2s, background 0.35s;
+        }
+
+        body.mode-es .btn-mic {
+            background: linear-gradient(135deg, var(--accent-terra), #9A3F0B);
+            box-shadow: 0 4px 20px rgba(186, 80, 17, 0.4);
         }
 
         .btn-mic:hover {
@@ -187,6 +244,11 @@
 
         .btn-mic.recording {
             animation: pulse 1.5s infinite;
+            background: var(--error-red);
+        }
+
+        body.mode-es .btn-mic.recording {
+            animation: pulse-terra 1.5s infinite;
             background: var(--error-red);
         }
 
@@ -202,6 +264,12 @@
             100% {
                 box-shadow: 0 0 0 0 rgba(186, 21, 17, 0);
             }
+        }
+        
+        @keyframes pulse-terra {
+            0% { box-shadow: 0 0 0 0 rgba(186, 21, 17, 0.7); }
+            70% { box-shadow: 0 0 0 20px rgba(186, 21, 17, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(186, 21, 17, 0); }
         }
 
         /* STATUS */
@@ -230,6 +298,10 @@
             background: linear-gradient(90deg, var(--primary-jade), var(--btn-mic-grad2));
             transition: width 0.3s ease;
             border-radius: 10px;
+        }
+        
+        body.mode-es .progress-bar {
+            background: linear-gradient(90deg, var(--accent-terra), #9A3F0B);
         }
 
         /* RESULT BOX */
@@ -359,16 +431,17 @@
 </head>
 
 <body>
+    <div class="bg-image"></div>
     <div class="overlay"></div>
     <div class="main-wrapper flex flex-col items-center justify-start pt-[10vh] w-full max-w-3xl mx-auto min-h-screen">
         <!-- FLOATING TOP CONTROLS -->
         <div class="w-full flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
             <!-- MODE SELECTOR (MINI SWITCH) -->
             <div class="mode-toggle relative group" id="modeToggle" title="Haz clic para alternar el idioma de entrada. Usa K'iche' o Español según lo que hable el paciente." style="margin: 0; padding: 3px; width: 220px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); background: var(--card-bg); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid var(--card-border);">
-                <div class="mode-slider" id="modeSlider" style="background: var(--primary-jade);"></div>
+                <div class="mode-slider" id="modeSlider"></div>
                 <button class="mode-btn active cursor-pointer" id="btnKicheToEs" onclick="setMode('kiche-es')" style="padding: 0.4rem; font-size: 0.75rem;">K'iche' → Español</button>
                 <button class="mode-btn cursor-pointer" id="btnEsToKiche" onclick="setMode('es-kiche')" style="padding: 0.4rem; font-size: 0.75rem;">Español → K'iche'</button>
-                <span class="material-symbols-outlined absolute -right-8 top-1.5 opacity-30 group-hover:opacity-100 transition-opacity" style="font-size: 1.2rem; cursor: help;" title="Ayuda: Alterna el idioma de entrada">help</span>
+                <span onclick="startTour()" class="material-symbols-outlined absolute -right-8 top-1.5 opacity-30 group-hover:opacity-100 transition-opacity" style="font-size: 1.2rem; cursor: pointer;" title="Iniciar Tour Interactivo (Guía de Uso)">help</span>
             </div>
             
             <!-- ADMIN CONTROLS (ICONS ONLY) -->
@@ -546,12 +619,14 @@
                 btnEsToKiche.classList.remove('active');
                 statusEl.textContent = "Mantén presionado para hablar en K'iche'";
                 audioSection.style.display = 'flex';
+                document.body.classList.remove('mode-es');
             } else {
                 modeSlider.classList.add('right');
                 btnEsToKiche.classList.add('active');
                 btnKicheToEs.classList.remove('active');
                 statusEl.textContent = "Mantén presionado para hablar en Español";
                 audioSection.style.display = 'none';
+                document.body.classList.add('mode-es');
             }
             resetUI();
         }
@@ -752,8 +827,9 @@
             try {
                 const res = await fetch('/translate', { method: 'POST', body: formData });
                 if (!res.ok) { const e = await res.json(); throw new Error(e.error); }
+                
                 const data = await res.json();
-
+                
                 progressBar.style.width = '100%';
                 setTimeout(() => { progressContainer.style.display = 'none'; progressBar.style.width = '0%'; }, 500);
 
@@ -762,46 +838,49 @@
                 
                 // Show Result Box with fade-in
                 const rBox = document.getElementById('resultBox');
-                rBox.style.display = ''; // Limpiar inline styles anteriores si existían
+                rBox.style.display = ''; 
                 rBox.classList.remove('hidden');
                 rBox.classList.add('flex');
-                void rBox.offsetWidth; // force reflow
+                void rBox.offsetWidth; 
                 rBox.classList.remove('opacity-0');
                 rBox.classList.add('opacity-100');
 
-                // Update text (Typewriter Effect)
-                transcriptionInput.value = "";
-                translationText.textContent = "";
+                // Mostrar transcripción y traducción Inmediatamente
+                transcriptionInput.value = data.transcription;
+                transcriptionInput.style.height = 'auto';
+                transcriptionInput.style.height = (transcriptionInput.scrollHeight) + 'px';
+                translationText.textContent = data.translation;
                 
-                audioPlayer.src = data.audio_url + "?t=" + Date.now();
-                audioPlayer.play();
-
-                typeWriterEffect(transcriptionInput, data.transcription, true, 20);
-                await typeWriterEffect(translationText, data.translation, false, 25);
-
-                document.getElementById('retranslateBtn').classList.remove('opacity-0', 'scale-95');
-                document.getElementById('retranslateBtn').classList.add('opacity-100', 'scale-100');
-                document.getElementById('audioSection').classList.remove('opacity-0');
-                document.getElementById('audioSection').classList.add('opacity-100');
-
-                // Guardar en el historial de sesión y analizar contexto visual
+                // Ensure the translate button is enabled
+                const btn = document.getElementById('retranslateBtn');
+                btn.classList.remove('opacity-50', 'pointer-events-none');
+                
                 if (data.translation && !data.translation.startsWith("[Sin traducción")) {
                     sessionTranslations.push(data.translation);
                 }
                 
-                // Mostrar FAB de resumen y actualizar badge
-                if (sessionTranslations.length > 0) {
-                    const fab = document.getElementById('summaryFabContainer');
-                    fab.classList.remove('translate-y-24', 'opacity-0', 'pointer-events-none');
-                    fab.classList.add('translate-y-0', 'opacity-100', 'pointer-events-auto');
-                    
-                    const badge = document.getElementById('sessionCountBadge');
-                    badge.textContent = sessionTranslations.length;
-                    badge.classList.remove('scale-0');
-                    badge.classList.add('scale-100');
+                analyzeMedicalContext(data.translation + " " + data.transcription);
+                
+                // Generar TTS Español en segundo plano
+                if (data.translation) {
+                    try {
+                        audioPlayer.pause();
+                        audioPlayer.removeAttribute('src'); // reset
+                        const ttsRes = await fetch('/tts/es', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ text: data.translation })
+                        });
+                        const ttsData = await ttsRes.json();
+                        if (ttsData.audio_url) {
+                            audioPlayer.src = ttsData.audio_url + "?t=" + Date.now();
+                            audioPlayer.play();
+                        }
+                    } catch (e) {
+                        console.error("Error loading TTS:", e);
+                    }
                 }
 
-                analyzeMedicalContext(data.translation + " " + data.transcription);
 
             } catch (err) {
                 // Mensaje de error claro
@@ -817,6 +896,8 @@
             const text = transcriptionInput.value.trim();
             if (!text) return;
 
+            const btn = document.getElementById('retranslateBtn');
+            btn.classList.add('opacity-50', 'pointer-events-none');
             statusEl.textContent = "Traduciendo...";
 
             if (currentMode === 'kiche-es') {
@@ -827,16 +908,13 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ text: text, source: 'kiche' })
                     });
+                    
                     const data = await res.json();
                     if (data.error) throw new Error(data.error);
                     
                     translationText.textContent = "";
                     await typeWriterEffect(translationText, data.translation, false, 20);
                     
-                    if (data.audio_url) {
-                        audioPlayer.src = data.audio_url + "?t=" + Date.now();
-                        audioPlayer.play();
-                    }
                     statusEl.textContent = "¡Retradución completada!";
                     
                     if (data.translation && !data.translation.startsWith("[Sin traducción")) {
@@ -844,12 +922,37 @@
                     }
                     analyzeMedicalContext(data.translation + " " + text);
 
+                    // Generar TTS Español en segundo plano
+                    if (data.translation) {
+                        try {
+                            const ttsRes = await fetch('/tts/es', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ text: data.translation })
+                            });
+                            const ttsData = await ttsRes.json();
+                            if (ttsData.audio_url) {
+                                audioPlayer.src = ttsData.audio_url + "?t=" + Date.now();
+                                audioPlayer.play();
+                            }
+                        } catch (e) {
+                            console.error("Error loading TTS:", e);
+                        }
+                    }
+
+
                 } catch (err) {
                     showErrorAlert(err.message);
+                } finally {
+                    btn.classList.remove('opacity-50', 'pointer-events-none');
                 }
             } else {
                 // Already in es-kiche, retranslate to kiche
-                await translateToKiche(text);
+                try {
+                    await translateToKiche(text);
+                } finally {
+                    btn.classList.remove('opacity-50', 'pointer-events-none');
+                }
             }
         }
 
@@ -924,14 +1027,39 @@
                 statusEl.textContent = "¡Traducción completada!";
                 
                 await typeWriterEffect(translationText, data.translation, false, 20);
+                
+                // Ensure the translate button is enabled
+                const btn = document.getElementById('retranslateBtn');
+                btn.classList.remove('opacity-50', 'pointer-events-none');
 
                 if (data.audio_url) {
+                    // Audio Nativo ya venia en la cache
                     audioPlayer.src = data.audio_url + "?t=" + Date.now();
                     audioPlayer.play();
                     
                     document.getElementById('audioSection').style.display = 'flex';
                     document.getElementById('audioSection').classList.remove('opacity-0');
                     document.getElementById('audioSection').classList.add('opacity-100');
+                } else if (data.translation && !data.translation.startsWith("[Sin traducción")) {
+                    // Cargar VITS TTS asincronamente
+                    try {
+                        const ttsRes = await fetch('/tts/quc', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ text: data.translation })
+                        });
+                        const ttsData = await ttsRes.json();
+                        if (ttsData.audio_url) {
+                            audioPlayer.src = ttsData.audio_url + "?t=" + Date.now();
+                            audioPlayer.play();
+                            
+                            document.getElementById('audioSection').style.display = 'flex';
+                            document.getElementById('audioSection').classList.remove('opacity-0');
+                            document.getElementById('audioSection').classList.add('opacity-100');
+                        }
+                    } catch (e) {
+                        console.error("Error loading K'iche TTS:", e);
+                    }
                 }
 
                 // Guardar en el historial (español) y analizar
@@ -1102,6 +1230,6 @@
             applyTheme(false);
         }
     </script>
+    <script src="{{ url_for('static', filename='tour.js') }}"></script>
 </body>
-
 </html>

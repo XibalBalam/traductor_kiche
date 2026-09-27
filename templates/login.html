@@ -10,7 +10,7 @@
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: 'Inter', sans-serif;
-            background: url("{{ url_for('static', filename='backgroundLogin.jpeg') }}") center center / cover no-repeat fixed;
+            background-color: #0F172A;
             color: white;
             min-height: 100vh;
             display: flex;
@@ -19,6 +19,13 @@
             padding: 1.5rem 1rem;
         }
         /* Capa de oscurecimiento más sutil para que la imagen resalte más */
+        .bg-image {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: url("{{ url_for('static', filename='backgroundLogin.jpeg') }}") center center / cover no-repeat;
+            z-index: -2;
+        }
+
         .overlay {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -181,6 +188,7 @@
     <link rel="manifest" href="/static/favicon/site.webmanifest" />
 </head>
 <body>
+    <div class="bg-image"></div>
     <div class="overlay"></div>
     
     <!-- Botón Flotante Animado Esquina -->

@@ -48,7 +48,7 @@ try:
         repo_id=REPO_ID,
         repo_type="space",
         ignore_patterns=ignore_patterns,
-        commit_message="Update for background loading and mobile UI"
+        commit_message="feat: default to dark mode and add toggle"
     )
     print("Code uploaded successfully!")
 except Exception as e:

@@ -65,9 +65,16 @@
 
         body {
             font-family: 'Inter', sans-serif;
-            background: url("{{ url_for('static', filename='backgroundLogin.jpeg') }}") center center / cover no-repeat fixed;
+            background-color: #0F172A;
             color: var(--text-main);
             min-height: 100vh;
+        }
+
+        .bg-image {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: url("{{ url_for('static', filename='backgroundLogin.jpeg') }}") center center / cover no-repeat;
+            z-index: -2;
         }
 
         .overlay {
@@ -243,6 +250,7 @@
     <link rel="manifest" href="/static/favicon/site.webmanifest" />
 </head>
 <body class="p-4 sm:p-8 flex flex-col items-center">
+    <div class="bg-image"></div>
     <div class="overlay"></div>
     
     <div class="main-wrapper w-full max-w-4xl">

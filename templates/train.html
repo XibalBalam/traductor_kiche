@@ -58,10 +58,17 @@
         }
 
         body {
-            background: url("{{ url_for('static', filename='backgroundLogin.jpeg') }}") center center / cover no-repeat fixed;
+            background-color: #0F172A;
             color: var(--text-main);
             font-family: 'Outfit', sans-serif;
             min-height: 100vh;
+        }
+
+        .bg-image {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: url("{{ url_for('static', filename='backgroundLogin.jpeg') }}") center center / cover no-repeat;
+            z-index: -2;
         }
 
         .overlay {
@@ -303,6 +310,7 @@
 </head>
 
 <body class="p-4 sm:p-8 flex flex-col items-center">
+    <div class="bg-image"></div>
     <div class="overlay"></div>
     <div class="main-wrapper w-full max-w-3xl">
         <a href="/" class="transition-link inline-flex items-center gap-1.5 text-[color:var(--text-muted)] hover:text-[color:var(--text-main)] transition-colors text-sm mb-6 font-medium">
