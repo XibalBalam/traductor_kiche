@@ -4,8 +4,8 @@ FROM python:3.9-slim
 RUN useradd -m -u 1000 user
 ENV PATH="/home/user/.local/bin:$PATH"
 
-# Install ffmpeg for librosa
-RUN apt-get update && apt-get install -y ffmpeg && rm -rf /var/lib/apt/lists/*
+# Install ffmpeg for librosa, and build-essential/espeak-ng for TTS
+RUN apt-get update && apt-get install -y ffmpeg build-essential espeak-ng git && rm -rf /var/lib/apt/lists/*
 
 USER user
 WORKDIR /app
