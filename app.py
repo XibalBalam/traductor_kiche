@@ -1155,6 +1155,16 @@ def tts_quc():
     if not kiche_translation:
         return jsonify({'error': 'No text provided'}), 400
     
+    # 1. Intentar usar el audio original del dataset primero (Native Audio Cache)
+    check_trans = kiche_translation.lower().replace("ꞌ", "'").replace("’", "'")
+    if check_trans in _native_audio_cache:
+        native_file = _native_audio_cache[check_trans]
+        check_path = os.path.join(TRAINING_FOLDER, native_file)
+        if os.path.exists(check_path):
+            print(f"[/tts/quc] Using NATIVE AUDIO for: {check_trans}")
+            return jsonify({'audio_url': f"/training-audio/{native_file}"})
+            
+    # 2. Si no hay audio nativo, usar TTS Sintético
     if tts_model is None:
         return jsonify({'error': 'TTS model not loaded'}), 500
         

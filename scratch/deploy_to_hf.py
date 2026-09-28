@@ -40,7 +40,7 @@ for k, v in secrets.items():
 
 print("Uploading code to Hugging Face...")
 # We ignore the venv directory, scratch, and .git
-ignore_patterns = ["venv/*", "scratch/*", ".git/*", "__pycache__/*", "*.mp3", "*.wav", "outputs/*", "uploads/*", "training_data*", "*.zip", "models/mms_tts_kiche/*", "models/mms_kiche_trained/*", "models/*.zip"]
+ignore_patterns = ["venv/*", "scratch/*", ".git/*", "__pycache__/*", "*.mp3", "*.wav", "outputs/*", "uploads/*", "training_data*", "*.zip", "models/mms_tts_kiche/*", "models/mms_kiche_trained/*", "models/*.zip", "models/custom_kiche_tts/*"]
 
 try:
     api.upload_folder(
