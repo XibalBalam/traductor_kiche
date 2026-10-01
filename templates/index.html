@@ -703,6 +703,9 @@
                 modal.classList.add('opacity-0', 'pointer-events-none');
                 content.classList.remove('scale-100');
                 content.classList.add('scale-95');
+                if (isSummaryGenerated) {
+                    resetUI();
+                }
             }
         }
 
@@ -933,6 +936,17 @@
                     sessionTranslations.push(data.translation);
                 }
                 
+                if (sessionTranslations.length > 0) {
+                    const fab = document.getElementById('summaryFabContainer');
+                    fab.classList.remove('translate-y-24', 'opacity-0', 'pointer-events-none');
+                    fab.classList.add('translate-y-0', 'opacity-100', 'pointer-events-auto');
+                    
+                    const badge = document.getElementById('sessionCountBadge');
+                    badge.textContent = sessionTranslations.length;
+                    badge.classList.remove('scale-0');
+                    badge.classList.add('scale-100');
+                }
+                
                 analyzeMedicalContext(data.translation + " " + data.transcription);
                 
                 // Generar TTS Español en segundo plano
@@ -949,6 +963,9 @@
                         if (ttsData.audio_url) {
                             audioPlayer.src = ttsData.audio_url + "?t=" + Date.now();
                             audioPlayer.play();
+                            document.getElementById('audioSection').style.display = 'flex';
+                            document.getElementById('audioSection').classList.remove('opacity-0');
+                            document.getElementById('audioSection').classList.add('opacity-100');
                         }
                     } catch (e) {
                         console.error("Error loading TTS:", e);
@@ -994,6 +1011,18 @@
                     if (data.translation && !data.translation.startsWith("No se encontró traducción")) {
                         sessionTranslations.push(data.translation);
                     }
+                    
+                    if (sessionTranslations.length > 0) {
+                        const fab = document.getElementById('summaryFabContainer');
+                        fab.classList.remove('translate-y-24', 'opacity-0', 'pointer-events-none');
+                        fab.classList.add('translate-y-0', 'opacity-100', 'pointer-events-auto');
+                        
+                        const badge = document.getElementById('sessionCountBadge');
+                        badge.textContent = sessionTranslations.length;
+                        badge.classList.remove('scale-0');
+                        badge.classList.add('scale-100');
+                    }
+                    
                     analyzeMedicalContext(data.translation + " " + text);
 
                     // Generar TTS Español en segundo plano
@@ -1008,6 +1037,9 @@
                             if (ttsData.audio_url) {
                                 audioPlayer.src = ttsData.audio_url + "?t=" + Date.now();
                                 audioPlayer.play();
+                                document.getElementById('audioSection').style.display = 'flex';
+                                document.getElementById('audioSection').classList.remove('opacity-0');
+                                document.getElementById('audioSection').classList.add('opacity-100');
                             }
                         } catch (e) {
                             console.error("Error loading TTS:", e);

@@ -40,7 +40,7 @@ for k, v in secrets.items():
 
 print("Uploading code to Hugging Face...")
 # We ignore the venv directory, scratch, and .git
-ignore_patterns = ["venv/*", "scratch/*", ".git/*", "__pycache__/*", "*.mp3", "*.wav", "outputs/*", "uploads/*", "training_data*", "*.zip", "models/mms_tts_kiche/*", "models/mms_kiche_trained/*", "models/*.zip", "models/custom_kiche_tts/*"]
+ignore_patterns = ["venv/*", "scratch/*", ".git/*", "__pycache__/*", "*.mp3", "*.wav", "outputs/*", "uploads/*", "training_data*", "*.zip", "models/mms_tts_kiche/*", "models/*.zip", "models/custom_kiche_tts/*"]
 
 try:
     api.upload_folder(
@@ -48,7 +48,7 @@ try:
         repo_id=REPO_ID,
         repo_type="space",
         ignore_patterns=ignore_patterns,
-        commit_message="fix: sync audio recordings from s3, improved spanish to kiche lookup"
+        commit_message="deploy: new trained mms model, fix summary bugs, fix ios audio display"
     )
     print("Code uploaded successfully!")
 except Exception as e:
