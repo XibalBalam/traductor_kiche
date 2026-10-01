@@ -1,5 +1,6 @@
 
 import os
+import re
 import random
 import csv
 import time
@@ -612,30 +613,132 @@ def sync_file_to_s3(filepath, filename):
     except Exception as e:
         print(f"[S3] Failed to upload {filename}: {e}")
 
+# ── TRAINING FOLDER & BASELINE PHRASES ─────────────────────────────────────────
+TRAINING_FOLDER = 'training_data'
+TRAINING_AUDIO_FOLDER = os.path.join(TRAINING_FOLDER, 'audio')
+TRAINING_CSV = os.path.join(TRAINING_FOLDER, 'metadata.csv')
+os.makedirs(TRAINING_AUDIO_FOLDER, exist_ok=True)
+
+# Suggested phrases for training sessions
+TRAINING_PHRASES = [
+    ("k'ax waqan", "me duele la pierna / el pie"),
+    ("k'ax nu jolom", "me duele la cabeza"),
+    ("k'ax nu q'ab'", "me duele la mano"),
+    ("k'ax nuk'ux", "me duele el pecho"),
+    ("k'o nu q'aq'al", "tengo fiebre"),
+    ("maj wuxlab", "no tengo aire / no puedo respirar"),
+    ("kin jek' ta wuxlab", "no puedo respirar"),
+    ("ka lemlot wanima", "estoy mareado"),
+    ("kin xabik", "voy a vomitar"),
+    ("xin tzaqik", "me caí"),
+    ("xin q'osij", "me golpeé"),
+    ("xin jos nu q'ab'", "me raspé la mano"),
+    ("k'ax waral", "me duele aquí"),
+    ("nim k'ax", "mucho dolor"),
+    ("in yowab'", "estoy enfermo"),
+    ("na in utz taj", "no estoy bien"),
+    ("na toq'abej", "apóyame"),
+    ("chi na to o'", "ven a ayudarme"),
+    ("na toq'aj", "apóyame / sostenme"),
+    ("waqan", "pierna / pie"),
+    ("jolom", "cabeza"),
+    ("q'ab'", "mano / brazo"),
+    ("kik'", "sangre"),
+    ("q'aq'al", "fiebre"),
+    ("je'", "sí"),
+    ("man je' taj", "no"),
+    ("utz", "bien"),
+    ("jas ab'i'", "¿cómo te llamas?"),
+    ("jampa' ajunab'", "¿cuántos años tienes?"),
+    ("jawi' k'o wi", "¿dónde está?"),
+    ("chape'la", "pase adelante"),
+    ("t'uyu'la", "tome asiento"),
+    ("chab'ana jun toq'ob'", "por favor"),
+    ("maltyox", "gracias"),
+    ("saqarik", "buenos días"),
+    ("xeq'ij", "buenas tardes"),
+    ("xok aq'ab'", "buenas noches"),
+    ("chwe'q chik", "hasta mañana"),
+]
+
 # ── MEDICAL DICTIONARY & NATIVE AUDIO CACHE ────────────────────────────────────
 DICT_PATH = os.path.join(os.path.dirname(__file__), 'medical_dictionary.json')
 ESCRITURA_CSV = os.path.join(os.path.dirname(__file__), 'escritura_dataset.csv')
-_medical_dict = {}  # flat key → translation
-_es_to_kiche_dict = {} # flat spanish -> kiche
-_native_audio_cache = {} # flat kiche -> audio filepath
+_medical_dict = {}  # flat key → translation (K'iche' -> Spanish)
+_es_to_kiche_dict = {} # flat spanish -> kiche (Spanish -> K'iche')
+_native_audio_cache = {} # normalized/raw kiche -> audio filepath
+_native_audio_glottal_cache = {} # glottal-stripped kiche -> audio filepath
+
+def normalize_spanish_text(text):
+    if not text:
+        return ""
+    text = text.lower().strip()
+    text = unicodedata.normalize('NFD', text)
+    text = ''.join(c for c in text if unicodedata.category(c) != 'Mn')
+    text = re.sub(r'[¿?¡!.,;:\"()\'\[\]{}]', ' ', text)
+    return re.sub(r'\s+', ' ', text).strip()
+
+def normalize_kiche_for_cache(text):
+    if not text:
+        return ""
+    text = text.lower().strip()
+    text = text.replace("ꞌ", "'").replace("’", "'").replace("`", "'")
+    text = re.sub(r'[¿?¡!.,;:\"()\[\]{}]', ' ', text)
+    return re.sub(r'\s+', ' ', text).strip()
+
+def strip_glottal(text):
+    return re.sub(r"[']", "", normalize_kiche_for_cache(text))
+
+def find_native_audio(kiche_text):
+    if not kiche_text or not _native_audio_cache:
+        return None
+    norm_k = normalize_kiche_for_cache(kiche_text)
+    raw_k = kiche_text.strip().lower().replace("ꞌ", "'").replace("’", "'")
+    
+    # 1. Exact match on normalized K'iche'
+    if norm_k in _native_audio_cache:
+        return _native_audio_cache[norm_k]
+    # 2. Exact match on raw lower K'iche'
+    if raw_k in _native_audio_cache:
+        return _native_audio_cache[raw_k]
+    # 3. Match without glottal stops (e.g. k'ux vs k'u'x)
+    sg = strip_glottal(kiche_text)
+    if sg and sg in _native_audio_glottal_cache:
+        return _native_audio_glottal_cache[sg]
+    # 4. Rapidfuzz fuzzy match on normalized keys
+    try:
+        best_key, score, _ = rapidfuzz.process.extractOne(norm_k, _native_audio_cache.keys(), scorer=rapidfuzz.fuzz.ratio)
+        if score >= 88:
+            return _native_audio_cache[best_key]
+    except Exception:
+        pass
+    return None
 
 def load_native_audio_cache():
-    global _native_audio_cache
+    global _native_audio_cache, _native_audio_glottal_cache
     import csv
-    _native_audio_cache = {}
+    cache = {}
+    glottal_cache = {}
     if os.path.exists(TRAINING_CSV):
         try:
             with open(TRAINING_CSV, 'r', encoding='utf-8') as f:
                 reader = csv.DictReader(f)
                 for row in reader:
-                    trans = row.get('transcription', '').strip().lower()
+                    trans = row.get('transcription', '').strip()
                     audio_path = row.get('file_name', '').strip()
                     if trans and audio_path:
-                        trans = trans.replace("ꞌ", "'").replace("’", "'")
-                        _native_audio_cache[trans] = audio_path
-            print(f"[Dict] Loaded {len(_native_audio_cache)} native audio mappings from dataset.")
+                        norm_k = normalize_kiche_for_cache(trans)
+                        raw_k = trans.lower().replace("ꞌ", "'").replace("’", "'")
+                        sg = strip_glottal(trans)
+                        cache[norm_k] = audio_path
+                        cache[raw_k] = audio_path
+                        if sg:
+                            glottal_cache[sg] = audio_path
+            print(f"[Dict] Loaded {len(cache)} native audio mappings from dataset.")
         except Exception as e:
             print(f"[Dict] Error loading native audio cache: {e}")
+    _native_audio_cache = cache
+    _native_audio_glottal_cache = glottal_cache
 
 def load_medical_dict():
     global _medical_dict, _es_to_kiche_dict
@@ -645,26 +748,52 @@ def load_medical_dict():
         raw = json.load(f)
     flat = {}
     es_to_kiche = {}
-    
-    # Add from main dictionary
-    for section, entries in raw.items():
-        if section.startswith('_') and section != '_escritura_aprobada':
-            continue
-        for kiche, spanish in entries.items():
-            if not section.startswith('_'):
-                flat[kiche.lower()] = spanish
-            
-            # Prepare reverse lookup
-            base_esp = spanish.split('(')[0].strip().lower()
-            if base_esp and base_esp not in es_to_kiche:
-                es_to_kiche[base_esp] = kiche
-            if '/' in base_esp:
-                for p in base_esp.split('/'):
-                    p = p.strip()
-                    if p and p not in es_to_kiche:
-                        es_to_kiche[p] = kiche
-                        
-    # Add from escritura_dataset if exists
+
+    def add_entry(esp_str, kich_str, overwrite=False):
+        norm_esp = normalize_spanish_text(esp_str)
+        if not norm_esp or not kich_str:
+            return
+        flat[kich_str.lower().strip()] = esp_str
+        
+        has_audio = (find_native_audio(kich_str) is not None)
+        if overwrite:
+            es_to_kiche[norm_esp] = kich_str
+        elif norm_esp not in es_to_kiche:
+            es_to_kiche[norm_esp] = kich_str
+        else:
+            curr_val = es_to_kiche[norm_esp]
+            curr_has_audio = (find_native_audio(curr_val) is not None)
+            if not curr_has_audio and has_audio:
+                es_to_kiche[norm_esp] = kich_str
+
+    # 1. Baseline training phrases
+    for kich, esp in TRAINING_PHRASES:
+        add_entry(esp, kich, overwrite=False)
+
+    # 2. Main dictionary (non-internal, non-ia sections first)
+    regular_sections = {k: v for k, v in raw.items() if not k.startswith('_') and k != 'ia_generado'}
+    for section, entries in regular_sections.items():
+        if isinstance(entries, dict):
+            for kiche, spanish in entries.items():
+                base_esp = spanish.split('(')[0].strip()
+                add_entry(base_esp, kiche, overwrite=False)
+                if '/' in base_esp:
+                    for p in base_esp.split('/'):
+                        add_entry(p.strip(), kiche, overwrite=False)
+
+    # 3. Approved entries (_escritura_aprobada)
+    if '_escritura_aprobada' in raw and isinstance(raw['_escritura_aprobada'], dict):
+        for kiche, spanish in raw['_escritura_aprobada'].items():
+            base_esp = spanish.split('(')[0].strip()
+            add_entry(base_esp, kiche, overwrite=True)
+
+    # 4. ia_generado (lowest priority, never overwrite approved or human entries)
+    if 'ia_generado' in raw and isinstance(raw['ia_generado'], dict):
+        for kiche, spanish in raw['ia_generado'].items():
+            base_esp = spanish.split('(')[0].strip()
+            add_entry(base_esp, kiche, overwrite=False)
+
+    # 5. Escritura dataset (verified expert recordings - HIGHEST PRIORITY)
     if os.path.exists(ESCRITURA_CSV):
         import csv
         with open(ESCRITURA_CSV, encoding='utf-8') as f:
@@ -672,10 +801,9 @@ def load_medical_dict():
             next(reader, None)
             for r in reader:
                 if len(r) >= 2:
-                    esp, kich = r[0].split('(')[0].strip().lower(), r[1].strip()
-                    if esp and esp not in es_to_kiche:
-                        es_to_kiche[esp] = kich
-                        
+                    esp, kich = r[0].strip(), r[1].strip()
+                    add_entry(esp, kich, overwrite=True)
+
     _medical_dict = flat
     _es_to_kiche_dict = es_to_kiche
     print(f"[Dict] Loaded {len(_medical_dict)} medical entries. Reverse entries: {len(_es_to_kiche_dict)}")
@@ -737,13 +865,11 @@ sync_file_from_s3('app.db', DB_PATH)
 with app.app_context():
     db.create_all()
 
-TRAINING_FOLDER = 'training_data'
-TRAINING_CSV = os.path.join(TRAINING_FOLDER, 'metadata.csv')
-os.makedirs(TRAINING_FOLDER, exist_ok=True)
+os.makedirs(TRAINING_AUDIO_FOLDER, exist_ok=True)
 sync_file_from_s3('training_data/metadata.csv', TRAINING_CSV)
 
-load_medical_dict()
 load_native_audio_cache()
+load_medical_dict()
 load_normalization_rules()
 
 import re
@@ -855,7 +981,7 @@ def lookup_dictionary(text):
     # 4. Levenshtein / Fuzzy Match as fallback
     try:
         best_match_key, score, _ = rapidfuzz.process.extractOne(norm_input, norm_dict.keys(), scorer=rapidfuzz.fuzz.ratio)
-        if score >= 80:
+        if score >= 72:
             return norm_dict[best_match_key], f'rapidfuzz ({round(score)}%)'
     except Exception as e:
         print(f"[RapidFuzz] Error: {e}")
@@ -918,34 +1044,25 @@ def translate_spanish_to_kiche(spanish_text):
     if not spanish_text or not spanish_text.strip():
         return spanish_text
         
-    def strip_accents(text):
-        text = text.lower().strip()
-        text = unicodedata.normalize('NFD', text)
-        return ''.join(c for c in text if unicodedata.category(c) != 'Mn')
-        
-    norm_input = strip_accents(spanish_text)
+    norm_input = normalize_spanish_text(spanish_text)
+    if not norm_input:
+        return spanish_text
     
-    # 1. Exact or normalized match
+    # 1. Exact normalized match
     if norm_input in _es_to_kiche_dict:
         return _es_to_kiche_dict[norm_input]
         
-    # 2. Partial / Word overlap match
-    best_match = None
-    best_score = 0
-    for k, v in _es_to_kiche_dict.items():
-        if k and f" {k} " in f" {norm_input} ":
-            score = len(k.split())
-            if score > best_score:
-                best_score = score
-                best_match = v
-    if best_match:
-        return best_match
+    # 2. Subphrase / multi-word match (check longer phrases first to avoid wrong partial matches)
+    sorted_keys = sorted(_es_to_kiche_dict.keys(), key=lambda x: len(x.split()), reverse=True)
+    for k in sorted_keys:
+        words = k.split()
+        if len(words) > 1 and f" {k} " in f" {norm_input} ":
+            return _es_to_kiche_dict[k]
         
     # 3. Fuzzy match (Levenshtein) via rapidfuzz
     try:
         match_key, score, _ = rapidfuzz.process.extractOne(norm_input, _es_to_kiche_dict.keys(), scorer=rapidfuzz.fuzz.ratio)
-        # Require higher score for Spanish->Kiche to avoid wrong medical translations
-        if score >= 82:
+        if score >= 68:
             return _es_to_kiche_dict[match_key]
     except Exception as e:
         print(f"[RapidFuzz es->kiche] Error: {e}")
@@ -1118,7 +1235,6 @@ def translate():
         # Translation using Dict / NLLB-200 / Fallback
         translation = translate_kiche_to_spanish(display_transcription)
         
-        # TTS moved to frontend for faster text response
         audio_url = None
         return jsonify({
             'transcription': display_transcription,
@@ -1156,13 +1272,10 @@ def tts_quc():
         return jsonify({'error': 'No text provided'}), 400
     
     # 1. Intentar usar el audio original del dataset primero (Native Audio Cache)
-    check_trans = kiche_translation.lower().replace("ꞌ", "'").replace("’", "'")
-    if check_trans in _native_audio_cache:
-        native_file = _native_audio_cache[check_trans]
-        check_path = os.path.join(TRAINING_FOLDER, native_file)
-        if os.path.exists(check_path):
-            print(f"[/tts/quc] Using NATIVE AUDIO for: {check_trans}")
-            return jsonify({'audio_url': f"/training-audio/{native_file}"})
+    native_file = find_native_audio(kiche_translation)
+    if native_file:
+        print(f"[/tts/quc] Using NATIVE AUDIO for: {kiche_translation} -> {native_file}")
+        return jsonify({'audio_url': f"/training-audio/{native_file}"})
             
     # 2. Si no hay audio nativo, usar TTS Sintético
     if tts_model is None:
@@ -1202,12 +1315,14 @@ def get_training_audio(filepath):
         filepath = filepath[len('audio/'):]
         
     local_audio_dir = os.path.join(TRAINING_FOLDER, 'audio')
+    os.makedirs(local_audio_dir, exist_ok=True)
     full_path = os.path.join(local_audio_dir, filepath)
     
     # If file doesn't exist locally, try downloading it from S3
     if not os.path.exists(full_path):
         if s3_client and S3_BUCKET_NAME:
             try:
+                os.makedirs(os.path.dirname(full_path), exist_ok=True)
                 s3_client.download_file(S3_BUCKET_NAME, f"training_data/audio/{filepath}", full_path)
                 print(f"[S3] Downloaded missing audio {filepath} from S3")
             except Exception as e:
@@ -1259,68 +1374,18 @@ def translate_to_kiche():
             'translation': kiche_translation
         }
 
-        # Generar TTS K'iche' si el modelo está disponible y se logró traducir
-        if tts_model is not None and not kiche_translation.startswith("[Sin traducción"):
-            check_trans = kiche_translation.strip().lower().replace("ꞌ", "'").replace("’", "'")
-            
-            # 1. Intentar usar el audio original del dataset
-            if check_trans in _native_audio_cache:
-                native_file = _native_audio_cache[check_trans]
-                check_path = os.path.join(TRAINING_FOLDER, native_file)
-                if os.path.exists(check_path):
-                    audio_url = f"/training-audio/{native_file}"
-                    response_data['audio_url'] = audio_url
-                    print(f"[TTS] Using NATIVE AUDIO for: {check_trans}")
-            
-
+        # 1. Intentar usar el audio original del dataset primero (Native Audio Cache)
+        native_file = find_native_audio(kiche_translation)
+        if native_file:
+            audio_url = f"/training-audio/{native_file}"
+            response_data['audio_url'] = audio_url
+            print(f"[TTS] Using NATIVE AUDIO for: {kiche_translation} -> {native_file}")
 
         return jsonify(response_data)
     except Exception as e:
         print(f"[/translate-to-kiche] Error: {e}")
         return jsonify({'error': str(e)}), 500
 
-
-# ── TRAINING MODE ──────────────────────────────────────────────────────────────
-TRAINING_FOLDER = 'training_data'
-TRAINING_AUDIO_FOLDER = os.path.join(TRAINING_FOLDER, 'audio')
-TRAINING_CSV = os.path.join(TRAINING_FOLDER, 'metadata.csv')
-os.makedirs(TRAINING_AUDIO_FOLDER, exist_ok=True)
-
-# Suggested phrases for training sessions
-TRAINING_PHRASES = [
-    ("k'ax waqan", "me duele la pierna / el pie"),
-    ("k'ax nu jolom", "me duele la cabeza"),
-    ("k'ax nu q'ab'", "me duele la mano"),
-    ("k'ax nuk'ux", "me duele el pecho"),
-    ("k'o nu q'aq'al", "tengo fiebre"),
-    ("maj wuxlab", "no tengo aire / no puedo respirar"),
-    ("kin jek' ta wuxlab", "no puedo respirar"),
-    ("ka lemlot wanima", "estoy mareado"),
-    ("kin xabik", "voy a vomitar"),
-    ("xin tzaqik", "me caí"),
-    ("xin q'osij", "me golpeé"),
-    ("xin jos nu q'ab'", "me raspé la mano"),
-    ("k'ax waral", "me duele aquí"),
-    ("nim k'ax", "mucho dolor"),
-    ("in yowab'", "estoy enfermo"),
-    ("na in utz taj", "no estoy bien"),
-    ("na toq'abej", "apóyame"),
-    ("chi na to o'", "ven a ayudarme"),
-    ("na toq'aj", "apóyame / sostenme"),
-    ("waqan", "pierna / pie"),
-    ("jolom", "cabeza"),
-    ("q'ab'", "mano / brazo"),
-    ("kik'", "sangre"),
-    ("q'aq'al", "fiebre"),
-    ("je'", "sí"),
-    ("man je' taj", "no"),
-    ("utz", "bien"),
-    ("jas ab'i'", "¿cómo te llamas?"),
-    ("jampa' ajunab'", "¿cuántos años tienes?"),
-    ("jawije' at petinaq wi", "¿de dónde vienes?"),
-    ("jas k'o awe", "¿qué tienes? / ¿qué te pasa?"),
-    ("jas ana'om", "¿cómo te sientes?"),
-]
 
 @app.route('/tts-playground')
 def tts_playground():
@@ -1442,6 +1507,7 @@ def save_training_sample():
     # Generate filename
     count = get_training_count() + 1
     filename = f"sample_{count:04d}.webm"
+    os.makedirs(TRAINING_AUDIO_FOLDER, exist_ok=True)
     audio_path = os.path.join(TRAINING_AUDIO_FOLDER, filename)
     audio_file.save(audio_path)
 
@@ -1454,7 +1520,7 @@ def save_training_sample():
             writer.writerow(['file_name', 'transcription', 'asr_raw'])
         writer.writerow([f"audio/{filename}", correct_text, asr_raw])
 
-    # Si viene del modo experto con traducción en español, guardarlo también en el dataset de escritura/diccionario
+    # Si viene con traducción en español, guardarlo también en el dataset de escritura/diccionario
     if spanish_text:
         try:
             variantes_existentes = set()
@@ -1463,9 +1529,9 @@ def save_training_sample():
                     import csv
                     reader = csv.DictReader(f)
                     for row in reader:
-                        if row.get('espanol') == spanish_text:
-                            variantes_existentes.add(row.get('kiche'))
-            if correct_text not in variantes_existentes:
+                        if normalize_spanish_text(row.get('espanol')) == normalize_spanish_text(spanish_text):
+                            variantes_existentes.add(normalize_kiche_for_cache(row.get('kiche')))
+            if normalize_kiche_for_cache(correct_text) not in variantes_existentes:
                 write_escritura_header = not os.path.exists(ESCRITURA_CSV)
                 with open(ESCRITURA_CSV, 'a', encoding='utf-8', newline='') as f:
                     import csv
@@ -1483,7 +1549,7 @@ def save_training_sample():
                 if '_pendientes_traduccion' in diccionario:
                     keys_to_delete = [
                         k for k, v in diccionario['_pendientes_traduccion'].items()
-                        if (v.split('(')[0].strip() if '(' in v and ')' in v else v.strip()) == spanish_text
+                        if normalize_spanish_text(v.split('(')[0] if '(' in v and ')' in v else v) == normalize_spanish_text(spanish_text)
                     ]
                     if keys_to_delete:
                         for k in keys_to_delete:
@@ -1491,7 +1557,6 @@ def save_training_sample():
                         with open(DICT_PATH, 'w', encoding='utf-8-sig') as f:
                             json.dump(diccionario, f, ensure_ascii=False, indent=4)
                         sync_file_to_s3(DICT_PATH, 'medical_dictionary.json')
-            load_medical_dict()
         except Exception as e:
             print(f"[Expert Save] Error updating dictionary/escritura: {e}")
 
@@ -1504,8 +1569,9 @@ def save_training_sample():
         except Exception as e:
             print(f"[S3] Upload error: {e}")
 
-    # Update the native audio cache so it is instantly available for TTS translation
+    # Update both native audio cache and dictionary so they are instantly available
     load_native_audio_cache()
+    load_medical_dict()
 
     return jsonify({
         'status': 'saved',
@@ -1696,6 +1762,9 @@ def api_update_training_sample():
         except Exception as e:
             print(f"[S3] Upload error: {e}")
 
+    load_native_audio_cache()
+    load_medical_dict()
+
     return jsonify({'status': 'ok'})
 
 @app.route('/api/delete-training-sample', methods=['POST'])
@@ -1741,6 +1810,9 @@ def api_delete_training_sample():
             s3_client.delete_object(Bucket=S3_BUCKET_NAME, Key=f"training_data/{file_name}")
         except Exception as e:
             print(f"[S3] Upload/Delete error: {e}")
+
+    load_native_audio_cache()
+    load_medical_dict()
 
     return jsonify({'status': 'ok'})
 

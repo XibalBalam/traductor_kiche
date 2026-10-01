@@ -879,10 +879,15 @@
             saveBtn.disabled = true;
             saveBtn.textContent = 'Guardando...';
 
+            const currentSpanish = (phrases && phrases[phraseIdx]) ? phrases[phraseIdx][1].replace(/^✅\s*\[Aprobado\]\s*/i, '').trim() : '';
+
             const fd = new FormData();
             fd.append('audio', currentAudioBlob, 'sample.wav');
             fd.append('correct_text', correctText);
-            fd.append('asr_raw', currentAsrRaw);
+            if (currentSpanish) {
+                fd.append('spanish_text', currentSpanish);
+            }
+            fd.append('asr_raw', currentAsrRaw || currentSpanish);
 
             try {
                 const res = await fetch('/save-training-sample', { method: 'POST', body: fd });

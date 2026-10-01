@@ -568,6 +568,17 @@
         const btnKicheToEs = document.getElementById('btnKicheToEs');
         const btnEsToKiche = document.getElementById('btnEsToKiche');
 
+        // Request microphone permission on page load
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                stream.getTracks().forEach(track => track.stop());
+                console.log("Microphone permission granted on load");
+            } catch (err) {
+                console.error("Microphone permission denied or error on load:", err);
+            }
+        });
+
         // ── MANEJO DE ERRORES (TOAST) ──────────────────────────────────────
         let errorToastTimeout;
         function showErrorAlert(msg) {
@@ -709,10 +720,10 @@
 
         // ── MIC BUTTON ─────────────────────────────────────────────────────
         const startAction = async (e) => {
-            e.preventDefault();
+            if (e.cancelable) e.preventDefault();
             if (!isRecording) {
                 resetUI();
-                await requestWakeLock(); // Prevent screen sleep
+                requestWakeLock(); // Prevent screen sleep (fire and forget to preserve user gesture context)
                 if (currentMode === 'kiche-es') {
                     await startKicheRecording();
                 } else {
@@ -773,12 +784,12 @@
         async function startKicheRecording() {
             try {
                 audioChunks = [];
-                // Desactivar filtros del navegador que destruyen los saltillos (q', k') del K'iche'
+                // Activar filtros del navegador para mejorar el audio de micrófonos de baja calidad
                 const stream = await navigator.mediaDevices.getUserMedia({ 
                     audio: {
-                        echoCancellation: false,
-                        noiseSuppression: false,
-                        autoGainControl: false
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        autoGainControl: true
                     } 
                 });
                 mediaStream = stream;
@@ -998,7 +1009,13 @@
                 releaseWakeLock();
             };
 
-            recognition.start();
+            try {
+                recognition.start();
+            } catch (err) {
+                statusEl.textContent = "Error al iniciar micrófono: " + err.message;
+                micBtn.classList.remove('recording');
+                isRecording = false;
+            }
         }
 
         function stopSpanishRecognition() {

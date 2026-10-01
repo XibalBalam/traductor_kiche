@@ -21,5 +21,5 @@ COPY --chown=user . /app
 # Expose the default port for HF Spaces Docker
 EXPOSE 7860
 
-# Run with Gunicorn
-CMD ["gunicorn", "-w", "2", "-b", "0.0.0.0:7860", "--timeout", "300", "app:app"]
+# Run with Gunicorn (1 worker to share in-memory state for export jobs, multiple threads for concurrency)
+CMD ["gunicorn", "-w", "1", "--threads", "4", "-b", "0.0.0.0:7860", "--timeout", "300", "app:app"]

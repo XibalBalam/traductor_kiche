@@ -48,7 +48,7 @@ try:
         repo_id=REPO_ID,
         repo_type="space",
         ignore_patterns=ignore_patterns,
-        commit_message="feat: interactive tour, ui polish, and theme improvements"
+        commit_message="fix: sync audio recordings from s3, improved spanish to kiche lookup"
     )
     print("Code uploaded successfully!")
 except Exception as e:
