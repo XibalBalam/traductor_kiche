@@ -142,6 +142,25 @@
             100% { opacity: 0; filter: blur(15px); transform: translateY(-10px) scale(0.98); }
         }
 
+        /* LITE MODE (Baja Gama) */
+        :root.lite-mode * {
+            animation: none !important;
+            transition: none !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+        }
+        :root.lite-mode .container {
+            background: #1E293B !important; /* Fallback solido para oscuro */
+            border: 1px solid #334155 !important;
+        }
+        :root.light-mode.lite-mode .container {
+            background: #FFFFFF !important; /* Fallback solido para claro */
+            border: 1px solid #CBD5E1 !important;
+        }
+        :root.lite-mode .bg-image {
+            filter: none !important;
+        }
+
         .container {
             background: var(--card-bg);
             backdrop-filter: blur(20px);
@@ -446,6 +465,7 @@
             
             <!-- ADMIN CONTROLS (ICONS ONLY) -->
             <div class="flex gap-2">
+                <button onclick="toggleLiteMode()" title="Modo Lite (Quitar animaciones para rendimiento)" class="transition-link w-9 h-9 flex items-center justify-center rounded-full bg-yellow-500/15 border border-yellow-500/35 text-yellow-500 hover:bg-yellow-500/30 transition-colors cursor-pointer"><span class="material-symbols-outlined" style="font-size: 1.1rem;">speed</span></button>
                 <a href="/cuenta" title="Mi Cuenta (Perfil)" class="transition-link w-9 h-9 flex items-center justify-center rounded-full bg-slate-500/15 border border-slate-500/35 text-slate-400 hover:bg-slate-500/30 transition-colors"><span class="material-symbols-outlined" style="font-size: 1.1rem;">person</span></a>
                 
                 {% if session.get('role') in ['admin', 'entrenador'] %}
@@ -577,7 +597,35 @@
             } catch (err) {
                 console.error("Microphone permission denied or error on load:", err);
             }
+
+            // Auto-detect low-end device for Lite Mode
+            const isLowEnd = (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) || 
+                             (navigator.deviceMemory && navigator.deviceMemory <= 4) ||
+                             window.innerWidth < 400;
+            const savedLite = localStorage.getItem('liteMode');
+            if (savedLite === 'true' || (savedLite === null && isLowEnd)) {
+                document.documentElement.classList.add('lite-mode');
+            }
         });
+
+        function toggleLiteMode() {
+            const isLite = document.documentElement.classList.toggle('lite-mode');
+            localStorage.setItem('liteMode', isLite ? 'true' : 'false');
+            showErrorAlert(isLite ? "Modo Lite activado (rendimiento rápido)." : "Modo normal activado (animaciones completas).");
+            // Usamos showErrorAlert como toast genérico para avisar
+            document.getElementById('errorToast').style.borderColor = isLite ? 'var(--primary-jade)' : 'var(--primary-jade)';
+            document.querySelector('#errorToast span').textContent = 'speed';
+            document.querySelector('#errorToast span').style.color = 'var(--primary-jade)';
+            document.getElementById('errorToastMsg').textContent = isLite ? 'Animaciones y efectos desactivados.' : 'Animaciones y efectos activados.';
+            document.querySelector('#errorToast h4').textContent = 'Modo Rendimiento';
+            setTimeout(() => {
+                // reset styles
+                document.getElementById('errorToast').style.borderColor = '';
+                document.querySelector('#errorToast span').textContent = 'warning';
+                document.querySelector('#errorToast span').style.color = '';
+                document.querySelector('#errorToast h4').textContent = 'Error del Sistema';
+            }, 5000);
+        }
 
         // ── MANEJO DE ERRORES (TOAST) ──────────────────────────────────────
         let errorToastTimeout;
@@ -718,9 +766,24 @@
             });
         }
 
+        let audioUnlocked = false;
+        function unlockAudio() {
+            if (!audioUnlocked && window.audioPlayer) {
+                // Play and pause immediately to unlock audio context on iOS
+                const playPromise = audioPlayer.play();
+                if (playPromise !== undefined) {
+                    playPromise.then(() => {
+                        audioPlayer.pause();
+                    }).catch(() => {});
+                }
+                audioUnlocked = true;
+            }
+        }
+
         // ── MIC BUTTON ─────────────────────────────────────────────────────
         const startAction = async (e) => {
             if (e.cancelable) e.preventDefault();
+            unlockAudio(); // Unlock audio context on first user interaction
             if (!isRecording) {
                 resetUI();
                 requestWakeLock(); // Prevent screen sleep (fire and forget to preserve user gesture context)
@@ -866,7 +929,7 @@
                 const btn = document.getElementById('retranslateBtn');
                 btn.classList.remove('opacity-50', 'pointer-events-none');
                 
-                if (data.translation && !data.translation.startsWith("[Sin traducción")) {
+                if (data.translation && !data.translation.startsWith("No se encontró traducción")) {
                     sessionTranslations.push(data.translation);
                 }
                 
@@ -928,7 +991,7 @@
                     
                     statusEl.textContent = "¡Retradución completada!";
                     
-                    if (data.translation && !data.translation.startsWith("[Sin traducción")) {
+                    if (data.translation && !data.translation.startsWith("No se encontró traducción")) {
                         sessionTranslations.push(data.translation);
                     }
                     analyzeMedicalContext(data.translation + " " + text);
@@ -977,9 +1040,12 @@
 
             recognition = new SpeechRecognition();
             recognition.lang = 'es-GT';
-            recognition.interimResults = false;
+            recognition.interimResults = true;
             recognition.maxAlternatives = 1;
-            recognition.continuous = false;
+            recognition.continuous = false; // iOS Safari throws 'service-not-allowed' si es true
+            
+            lastSpanishText = "";
+            transcriptionInput.value = "";
 
             recognition.onstart = () => {
                 isRecording = true;
@@ -988,12 +1054,24 @@
                 updateStatusIndicator('recording');
             };
 
-            recognition.onresult = async (event) => {
-                const spokenText = event.results[0][0].transcript;
-                lastSpanishText = spokenText;
-                transcriptionInput.value = spokenText;
-                statusEl.textContent = "Traduciendo al K'iche'...";
-                await translateToKiche(spokenText);
+            recognition.onresult = (event) => {
+                let interimTranscript = '';
+                let finalTranscript = '';
+
+                for (let i = event.resultIndex; i < event.results.length; ++i) {
+                    if (event.results[i].isFinal) {
+                        finalTranscript += event.results[i][0].transcript;
+                    } else {
+                        interimTranscript += event.results[i][0].transcript;
+                    }
+                }
+                
+                // Actualizar UI con lo que va escuchando
+                const currentText = finalTranscript || interimTranscript || event.results[0][0].transcript;
+                if (currentText.trim()) {
+                    lastSpanishText = currentText;
+                    transcriptionInput.value = lastSpanishText;
+                }
             };
 
             recognition.onerror = (e) => {
@@ -1004,9 +1082,11 @@
             };
 
             recognition.onend = () => {
-                micBtn.classList.remove('recording');
-                isRecording = false;
-                releaseWakeLock();
+                // Si el API corta por sí solo antes de que el usuario suelte el botón, 
+                // reintentamos iniciar si seguimos en modo isRecording.
+                if (isRecording) {
+                    try { recognition.start(); } catch(e) {}
+                }
             };
 
             try {
@@ -1018,8 +1098,25 @@
             }
         }
 
-        function stopSpanishRecognition() {
-            if (recognition) recognition.stop();
+        async function stopSpanishRecognition() {
+            if (recognition) {
+                isRecording = false;
+                recognition.stop();
+                micBtn.classList.remove('recording');
+                releaseWakeLock();
+                
+                // Darle un pequeño tiempo por si onresult trae la última palabra
+                setTimeout(async () => {
+                    const textToTranslate = transcriptionInput.value.trim() || lastSpanishText.trim();
+                    if (textToTranslate) {
+                        statusEl.textContent = "Traduciendo al K'iche'...";
+                        await translateToKiche(textToTranslate);
+                    } else {
+                        statusEl.textContent = "No se detectó voz.";
+                        updateStatusIndicator('none');
+                    }
+                }, 300);
+            }
         }
 
         async function translateToKiche(text) {
@@ -1057,7 +1154,7 @@
                     document.getElementById('audioSection').style.display = 'flex';
                     document.getElementById('audioSection').classList.remove('opacity-0');
                     document.getElementById('audioSection').classList.add('opacity-100');
-                } else if (data.translation && !data.translation.startsWith("[Sin traducción")) {
+                } else if (data.translation && !data.translation.startsWith("No se encontró traducción")) {
                     // Cargar VITS TTS asincronamente
                     try {
                         const ttsRes = await fetch('/tts/quc', {

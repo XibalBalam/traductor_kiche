@@ -1009,7 +1009,7 @@ def translate_kiche_to_spanish(text):
     print(f"[NLLB] '{text}' not in dictionary, using NLLB API...")
     if not HF_TOKEN:
         print("[NLLB] No token, skipping NLLB.")
-        return f"[Sin traducción en diccionario: {text}]"
+        return f"No se encontró traducción para '{text}'"
     headers = {
         "Authorization": f"Bearer {HF_TOKEN}",
         "Content-Type": "application/json"
@@ -1033,10 +1033,10 @@ def translate_kiche_to_spanish(text):
                 
         # API Error, return friendly message instead of 500
         print(f"[NLLB] Non-200 response, returning fallback message.")
-        return f"[Sin traducción en diccionario: {text}]"
+        return f"No se encontró traducción para '{text}'"
     except Exception as e:
         print(f"[NLLB] Exception: {e}")
-        return f"[Sin traducción en diccionario: {text}]"
+        return f"No se encontró traducción para '{text}'"
 
 
 def translate_spanish_to_kiche(spanish_text):
@@ -1067,7 +1067,7 @@ def translate_spanish_to_kiche(spanish_text):
     except Exception as e:
         print(f"[RapidFuzz es->kiche] Error: {e}")
         
-    return f"[Sin traducción: '{spanish_text}']"
+    return f"No se encontró traducción para '{spanish_text}'"
 
 
 UPLOAD_FOLDER = 'uploads'
