@@ -244,9 +244,7 @@
                     const target = this.href;
                     const card = document.querySelector('.card');
                     if (card) card.classList.add('smoke-out');
-                    setTimeout(() => {
-                        window.location.href = target;
-                    }, 400);
+                    window.location.href = target;
                 }
             });
         });
@@ -262,9 +260,7 @@
                     if (card) card.classList.add('smoke-out');
                     
                     // We must submit the form properly bypassing the event listener
-                    setTimeout(() => {
-                        HTMLFormElement.prototype.submit.call(this);
-                    }, 400);
+                    HTMLFormElement.prototype.submit.call(this);
                 }
             });
         }

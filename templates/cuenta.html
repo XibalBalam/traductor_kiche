@@ -176,6 +176,12 @@
     <link rel="shortcut icon" href="/static/favicon/favicon.ico" />
     <link rel="apple-touch-icon" sizes="180x180" href="/static/favicon/apple-touch-icon.png" />
     <link rel="manifest" href="/static/favicon/site.webmanifest" />
+    <script>
+        // Aplicar el tema inmediatamente antes de renderizar el body (evita FOUC)
+        if (localStorage.getItem('theme') === 'light' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: light)').matches)) {
+            document.documentElement.classList.add('light-mode');
+        }
+    </script>
 </head>
 <body class="p-4 sm:p-8">
     <div class="bg-image"></div>
@@ -185,6 +191,9 @@
         <div class="glass-card w-full max-w-lg p-8 sm:p-10 relative">
             <a href="/" class="transition-link absolute top-6 left-6 text-[color:var(--text-muted)] hover:text-[color:var(--text-main)] transition-colors" title="Volver al Traductor">
                 <span class="material-symbols-outlined text-[1.4rem]">arrow_back</span>
+            </a>
+            <a href="/ayuda#sec-3" class="transition-link absolute top-6 right-6 text-[color:var(--text-muted)] hover:text-[color:var(--text-main)] transition-colors" title="Ayuda sobre Cuenta y Preferencias">
+                <span class="material-symbols-outlined text-[1.4rem]">help_outline</span>
             </a>
             
             <div class="text-center mb-8">
@@ -301,9 +310,7 @@
                     e.preventDefault();
                     const target = this.href;
                     document.querySelector('.main-wrapper').classList.add('smoke-out');
-                    setTimeout(() => {
-                        window.location.href = target;
-                    }, 400);
+                    window.location.href = target;
                 }
             });
         });
@@ -314,9 +321,7 @@
                 if (this.checkValidity()) {
                     e.preventDefault();
                     document.querySelector('.main-wrapper').classList.add('smoke-out');
-                    setTimeout(() => {
-                        HTMLFormElement.prototype.submit.call(this);
-                    }, 400);
+                    HTMLFormElement.prototype.submit.call(this);
                 }
             });
         });
@@ -340,8 +345,8 @@
     </script>
 
     <!-- Theme Toggle -->
-    <button id="themeToggleBtn" onclick="toggleTheme()" class="fixed top-4 right-4 bg-white/20 hover:bg-white/30 backdrop-blur-md p-3 rounded-full shadow-lg border border-white/20 transition-all z-50 flex items-center justify-center group" title="Cambiar Tema">
-        <span class="material-symbols-outlined text-[var(--text-main)] group-hover:scale-110 transition-transform">light_mode</span>
+    <button id="themeToggleBtn" onclick="toggleTheme()" class="fixed top-4 right-4 bg-white/20 hover:bg-white/30 backdrop-blur-md p-2 rounded-full shadow-lg border border-white/20 transition-all z-50 flex items-center justify-center group" title="Cambiar Tema">
+        <span class="material-symbols-outlined text-[1.2rem] text-[var(--text-main)] group-hover:scale-110 transition-transform">light_mode</span>
     </button>
     <script>
         function applyTheme(isLight) {

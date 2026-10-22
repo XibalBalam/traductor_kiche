@@ -33,6 +33,8 @@
                 --badge-approved-bg: rgba(16, 185, 129, 0.15);
                 --badge-approved-text: #34D399;
                 --badge-approved-border: rgba(16, 185, 129, 0.3);
+                
+                --menu-bg: rgba(30, 41, 59, 0.98);
             }
         :root.light-mode {
             /* Modo Claro */
@@ -59,6 +61,8 @@
             --badge-approved-bg: rgba(16, 185, 129, 0.15);
             --badge-approved-text: #059669;
             --badge-approved-border: rgba(16, 185, 129, 0.3);
+            
+            --menu-bg: rgba(255, 255, 255, 0.98);
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -123,11 +127,11 @@
             right: 0;
             top: 100%;
             margin-top: 8px;
-            background: var(--card-bg);
+            background: var(--menu-bg);
             backdrop-filter: blur(25px);
             -webkit-backdrop-filter: blur(25px);
             border: 1px solid var(--card-border);
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
             border-radius: 12px;
             min-width: 220px;
             z-index: 50;
@@ -248,23 +252,42 @@
     <link rel="shortcut icon" href="/static/favicon/favicon.ico" />
     <link rel="apple-touch-icon" sizes="180x180" href="/static/favicon/apple-touch-icon.png" />
     <link rel="manifest" href="/static/favicon/site.webmanifest" />
+    <script>
+        // Aplicar el tema inmediatamente antes de renderizar el body (evita FOUC)
+        if (localStorage.getItem('theme') === 'light' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: light)').matches)) {
+            document.documentElement.classList.add('light-mode');
+        }
+    </script>
 </head>
 <body class="p-4 sm:p-8 flex flex-col items-center">
     <div class="bg-image"></div>
     <div class="overlay"></div>
     
     <div class="main-wrapper w-full max-w-4xl">
-        <div class="mb-6">
+        <div class="mb-6 flex justify-between items-center">
             <a href="/" class="transition-link inline-flex items-center gap-1.5 text-[color:var(--text-muted)] hover:text-[color:var(--text-main)] transition-colors text-sm font-medium">
                 <span class="material-symbols-outlined text-[1.1rem]">arrow_back</span> Volver al Traductor
             </a>
+            <a href="/ayuda#sec-6" class="transition-link inline-flex items-center gap-1 text-[color:var(--text-muted)] hover:text-[color:var(--text-main)] transition-colors text-sm font-medium" title="Ayuda sobre Administración">
+                <span class="material-symbols-outlined text-[1.1rem]">help_outline</span> Ayuda
+            </a>
         </div>
         
-        <div class="text-center mb-8">
+        <div class="text-center mb-8 relative">
             <h1 class="text-2xl sm:text-3xl font-bold tracking-tight flex items-center justify-center gap-2">
                 <span class="material-symbols-outlined text-[2rem] text-[color:var(--primary-jade)]">shield_person</span> Panel de Administrador
             </h1>
             <p class="text-[color:var(--text-muted)] mt-2 text-sm">Gestión de Usuarios y Accesos</p>
+            <div class="mt-6 flex flex-col sm:flex-row justify-center items-center gap-3 w-full max-w-2xl mx-auto">
+                <div class="relative flex-1 w-full sm:w-auto">
+                    <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-[color:var(--text-muted)]">search</span>
+                    <input type="text" id="searchInput" placeholder="Buscar por nombre, correo o rol..." class="form-input w-full pl-11 pr-4 py-3 rounded-xl text-sm outline-none bg-black/10 backdrop-blur-md border border-[color:var(--card-border)]" oninput="filterUsers()">
+                </div>
+                <button onclick="document.getElementById('createUserModal').classList.remove('hidden')" class="bg-[color:var(--primary-jade)] hover:bg-[color:var(--primary-hover)] text-white px-5 py-3 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition-colors whitespace-nowrap shadow-lg w-full sm:w-auto">
+                    <span class="material-symbols-outlined text-[1.2rem]">person_add</span>
+                    Crear Cuenta
+                </button>
+            </div>
         </div>
         
         {% if users|length == 0 %}
@@ -276,76 +299,34 @@
                 </p>
             </div>
         {% else %}
-            <div class="flex flex-col gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="usersList">
                 {% for user in users %}
-                <div class="glass-card p-5 sm:p-6 flex flex-row gap-4 items-center justify-between">
-                    
-                    <div class="flex-1">
-                        <div class="flex items-center gap-2 mb-2">
-                            <span class="material-symbols-outlined text-[1.5rem] text-[color:var(--text-main)]">person</span>
-                            <span class="text-lg font-bold text-[color:var(--text-main)]">{{ user.username }}</span>
-                        </div>
-                        
-                        <div class="flex flex-wrap items-center gap-4 mt-3">
-                            <div class="flex items-center gap-2">
-                                {% if user.status == 'pending' %}
-                                    <span class="badge-pending px-2.5 py-0.5 rounded text-[0.7rem] uppercase font-bold tracking-wider flex items-center gap-1">
-                                        <span class="material-symbols-outlined text-[0.9rem]">hourglass_empty</span> Pendiente
-                                    </span>
-                                {% else %}
-                                    <span class="badge-approved px-2.5 py-0.5 rounded text-[0.7rem] uppercase font-bold tracking-wider flex items-center gap-1">
-                                        <span class="material-symbols-outlined text-[0.9rem]">verified_user</span> Aprobado
-                                    </span>
-                                {% endif %}
-                            </div>
-                            
-                            <div class="flex items-center gap-2">
-                                <span class="text-xs uppercase tracking-wide font-semibold text-[color:var(--text-muted)]">Rol:</span>
-                                <span class="font-bold text-[color:var(--primary-jade)] text-sm capitalize">{{ user.role }}</span>
-                            </div>
-                        </div>
+                <div class="user-card-item glass-card p-4 flex flex-row gap-3 items-center justify-between cursor-pointer hover:bg-white/5 transition-colors border border-[color:var(--card-border)] shadow-sm hover:shadow-md" onclick="openUserDetails({{ user.id }})">
+                    <div class="flex flex-col min-w-0 flex-1">
+                        <span class="text-sm font-bold text-[color:var(--text-main)] truncate block mb-0.5">{{ user.username }}</span>
+                        <span class="text-xs text-[color:var(--text-muted)] truncate block">{{ user.full_name or 'Sin Nombre' }} • <span class="capitalize">{{ user.role }}</span></span>
+                        <span class="hidden user-search-data">{{ user.full_name }} {{ user.role }} {{ user.username }}</span>
                     </div>
-                    
-                    <!-- MENÚ CONTEXTUAL -->
-                    <div class="relative">
-                        <button class="menu-btn" onclick="toggleMenu('menu-{{ user.id }}', this)">
-                            <span class="material-symbols-outlined">more_vert</span>
-                        </button>
-                        
-                        <div id="menu-{{ user.id }}" class="dropdown-menu">
-                            {% if user.status == 'pending' %}
-                            <form method="POST" action="/admin/approve/{{ user.id }}" class="form-submit-anim">
-                                <button type="submit" class="dropdown-item success">
-                                    <span class="material-symbols-outlined text-[1.1rem]">check_circle</span>
-                                    <span>Aprobar cuenta</span>
-                                </button>
-                            </form>
-                            <div class="h-[1px] w-full bg-[color:var(--card-border)] opacity-30 my-1"></div>
-                            {% endif %}
-                            
-                            <!-- Cambiar Rol (inline selection) -->
-                            <form method="POST" action="/admin/changerole/{{ user.id }}" class="form-submit-anim px-4 py-3 flex flex-col gap-2">
-                                <label class="text-[0.65rem] uppercase tracking-wide font-bold text-[color:var(--text-muted)]">Cambiar Rol</label>
-                                <select name="role" class="form-input rounded-lg px-2 py-1.5 text-xs w-full outline-none" onchange="this.form.submit()">
-                                    <option value="basico" {% if user.role == 'basico' %}selected{% endif %}>Básico (Traductor)</option>
-                                    <option value="entrenador" {% if user.role == 'entrenador' %}selected{% endif %}>Entrenador</option>
-                                    <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>Administrador</option>
-                                </select>
-                            </form>
-                            
-                            <div class="h-[1px] w-full bg-[color:var(--card-border)] opacity-30 my-1"></div>
-                            
-                            <!-- Eliminar Usuario -->
-                            <form method="POST" action="/admin/delete/{{ user.id }}" class="form-submit-anim" onsubmit="return confirm('¿Estás absolutamente seguro de eliminar a {{ user.username }} permanentemente?');">
-                                <button type="submit" class="dropdown-item danger">
-                                    <span class="material-symbols-outlined text-[1.1rem]">person_remove</span>
-                                    <span>Eliminar usuario</span>
-                                </button>
-                            </form>
-                        </div>
+                    <div class="flex items-center gap-2 flex-shrink-0">
+                        {% if user.status == 'pending' %}
+                            <div class="w-2.5 h-2.5 rounded-full bg-yellow-400 shadow-[0_0_8px_rgba(250,204,21,0.6)]" title="Pendiente"></div>
+                        {% else %}
+                            <div class="w-2.5 h-2.5 rounded-full bg-[color:var(--primary-jade)] shadow-[0_0_8px_rgba(16,185,129,0.6)]" title="Aprobado"></div>
+                        {% endif %}
+                        <span class="material-symbols-outlined text-[color:var(--text-muted)] text-[1.2rem] opacity-50">chevron_right</span>
                     </div>
-                    
                 </div>
+                <script>
+                    window.userData = window.userData || {};
+                    window.userData[{{ user.id }}] = {
+                        id: {{ user.id }},
+                        username: "{{ user.username }}",
+                        full_name: "{{ user.full_name or '' }}",
+                        role: "{{ user.role }}",
+                        status: "{{ user.status }}",
+                        last_login: "{% if user.last_login %}{{ user.last_login.strftime('%d/%m/%Y %H:%M') }}{% else %}Nunca{% endif %}"
+                    };
+                </script>
                 {% endfor %}
             </div>
         {% endif %}
@@ -359,14 +340,14 @@
                     <div class="alert-toast alert-{{ category }} flex items-center gap-3 px-5 py-4 rounded-xl" style="max-width: 350px;">
                         {% if category == 'success' %}
                             <span class="material-symbols-outlined text-[1.4rem]" style="color: var(--primary-jade);">check_circle</span>
-                        {% elif category == 'danger' %}
+                        {% elif category == 'danger' or category == 'error' %}
                             <span class="material-symbols-outlined text-[1.4rem]" style="color: var(--error-red);">warning</span>
                         {% else %}
                             <span class="material-symbols-outlined text-[1.4rem]" style="color: #3b82f6;">info</span>
                         {% endif %}
                         <div>
                             <h4 class="font-bold text-sm m-0 mb-0.5 text-[color:var(--text-main)] leading-[1.2]">
-                                {% if category == 'success' %}Éxito{% elif category == 'danger' %}Acción Requerida{% else %}Información{% endif %}
+                                {% if category == 'success' %}Éxito{% elif category == 'danger' or category == 'error' %}Atención{% elif category == 'warning' %}Aviso{% else %}Información{% endif %}
                             </h4>
                             <p class="text-xs m-0 text-[color:var(--text-muted)] leading-[1.2] break-words">{{ message }}</p>
                         </div>
@@ -376,53 +357,236 @@
         {% endwith %}
     </div>
 
-    <script>
-        // Lógica de menús contextuales
-        let activeMenu = null;
-        let activeBtn = null;
 
-        function toggleMenu(menuId, btnElement) {
-            const menu = document.getElementById(menuId);
-            const currentCard = btnElement.closest('.glass-card');
-            
-            // Cerrar menú activo anterior si existe y no es el actual
-            if (activeMenu && activeMenu !== menu) {
-                activeMenu.classList.remove('active');
-                if(activeBtn) {
-                    activeBtn.classList.remove('active');
-                    const oldCard = activeBtn.closest('.glass-card');
-                    if(oldCard) oldCard.style.zIndex = '1';
+    <!-- Create User Modal -->
+    <div id="createUserModal" class="fixed inset-0 z-[100] hidden">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="document.getElementById('createUserModal').classList.add('hidden')"></div>
+        <div class="absolute inset-0 flex items-center justify-center p-4">
+            <div class="glass-card w-full max-w-md p-6 sm:p-8 animate-[smokeIn_0.4s_ease-out_forwards]">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold text-[color:var(--text-main)] flex items-center gap-2">
+                        <span class="material-symbols-outlined text-[color:var(--primary-jade)]">person_add</span>
+                        Crear Nuevo Usuario
+                    </h3>
+                    <button onclick="document.getElementById('createUserModal').classList.add('hidden')" class="text-[color:var(--text-muted)] hover:text-[color:var(--text-main)]">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+                <form method="POST" action="/admin/create_user" class="form-submit-anim flex flex-col gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-[color:var(--text-main)] mb-1">Nombre Completo</label>
+                        <input type="text" name="full_name" required class="form-input w-full rounded-xl px-4 py-3 text-sm" placeholder="Ej. Juan Pérez">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-[color:var(--text-main)] mb-1">Nombre de Usuario (Correo)</label>
+                        <input type="text" id="adminNewUsername" name="username" required class="form-input w-full rounded-xl px-4 py-3 text-sm" placeholder="Ej. usuario@gmail.com">
+                        <div id="adminUsernameWarning" class="hidden mt-1 text-xs text-yellow-400">Nota: Parece que escribiste una coma (,) en lugar de un punto (.). Revisa que tu correo esté bien escrito.</div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-[color:var(--text-main)] mb-1">Contraseña</label>
+                        <input type="password" name="password" required class="form-input w-full rounded-xl px-4 py-3 text-sm" placeholder="Mínimo 4 caracteres">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-[color:var(--text-main)] mb-1">Rol</label>
+                        <select name="role" required class="form-input w-full rounded-xl px-4 py-3 text-sm">
+                            <option value="basico">Básico (Traductor)</option>
+                            <option value="entrenador">Entrenador</option>
+                            <option value="admin">Administrador</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-[color:var(--text-main)] mb-1">Pregunta de Seguridad</label>
+                        <select name="security_question" required class="form-input w-full rounded-xl px-4 py-3 text-sm">
+                            <option value="¿Cuál es el nombre de tu primera mascota?">¿Cuál es el nombre de tu primera mascota?</option>
+                            <option value="¿En qué ciudad naciste?">¿En qué ciudad naciste?</option>
+                            <option value="¿Cuál era el nombre de tu mejor amigo de la infancia?">¿Cuál era el nombre de tu mejor amigo de la infancia?</option>
+                            <option value="¿Cuál es tu comida favorita?">¿Cuál es tu comida favorita?</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-[color:var(--text-main)] mb-1">Respuesta Secreta</label>
+                        <input type="password" name="security_answer" required class="form-input w-full rounded-xl px-4 py-3 text-sm" placeholder="Respuesta a la pregunta">
+                    </div>
+                    <div class="mt-4">
+                        <button type="submit" class="w-full bg-[color:var(--primary-jade)] hover:bg-[color:var(--primary-hover)] text-white font-semibold py-3 rounded-xl transition-colors flex items-center justify-center gap-2">
+                            <span class="material-symbols-outlined text-[1.2rem]">save</span>
+                            Crear y Aprobar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- User Details/Edit Modal -->
+    <div id="userDetailsModal" class="fixed inset-0 z-[100] hidden">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeUserDetails()"></div>
+        <div class="absolute inset-0 flex items-center justify-center p-4">
+            <div class="glass-card w-full max-w-md p-6 sm:p-8 animate-[smokeIn_0.4s_ease-out_forwards] max-h-[90vh] overflow-y-auto">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold text-[color:var(--text-main)] flex items-center gap-2">
+                        <span class="material-symbols-outlined text-[color:var(--primary-jade)]">manage_accounts</span>
+                        Gestión de Usuario
+                    </h3>
+                    <button onclick="closeUserDetails()" class="text-[color:var(--text-muted)] hover:text-[color:var(--text-main)]">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+                
+                <!-- View Mode -->
+                <div id="userViewMode" class="flex flex-col gap-4">
+                    <div class="bg-black/5 rounded-xl p-4 border border-[color:var(--card-border)]">
+                        <p class="text-xs text-[color:var(--text-muted)] uppercase tracking-wide font-bold mb-1">Correo Electrónico / Usuario</p>
+                        <p id="detailEmail" class="text-[color:var(--text-main)] font-bold text-lg break-all">-</p>
+                    </div>
+                    <div class="bg-black/5 rounded-xl p-4 border border-[color:var(--card-border)]">
+                        <p class="text-xs text-[color:var(--text-muted)] uppercase tracking-wide font-bold mb-1">Nombre Completo</p>
+                        <p id="detailName" class="text-[color:var(--text-main)] font-medium">-</p>
+                    </div>
+                    <div class="flex gap-4">
+                        <div class="bg-black/5 rounded-xl p-4 border border-[color:var(--card-border)] flex-1">
+                            <p class="text-xs text-[color:var(--text-muted)] uppercase tracking-wide font-bold mb-1">Área / Rol</p>
+                            <p id="detailRole" class="text-[color:var(--primary-jade)] font-bold capitalize">-</p>
+                        </div>
+                        <div class="bg-black/5 rounded-xl p-4 border border-[color:var(--card-border)] flex-1">
+                            <p class="text-xs text-[color:var(--text-muted)] uppercase tracking-wide font-bold mb-1">Estado</p>
+                            <p id="detailStatus" class="font-bold">-</p>
+                        </div>
+                    </div>
+                    <div class="text-center mt-2">
+                        <p class="text-xs text-[color:var(--text-muted)]">Última sesión: <span id="detailLogin" class="font-semibold">-</span></p>
+                    </div>
+                    
+                    <div class="flex flex-col gap-3 mt-4">
+                        <form id="approveForm" method="POST" action="" class="hidden">
+                            <button type="submit" class="w-full bg-[color:var(--primary-jade)] hover:bg-[color:var(--primary-hover)] text-white font-semibold py-3 rounded-xl transition-colors flex items-center justify-center gap-2">
+                                <span class="material-symbols-outlined">check_circle</span> Aprobar Cuenta
+                            </button>
+                        </form>
+                        <button type="button" onclick="toggleEditMode(true)" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl transition-colors flex items-center justify-center gap-2">
+                            <span class="material-symbols-outlined">edit</span> Editar Perfil
+                        </button>
+                        <form id="deleteForm" method="POST" action="" onsubmit="return confirm('¿Estás absolutamente seguro de eliminar a este usuario permanentemente?');">
+                            <button type="submit" class="w-full bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/30 font-semibold py-3 rounded-xl transition-colors flex items-center justify-center gap-2">
+                                <span class="material-symbols-outlined">delete</span> Eliminar Usuario
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Edit Mode -->
+                <form id="userEditMode" method="POST" action="" class="hidden flex-col gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-[color:var(--text-main)] mb-1">Correo Electrónico / Usuario</label>
+                        <input type="text" id="editEmail" name="username" required class="form-input w-full rounded-xl px-4 py-3 text-sm" placeholder="Ej. usuario@gmail.com">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-[color:var(--text-main)] mb-1">Nombre Completo</label>
+                        <input type="text" id="editName" name="full_name" class="form-input w-full rounded-xl px-4 py-3 text-sm" placeholder="Ej. Juan Pérez">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-[color:var(--text-main)] mb-1">Área / Rol</label>
+                        <select id="editRole" name="role" required class="form-input w-full rounded-xl px-4 py-3 text-sm">
+                            <option value="basico">Básico (Traductor)</option>
+                            <option value="entrenador">Entrenador</option>
+                            <option value="admin">Administrador</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-[color:var(--text-main)] mb-1">Cambiar Contraseña <span class="text-xs opacity-60">(opcional)</span></label>
+                        <input type="password" name="password" class="form-input w-full rounded-xl px-4 py-3 text-sm" placeholder="Dejar en blanco para no cambiar">
+                    </div>
+                    
+                    <div class="flex gap-3 mt-4">
+                        <button type="button" onclick="toggleEditMode(false)" class="flex-1 bg-black/20 hover:bg-black/30 text-[color:var(--text-main)] font-semibold py-3 rounded-xl transition-colors">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="flex-1 bg-[color:var(--primary-jade)] hover:bg-[color:var(--primary-hover)] text-white font-semibold py-3 rounded-xl transition-colors flex items-center justify-center gap-2">
+                            <span class="material-symbols-outlined text-[1.2rem]">save</span> Guardar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function filterUsers() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const cards = document.querySelectorAll('.user-card-item');
+            cards.forEach(card => {
+                const searchData = card.querySelector('.user-search-data').textContent.toLowerCase();
+                if (searchData.includes(query)) {
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
                 }
+            });
+        }
+
+        function openUserDetails(userId) {
+            const user = window.userData[userId];
+            if (!user) return;
+            
+            // View Mode
+            document.getElementById('detailName').textContent = user.full_name || 'Sin Nombre';
+            document.getElementById('detailEmail').textContent = user.username;
+            document.getElementById('detailRole').textContent = user.role;
+            document.getElementById('detailLogin').textContent = user.last_login;
+            
+            const statusEl = document.getElementById('detailStatus');
+            if (user.status === 'pending') {
+                statusEl.textContent = 'Pendiente';
+                statusEl.className = 'font-bold text-yellow-400';
+                document.getElementById('approveForm').classList.remove('hidden');
+                document.getElementById('approveForm').action = '/admin/approve/' + userId;
+            } else {
+                statusEl.textContent = 'Aprobado';
+                statusEl.className = 'font-bold text-[color:var(--primary-jade)]';
+                document.getElementById('approveForm').classList.add('hidden');
             }
             
-            if (menu.classList.contains('active')) {
-                menu.classList.remove('active');
-                btnElement.classList.remove('active');
-                if(currentCard) currentCard.style.zIndex = '1';
-                activeMenu = null;
-                activeBtn = null;
+            document.getElementById('deleteForm').action = '/admin/delete/' + userId;
+            
+            // Edit Mode
+            document.getElementById('editName').value = user.full_name || '';
+            document.getElementById('editEmail').value = user.username;
+            document.getElementById('editRole').value = user.role;
+            document.getElementById('userEditMode').action = '/admin/edit_user/' + userId;
+            
+            toggleEditMode(false);
+            document.getElementById('userDetailsModal').classList.remove('hidden');
+        }
+
+        function closeUserDetails() {
+            document.getElementById('userDetailsModal').classList.add('hidden');
+            toggleEditMode(false);
+        }
+
+        function toggleEditMode(isEdit) {
+            if (isEdit) {
+                document.getElementById('userViewMode').classList.add('hidden');
+                document.getElementById('userEditMode').classList.remove('hidden');
+                document.getElementById('userEditMode').classList.add('flex');
             } else {
-                menu.classList.add('active');
-                btnElement.classList.add('active');
-                if(currentCard) currentCard.style.zIndex = '50';
-                activeMenu = menu;
-                activeBtn = btnElement;
+                document.getElementById('userEditMode').classList.add('hidden');
+                document.getElementById('userEditMode').classList.remove('flex');
+                document.getElementById('userViewMode').classList.remove('hidden');
             }
         }
 
-        // Cerrar menú si se hace clic afuera
-        document.addEventListener('click', function(e) {
-            if (activeMenu && !e.target.closest('.relative')) {
-                activeMenu.classList.remove('active');
-                if(activeBtn) {
-                    activeBtn.classList.remove('active');
-                    const card = activeBtn.closest('.glass-card');
-                    if(card) card.style.zIndex = '1';
+        // Validación en tiempo real del correo (evitar comas en vez de puntos)
+        const adminUsernameInput = document.getElementById('adminNewUsername');
+        const adminUsernameWarning = document.getElementById('adminUsernameWarning');
+        if (adminUsernameInput && adminUsernameWarning) {
+            adminUsernameInput.addEventListener('input', function(e) {
+                const val = e.target.value;
+                if (val.includes(',com') || val.includes(',net') || val.includes(',org') || val.includes(',edu')) {
+                    adminUsernameWarning.classList.remove('hidden');
+                } else {
+                    adminUsernameWarning.classList.add('hidden');
                 }
-                activeMenu = null;
-                activeBtn = null;
-            }
-        });
+            });
+        }
 
         // Animación de humo al cambiar de página (enlaces)
         document.querySelectorAll('.transition-link').forEach(link => {
@@ -431,9 +595,7 @@
                     e.preventDefault();
                     const target = this.href;
                     document.querySelector('.main-wrapper').classList.add('smoke-out');
-                    setTimeout(() => {
-                        window.location.href = target;
-                    }, 400);
+                    window.location.href = target;
                 }
             });
         });
@@ -473,8 +635,8 @@
     </script>
 
     <!-- Theme Toggle -->
-    <button id="themeToggleBtn" onclick="toggleTheme()" class="fixed top-4 right-4 bg-white/20 hover:bg-white/30 backdrop-blur-md p-3 rounded-full shadow-lg border border-white/20 transition-all z-50 flex items-center justify-center group" title="Cambiar Tema">
-        <span class="material-symbols-outlined text-[var(--text-main)] group-hover:scale-110 transition-transform">light_mode</span>
+    <button id="themeToggleBtn" onclick="toggleTheme()" class="fixed top-4 right-4 bg-white/20 hover:bg-white/30 backdrop-blur-md p-2 rounded-full shadow-lg border border-white/20 transition-all z-50 flex items-center justify-center group" title="Cambiar Tema">
+        <span class="material-symbols-outlined text-[1.2rem] text-[var(--text-main)] group-hover:scale-110 transition-transform">light_mode</span>
     </button>
     <script>
         function applyTheme(isLight) {

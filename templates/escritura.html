@@ -194,6 +194,12 @@
     <link rel="shortcut icon" href="/static/favicon/favicon.ico" />
     <link rel="apple-touch-icon" sizes="180x180" href="/static/favicon/apple-touch-icon.png" />
     <link rel="manifest" href="/static/favicon/site.webmanifest" />
+    <script>
+        // Aplicar el tema inmediatamente antes de renderizar el body (evita FOUC)
+        if (localStorage.getItem('theme') === 'light' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: light)').matches)) {
+            document.documentElement.classList.add('light-mode');
+        }
+    </script>
 </head>
 <body class="p-4 sm:p-8 flex flex-col items-center">
     <div class="bg-image"></div>
@@ -203,9 +209,14 @@
             <a href="/" class="transition-link inline-flex items-center gap-1.5 text-[color:var(--text-muted)] hover:text-[color:var(--text-main)] transition-colors text-sm font-medium">
                 <span class="material-symbols-outlined text-[1.1rem]">arrow_back</span> Volver al Traductor
             </a>
-            <a href="/revisar" class="transition-link inline-flex items-center gap-1.5 text-[color:var(--primary-jade)] transition-colors text-sm font-bold">
-                Ir a Revisión <span class="material-symbols-outlined text-[1.1rem]">arrow_forward</span>
-            </a>
+            <div class="flex items-center gap-4">
+                <a href="/ayuda#sec-5" class="transition-link inline-flex items-center gap-1 text-[color:var(--text-muted)] hover:text-[color:var(--text-main)] transition-colors text-sm font-medium" title="Ayuda sobre Práctica de Escritura">
+                    <span class="material-symbols-outlined text-[1.1rem]">help_outline</span> Ayuda
+                </a>
+                <a href="/revisar" class="transition-link inline-flex items-center gap-1.5 text-[color:var(--primary-jade)] transition-colors text-sm font-bold">
+                    Ir a Revisión <span class="material-symbols-outlined text-[1.1rem]">arrow_forward</span>
+                </a>
+            </div>
         </div>
 
         <div class="text-center mb-8">
@@ -239,7 +250,7 @@
                     
                     <div class="flex flex-wrap gap-2 justify-center mb-4">
                         <button type="submit" class="btn-primary rounded-xl px-6 py-3 text-sm flex-1 font-bold">Guardar</button>
-                        <button type="button" class="btn-nav rounded-xl px-6 py-3 text-sm flex-1 font-semibold" onclick="document.querySelector('.main-wrapper').classList.add('smoke-out'); setTimeout(() => window.location.href='/escritura', 400);">Saltar</button>
+                        <button type="button" class="btn-nav rounded-xl px-6 py-3 text-sm flex-1 font-semibold" onclick="document.querySelector('.main-wrapper').classList.add('smoke-out'); window.location.href='/escritura';">Saltar</button>
                         <button type="button" class="btn-danger rounded-xl px-6 py-3 text-sm flex items-center justify-center gap-1.5 font-semibold" onclick="eliminarPendiente('{{ palabra_espanol }}')">
                             <span class="material-symbols-outlined text-[1.1rem]">delete</span> Basura
                         </button>
@@ -288,6 +299,34 @@
                 <span class="material-symbols-outlined transition-transform duration-200">expand_more</span>
             </summary>
             <div class="p-5 border-t border-[color:var(--card-border)] bg-[color:var(--card-bg)]">
+                <!-- Configuración de API Key (Opcional/Colapsable) -->
+                <div class="mb-4 p-3 rounded-xl border border-[color:var(--card-border)] bg-[color:var(--input-bg)]">
+                    <div class="flex items-center justify-between cursor-pointer select-none" onclick="toggleApiKeyBox()">
+                        <span class="text-xs font-semibold flex items-center gap-1.5 text-[color:var(--text-main)]">
+                            <span class="material-symbols-outlined text-[1.1rem] text-[color:var(--primary-jade)]">key</span>
+                            API Key de Google Gemini
+                            {% if has_gemini_key %}
+                            <span id="keyStatusBadge" class="text-[0.68rem] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/30">Activa</span>
+                            {% else %}
+                            <span id="keyStatusBadge" class="text-[0.68rem] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-semibold border border-amber-500/30">Catálogo Local Activo</span>
+                            {% endif %}
+                        </span>
+                        <span id="apiKeyChevron" class="material-symbols-outlined text-sm text-[color:var(--text-muted)] transition-transform duration-200">expand_more</span>
+                    </div>
+                    <div id="apiKeyCollapse" class="hidden mt-3 pt-3 border-t border-[color:var(--card-border)]">
+                        <p class="text-xs text-[color:var(--text-muted)] mb-2.5">
+                            Ingresa tu clave de Google Gemini para habilitar generación dinámica con IA. Si no tienes una, el sistema usará automáticamente el catálogo clínico integrado sin errores.
+                        </p>
+                        <div class="flex gap-2">
+                            <input type="password" id="gemini-key-input" placeholder="Pega tu clave (AIzaSy...)" class="form-input rounded-xl px-3 py-1.5 text-xs flex-1">
+                            <button type="button" class="btn-primary rounded-xl px-3 py-1.5 text-xs font-semibold flex items-center gap-1" onclick="guardarApiKey()">
+                                <span class="material-symbols-outlined text-[1rem]">save</span> Guardar
+                            </button>
+                        </div>
+                        <div id="key-save-feedback" class="mt-2 text-xs font-medium text-center"></div>
+                    </div>
+                </div>
+
                 <label class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[color:var(--text-muted)] mb-3">
                     <span class="material-symbols-outlined text-[1.1rem]">rocket_launch</span> Plan de Entrenamiento Rápido:
                 </label>
@@ -298,7 +337,7 @@
                 </div>
                 
                 <div class="flex gap-2 flex-col sm:flex-row">
-                    <input type="text" id="instruccion-ia" placeholder="Ej: Genera 5 partes del cuerpo..." class="form-input rounded-xl px-4 py-2 text-sm flex-1">
+                    <input type="text" id="instruccion-ia" placeholder="Ej: Genera 5 síntomas de triaje..." class="form-input rounded-xl px-4 py-2 text-sm flex-1">
                     <button type="button" id="btn-ia" class="btn-primary rounded-xl px-4 py-2 text-sm font-semibold flex items-center justify-center gap-1.5" onclick="generarIA()">
                         <span class="material-symbols-outlined text-[1.1rem]">auto_awesome</span> Generar
                     </button>
@@ -380,13 +419,71 @@
                 });
                 if (res.ok) {
                     document.querySelector('.main-wrapper').classList.add('smoke-out');
-                    setTimeout(() => window.location.reload(), 400);
+                    window.location.reload();
                 } else {
                     const data = await res.json();
                     alert("No se pudo eliminar: " + (data.error || "Error desconocido"));
                 }
             } catch (err) {
                 alert("Error de conexión al eliminar.");
+            }
+        }
+
+        function toggleApiKeyBox() {
+            const collapse = document.getElementById('apiKeyCollapse');
+            const chevron = document.getElementById('apiKeyChevron');
+            if (collapse.classList.contains('hidden')) {
+                collapse.classList.remove('hidden');
+                chevron.style.transform = 'rotate(180deg)';
+                const input = document.getElementById('gemini-key-input');
+                if (input) input.focus();
+            } else {
+                collapse.classList.add('hidden');
+                chevron.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        async function guardarApiKey() {
+            const input = document.getElementById('gemini-key-input');
+            const feedback = document.getElementById('key-save-feedback');
+            const badge = document.getElementById('keyStatusBadge');
+            const key = input.value.trim();
+
+            if (!key) {
+                feedback.style.color = 'var(--error-red)';
+                feedback.textContent = 'Por favor, ingresa una clave de API válida.';
+                return;
+            }
+
+            feedback.style.color = 'var(--text-main)';
+            feedback.textContent = 'Guardando clave...';
+
+            try {
+                const res = await fetch('/api/guardar-gemini-key', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ api_key: key })
+                });
+                const data = await res.json();
+                if (res.ok && data.status === 'ok') {
+                    feedback.style.color = 'var(--primary-jade)';
+                    feedback.textContent = '✓ ' + data.message;
+                    input.value = '';
+                    if (badge) {
+                        badge.className = 'text-[0.68rem] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/30';
+                        badge.textContent = 'Activa';
+                    }
+                    setTimeout(() => {
+                        feedback.textContent = '';
+                        toggleApiKeyBox();
+                    }, 2000);
+                } else {
+                    feedback.style.color = 'var(--error-red)';
+                    feedback.textContent = '✗ ' + (data.error || 'Error al guardar la clave.');
+                }
+            } catch (err) {
+                feedback.style.color = 'var(--error-red)';
+                feedback.textContent = 'Error de conexión con el servidor.';
             }
         }
 
@@ -402,7 +499,7 @@
             
             btn.disabled = true;
             status.style.color = 'var(--text-main)';
-            status.textContent = '⏳ Pensando (la IA está generando palabras)...';
+            status.textContent = '⏳ Procesando vocabulario clínico...';
             
             await requestWakeLock();
             
@@ -413,19 +510,20 @@
                     body: JSON.stringify({ instruccion: instruccion })
                 });
                 const data = await res.json();
-                if (data.status === 'ok') {
+                if (res.ok && data.status === 'ok') {
                     status.style.color = 'var(--primary-jade)';
-                    status.innerHTML = `✅ <b>¡Éxito!</b> La IA generó <b>${data.palabras.length}</b> frases. <br>Actualizando...`;
+                    const origen = data.origen || (data.source === 'gemini' ? 'Google Gemini' : 'Catálogo Clínico');
+                    status.innerHTML = `✅ <b>¡Éxito!</b> (${origen}) Se agregaron <b>${data.palabras.length}</b> frases para traducir. <br>Actualizando...`;
                     
                     // Smoke out transition before reload
                     setTimeout(() => {
                         document.querySelector('.main-wrapper').classList.add('smoke-out');
-                        setTimeout(() => window.location.reload(), 400);
-                    }, 1000);
+                        window.location.reload();
+                    }, 1200);
                 } else {
                     status.style.color = 'var(--error-red)';
-                    status.textContent = '❌ Operación fallida.';
-                    showErrorToast('IA: ' + data.error);
+                    status.textContent = '❌ Operación no completada.';
+                    showErrorToast(data.error || 'No se pudieron generar palabras.');
                 }
             } catch (e) {
                 status.style.color = 'var(--error-red)';
@@ -437,29 +535,22 @@
             }
         }
 
-        // Animación de humo al cambiar de página (enlaces)
+        // Animación visual al cambiar de página (enlaces)
         document.querySelectorAll('.transition-link').forEach(link => {
             link.addEventListener('click', function(e) {
                 if (this.href && !this.href.includes('#') && this.getAttribute('target') !== '_blank') {
-                    e.preventDefault();
-                    const target = this.href;
-                    document.querySelector('.main-wrapper').classList.add('smoke-out');
-                    setTimeout(() => {
-                        window.location.href = target;
-                    }, 400);
+                    const wrapper = document.querySelector('.main-wrapper');
+                    if (wrapper) wrapper.classList.add('smoke-out');
                 }
             });
         });
 
-        // Animación de humo al enviar formularios
+        // Animación visual al enviar formularios
         document.querySelectorAll('form').forEach(form => {
             form.addEventListener('submit', function(e) {
                 if (this.checkValidity()) {
-                    e.preventDefault();
-                    document.querySelector('.main-wrapper').classList.add('smoke-out');
-                    setTimeout(() => {
-                        HTMLFormElement.prototype.submit.call(this);
-                    }, 400);
+                    const wrapper = document.querySelector('.main-wrapper');
+                    if (wrapper) wrapper.classList.add('smoke-out');
                 }
             });
         });
@@ -477,8 +568,8 @@
     </script>
 
     <!-- Theme Toggle -->
-    <button id="themeToggleBtn" onclick="toggleTheme()" class="fixed top-4 right-4 bg-white/20 hover:bg-white/30 backdrop-blur-md p-3 rounded-full shadow-lg border border-white/20 transition-all z-50 flex items-center justify-center group" title="Cambiar Tema">
-        <span class="material-symbols-outlined text-[var(--text-main)] group-hover:scale-110 transition-transform">light_mode</span>
+    <button id="themeToggleBtn" onclick="toggleTheme()" class="fixed top-4 right-4 bg-white/20 hover:bg-white/30 backdrop-blur-md p-2 rounded-full shadow-lg border border-white/20 transition-all z-50 flex items-center justify-center group" title="Cambiar Tema">
+        <span class="material-symbols-outlined text-[1.2rem] text-[var(--text-main)] group-hover:scale-110 transition-transform">light_mode</span>
     </button>
     <script>
         function applyTheme(isLight) {

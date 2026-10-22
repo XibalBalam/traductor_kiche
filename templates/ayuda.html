@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Centro de Ayuda - Traductor K'iche'</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+    <link rel="icon" type="image/png" href="/static/favicon/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="/static/favicon/favicon.svg" />
+    <link rel="shortcut icon" href="/static/favicon/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/favicon/apple-touch-icon.png" />
+    <link rel="manifest" href="/static/favicon/site.webmanifest" />
+
+    <style>
+        :root {
+            /* Modo Oscuro (Default Ch'aweb'al) */
+            --bg-canvas-overlay: rgba(15, 23, 42, 0.75);
+            --primary-jade: #059669;
+            --primary-hover: #10B981;
+            --text-main: #E2E8F0;
+            --text-muted: rgba(226, 232, 240, 0.65);
+            --accent-terra: #BA5011;
+            --error-red: #BA1511;
+            
+            --card-bg: rgba(51, 65, 85, 0.45);
+            --card-border: rgba(255, 255, 255, 0.15);
+            --card-shadow: rgba(0, 0, 0, 0.35);
+            
+            --input-bg: rgba(15, 23, 42, 0.6);
+            --input-border: rgba(255, 255, 255, 0.15);
+        }
+        :root.light-mode {
+            /* Modo Claro Ch'aweb'al */
+            --bg-canvas-overlay: rgba(248, 250, 252, 0.65);
+            --primary-jade: #10B981;
+            --primary-hover: #059669;
+            --text-main: #233B33;
+            --text-muted: rgba(35, 59, 51, 0.65);
+            --accent-terra: #BA5011;
+            --error-red: #BA1511;
+            
+            --card-bg: rgba(255, 255, 255, 0.55);
+            --card-border: rgba(255, 255, 255, 0.6);
+            --card-shadow: rgba(0, 0, 0, 0.1);
+            
+            --input-bg: rgba(255, 255, 255, 0.6);
+            --input-border: rgba(35, 59, 51, 0.2);
+        }
+
+        /* LIGHT MODE OVERRIDES */
+        :root.light-mode .transition-link {
+            background-color: rgba(255, 255, 255, 0.9) !important;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15) !important;
+        }
+        :root.light-mode #themeToggleBtn {
+            background-color: rgba(255, 255, 255, 0.9) !important;
+            border-color: rgba(0,0,0,0.15) !important;
+            color: #334155 !important;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1) !important;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0F172A;
+            color: var(--text-main);
+            min-height: 100vh;
+        }
+
+        .bg-image {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: url("{{ url_for('static', filename='backgroundLogin.jpeg') }}") center center / cover no-repeat;
+            z-index: -2;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: var(--bg-canvas-overlay);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: -1;
+            transition: background 0.3s;
+        }
+
+        .main-wrapper {
+            position: relative;
+            z-index: 1;
+            animation: smokeIn 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+        .main-wrapper.smoke-out {
+            animation: smokeOut 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        @keyframes smokeIn {
+            0% { opacity: 0; filter: blur(15px); transform: translateY(10px) scale(0.98); }
+            100% { opacity: 1; filter: blur(0); transform: translateY(0) scale(1); }
+        }
+        @keyframes smokeOut {
+            0% { opacity: 1; filter: blur(0); transform: scale(1); }
+            100% { opacity: 0; filter: blur(15px); transform: translateY(-10px) scale(0.98); }
+        }
+
+        /* LITE MODE */
+        :root.lite-mode * {
+            animation: none !important;
+            transition: none !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+        }
+        :root.lite-mode .glass-card {
+            background: #1E293B !important;
+            border-color: #334155 !important;
+        }
+        :root.light-mode.lite-mode .glass-card {
+            background: #FFFFFF !important;
+            border-color: #CBD5E1 !important;
+        }
+
+        .glass-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--card-border);
+            border-top: 1px solid rgba(255, 255, 255, 0.3);
+            border-left: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px var(--card-shadow);
+            border-radius: 24px;
+        }
+
+        .form-input {
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            color: var(--text-main);
+            transition: all 0.3s ease;
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary-jade);
+            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.15);
+        }
+
+        .btn-nav {
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            color: var(--text-main);
+            transition: all 0.2s ease;
+        }
+        .btn-nav:hover:not(:disabled) {
+            background: var(--card-bg);
+            border-color: var(--primary-jade);
+            transform: translateY(-1px);
+        }
+        .btn-nav:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: var(--primary-jade);
+            color: #FFFFFF;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.2);
+        }
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3);
+        }
+
+        /* Screenshot viewer frame */
+        .preview-box {
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            overflow: hidden;
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        :root.light-mode .preview-box {
+            background: rgba(0, 0, 0, 0.05);
+        }
+        .preview-box:hover {
+            transform: scale(1.008);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+        }
+
+        /* Sidebar link active state */
+        .sidebar-btn {
+            transition: all 0.2s ease;
+            color: var(--text-muted);
+            border: 1px solid transparent;
+        }
+        .sidebar-btn:hover {
+            color: var(--text-main);
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .sidebar-btn.active {
+            background: var(--primary-jade) !important;
+            color: #FFFFFF !important;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+            font-weight: 700;
+        }
+
+        /* Sub-step anchor in sidebar */
+        .substep-link {
+            transition: all 0.15s ease;
+            color: var(--text-muted);
+            display: block;
+            border-left: 2px solid transparent;
+        }
+        .substep-link:hover {
+            color: var(--text-main);
+            border-left-color: var(--primary-jade);
+            padding-left: 0.5rem;
+        }
+
+        /* Highlight in search */
+        mark.search-match {
+            background-color: rgba(219, 157, 33, 0.4);
+            color: #FBBF24;
+            padding: 0 2px;
+            border-radius: 2px;
+            font-weight: bold;
+        }
+    </style>
+
+    <script>
+        if (localStorage.getItem('theme') === 'light' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: light)').matches)) {
+            document.documentElement.classList.add('light-mode');
+        }
+        if (localStorage.getItem('liteMode') === 'true') {
+            document.documentElement.classList.add('lite-mode');
+        }
+    </script>
+</head>
+
+<body class="p-4 sm:p-8 flex flex-col items-center">
+    <div class="bg-image"></div>
+    <div class="overlay"></div>
+
+    <div class="main-wrapper w-full max-w-5xl">
+        
+        <!-- BARRA SUPERIOR DE NAVEGACIÓN -->
+        <div class="flex justify-between items-center mb-6">
+            <a href="/" class="transition-link inline-flex items-center gap-1.5 text-[color:var(--text-muted)] hover:text-[color:var(--text-main)] transition-colors text-sm font-medium">
+                <span class="material-symbols-outlined text-[1.1rem]">arrow_back</span> Volver al Traductor
+            </a>
+            <div class="flex items-center gap-2">
+                <button id="themeToggleBtn" onclick="toggleTheme()" class="w-9 h-9 flex items-center justify-center rounded-full bg-slate-500/15 border border-slate-500/35 text-[color:var(--text-main)] hover:bg-slate-500/30 transition-colors cursor-pointer" title="Cambiar Tema">
+                    <span class="material-symbols-outlined text-[1.1rem]">dark_mode</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- ENCABEZADO CENTRADO CARACTERÍSTICO -->
+        <div class="text-center mb-6">
+            <h1 class="text-2xl sm:text-3xl font-bold tracking-tight flex items-center justify-center gap-2 text-[color:var(--text-main)]">
+                <span class="material-symbols-outlined text-[2rem] text-[color:var(--primary-jade)]">help_center</span> Centro de Ayuda y Manual
+            </h1>
+            <p class="text-sm mt-1.5 opacity-80" style="color: var(--text-muted);">Instrucciones paso a paso ilustradas para el uso completo de Ch'aweb'al</p>
+        </div>
+
+        <!-- BARRA DE BÚSQUEDA VISIBLE Y DIRECTA -->
+        <div class="glass-card p-4 mb-6 max-w-2xl mx-auto">
+            <div class="relative">
+                <span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-[1.2rem] text-[color:var(--text-muted)]">search</span>
+                <input type="text" id="manualSearchInput" oninput="handleSearch(this.value)" 
+                       placeholder="Buscar en todo el manual (ej. micrófono, resumen, contraseña, K'iche', etc.)..." 
+                       class="form-input w-full rounded-xl py-2.5 pl-10 pr-10 text-sm outline-none" />
+                <button id="clearSearchBtn" onclick="clearSearch()" class="hidden absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-[color:var(--text-muted)] hover:text-[color:var(--text-main)] cursor-pointer" title="Limpiar búsqueda">✕</button>
+            </div>
+            <!-- Subtítulo de estado de búsqueda -->
+            <div id="searchStatusText" class="hidden mt-2 text-xs flex items-center justify-between text-[color:var(--text-muted)] pt-2 border-t" style="border-color: var(--card-border);">
+                <span id="searchResultCount">0 resultados encontrados</span>
+                <button onclick="clearSearch()" class="text-[color:var(--primary-jade)] hover:underline font-semibold cursor-pointer">Volver al manual por módulos</button>
+            </div>
+        </div>
+
+        <!-- CONTENEDOR PRINCIPAL: SIDEBAR FIJA + FEED CONTINUO DE PASOS -->
+        <div class="flex flex-col lg:flex-row gap-6 items-start">
+            
+            <!-- PANEL LATERAL DE MÓDULOS (ESCRITORIO) -->
+            <aside class="w-full lg:w-72 lg:sticky lg:top-8 flex-shrink-0" id="sidebarContainer">
+                <div class="glass-card p-4 sm:p-5">
+                    <h2 class="text-xs font-bold uppercase tracking-wider text-[color:var(--text-muted)] mb-3 flex items-center gap-1.5">
+                        <span class="material-symbols-outlined text-[1rem] text-[color:var(--primary-jade)]">menu_book</span> Módulos del Sistema
+                    </h2>
+
+                    <!-- Lista de módulos con botones -->
+                    <div class="space-y-1" id="moduleNavList">
+                        <button onclick="selectModule(1)" id="sideModBtn-1" class="sidebar-btn w-full text-left p-2.5 rounded-xl text-xs sm:text-sm font-semibold flex items-center justify-between cursor-pointer">
+                            <span class="flex items-center gap-2"><span class="material-symbols-outlined text-[1.1rem]">login</span> 1. Acceso y cuenta</span>
+                            <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-black/20 opacity-75">18</span>
+                        </button>
+                        <button onclick="selectModule(2)" id="sideModBtn-2" class="sidebar-btn w-full text-left p-2.5 rounded-xl text-xs sm:text-sm font-semibold flex items-center justify-between cursor-pointer">
+                            <span class="flex items-center gap-2"><span class="material-symbols-outlined text-[1.1rem]">translate</span> 2. Traductor clínico</span>
+                            <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-black/20 opacity-75">11</span>
+                        </button>
+                        <button onclick="selectModule(3)" id="sideModBtn-3" class="sidebar-btn w-full text-left p-2.5 rounded-xl text-xs sm:text-sm font-semibold flex items-center justify-between cursor-pointer">
+                            <span class="flex items-center gap-2"><span class="material-symbols-outlined text-[1.1rem]">tune</span> 3. Preferencias</span>
+                            <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-black/20 opacity-75">5</span>
+                        </button>
+                        <button onclick="selectModule(4)" id="sideModBtn-4" class="sidebar-btn w-full text-left p-2.5 rounded-xl text-xs sm:text-sm font-semibold flex items-center justify-between cursor-pointer">
+                            <span class="flex items-center gap-2"><span class="material-symbols-outlined text-[1.1rem]">school</span> 4. Entrenamiento</span>
+                            <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-black/20 opacity-75">14</span>
+                        </button>
+                        <button onclick="selectModule(5)" id="sideModBtn-5" class="sidebar-btn w-full text-left p-2.5 rounded-xl text-xs sm:text-sm font-semibold flex items-center justify-between cursor-pointer">
+                            <span class="flex items-center gap-2"><span class="material-symbols-outlined text-[1.1rem]">edit_note</span> 5. Escritura</span>
+                            <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-black/20 opacity-75">4</span>
+                        </button>
+                        <button onclick="selectModule(6)" id="sideModBtn-6" class="sidebar-btn w-full text-left p-2.5 rounded-xl text-xs sm:text-sm font-semibold flex items-center justify-between cursor-pointer">
+                            <span class="flex items-center gap-2"><span class="material-symbols-outlined text-[1.1rem]">manage_accounts</span> 6. Administración</span>
+                            <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-black/20 opacity-75">6</span>
+                        </button>
+                    </div>
+
+                    <!-- Índice rápido de pasos del módulo activo -->
+                    <div class="mt-4 pt-3 border-t hidden lg:block" style="border-color: var(--card-border);">
+                        <span class="text-[11px] font-bold uppercase tracking-wider text-[color:var(--text-muted)] block mb-2">Pasos en este módulo:</span>
+                        <div id="substepsList" class="space-y-1 max-h-56 overflow-y-auto pr-1 text-xs">
+                            <!-- Populado por JS -->
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- ÁREA PRINCIPAL: VISTA DE MÓDULO O RESULTADOS DE BÚSQUEDA -->
+            <main class="flex-1 w-full space-y-6" id="contentArea">
+                
+                <!-- ENCABEZADO DEL MÓDULO ACTUAL -->
+                <div id="moduleHeaderCard" class="glass-card p-6 sm:p-7">
+                    <div class="flex items-center gap-3 mb-2">
+                        <span id="moduleIcon" class="material-symbols-outlined text-[2rem] text-[color:var(--primary-jade)]">translate</span>
+                        <div>
+                            <span id="moduleTag" class="text-xs uppercase font-bold tracking-wider text-[color:var(--primary-jade)]">Módulo 2</span>
+                            <h2 id="moduleTitle" class="text-xl sm:text-2xl font-bold tracking-tight text-[color:var(--text-main)]">Traductor clínico</h2>
+                        </div>
+                    </div>
+                    <p id="moduleDescription" class="text-sm text-[color:var(--text-muted)] leading-relaxed mt-2"></p>
+                    
+                    <!-- Avisos / Callouts del módulo -->
+                    <div id="moduleCallouts" class="mt-4 space-y-2.5"></div>
+                </div>
+
+                <!-- CONTENEDOR DE PASOS CONTINUOS (FLUJO SECUENCIAL) -->
+                <div id="stepsFeed" class="space-y-6">
+                    <!-- Pasos inyectados por JS en orden secuencial -->
+                </div>
+
+                <!-- NAVEGACIÓN INFERIOR ENTRE MÓDULOS -->
+                <div id="moduleNavFooter" class="glass-card p-4 flex justify-between items-center text-xs sm:text-sm font-semibold">
+                    <button id="btnPrevModule" onclick="navigateModule(-1)" class="btn-nav px-4 py-2 rounded-xl flex items-center gap-1.5 cursor-pointer">
+                        <span class="material-symbols-outlined text-[1.1rem]">arrow_back</span> <span id="prevModuleText">Módulo anterior</span>
+                    </button>
+                    <button id="btnNextModule" onclick="navigateModule(1)" class="btn-nav px-4 py-2 rounded-xl flex items-center gap-1.5 cursor-pointer">
+                        <span id="nextModuleText">Módulo siguiente</span> <span class="material-symbols-outlined text-[1.1rem]">arrow_forward</span>
+                    </button>
+                </div>
+            </main>
+        </div>
+
+        <!-- PIE DISCRETO -->
+        <div class="text-center text-xs text-[color:var(--text-muted)] py-10 opacity-75">
+            <p>Ch'aweb'al — Sistema de Traducción Clínica K'iche' ↔ Español</p>
+        </div>
+    </div>
+
+    <!-- LIGHTBOX / ZOOM MODAL EN PANTALLA COMPLETA -->
+    <div id="lightboxModal" class="fixed inset-0 z-50 hidden flex-col items-center justify-center p-4 bg-black/90 backdrop-blur-md" role="dialog" aria-modal="true">
+        <div class="w-full max-w-4xl flex items-center justify-between text-white pb-3">
+            <span id="lightboxBadge" class="text-xs font-bold px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">Paso</span>
+            <button onclick="closeLightbox()" class="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white cursor-pointer" title="Cerrar (Esc)">
+                <span class="material-symbols-outlined text-lg">close</span>
+            </button>
+        </div>
+        <div class="relative w-full max-w-4xl flex-1 flex items-center justify-center overflow-hidden">
+            <img id="lightboxImg" src="" alt="Captura ampliada" class="max-h-[80vh] max-w-full object-contain rounded-xl shadow-2xl" />
+        </div>
+        <div class="w-full max-w-4xl pt-2 text-center text-xs text-slate-300 italic" id="lightboxCaption"></div>
+    </div>
+
+    <!-- DATOS Y SCRIPT DE CONTINUIDAD Y BÚSQUEDA -->
+    <script>
+        const MODULES = [{"section_id": 1, "section_key": "sec-1", "section_title": "Acceso y recuperación de cuenta", "icon": "login", "description": "Instrucciones paso a paso para iniciar sesión, solicitar una cuenta nueva, validar el correo electrónico y restablecer la contraseña mediante preguntas de seguridad.", "callouts": [], "steps": [{"id": "paso-1", "step": 1, "file": "01-login-escritorio.png", "title": "Iniciar sesión", "text": "Escriba su usuario y contraseña para ingresar al sistema. Desde esta pantalla también se puede crear una cuenta o recuperar el acceso.", "alt": "Pantalla de inicio de sesión de Ch'aweb'al en escritorio."}, {"id": "paso-2", "step": 2, "file": "02-menu-cuentas.png", "title": "Abrir opciones de cuenta", "text": "Ubique el icono de cuenta en la esquina superior derecha.", "alt": "Icono de cuenta ubicado en la esquina superior derecha."}, {"id": "paso-3", "step": 3, "file": "03-opcion-crear-cuenta.png", "title": "Crear una cuenta", "text": "Al colocar el cursor sobre el icono de cuenta, seleccione **Crear cuenta**.", "alt": "Menú de cuenta con la opción Crear cuenta."}, {"id": "paso-4", "step": 4, "file": "04-formulario-crear-cuenta.png", "title": "Completar registro", "text": "Ingrese la información solicitada en el formulario para solicitar una cuenta nueva.", "alt": "Formulario para crear una cuenta de usuario."}, {"id": "paso-5", "step": 5, "file": "05-preguntas-seguridad.png", "title": "Elegir pregunta de seguridad", "text": "Seleccione y responda una pregunta de recuperación; será necesaria si olvida su contraseña.", "alt": "Lista de preguntas de seguridad durante el registro."}, {"id": "paso-6", "step": 6, "file": "06-registro-pendiente-aprobacion.png", "title": "Esperar aprobación", "text": "Al guardar, la solicitud queda pendiente de revisión por una persona administradora. Luego se regresa al inicio de sesión.", "alt": "Mensaje que confirma que la cuenta espera aprobación."}, {"id": "paso-7", "step": 7, "file": "07-validacion-correo.png", "title": "Corregir correo electrónico", "text": "Si se usa una coma en lugar de un punto en el correo, el sistema muestra una indicación para corregirlo.", "alt": "Mensaje de validación para un correo electrónico inválido."}, {"id": "paso-8", "step": 8, "file": "08-olvido-contrasena.png", "title": "Recuperar contraseña", "text": "Seleccione **¿Olvidaste tu contraseña?** desde el inicio de sesión.", "alt": "Enlace para recuperar contraseña."}, {"id": "paso-9", "step": 9, "file": "09-recuperacion-usuario.png", "title": "Identificar usuario", "text": "Escriba el nombre de usuario para iniciar la recuperación.", "alt": "Campo para ingresar el usuario en recuperación de contraseña."}, {"id": "paso-10", "step": 10, "file": "10-usuario-no-encontrado.png", "title": "Usuario no encontrado", "text": "Si el usuario no existe, revise que el nombre se haya escrito correctamente.", "alt": "Aviso de usuario no encontrado."}, {"id": "paso-11", "step": 11, "file": "11-pregunta-seguridad.png", "title": "Responder pregunta de seguridad", "text": "Si el usuario existe, responda la pregunta de seguridad asociada a la cuenta.", "alt": "Pregunta de seguridad para validar la recuperación."}, {"id": "paso-12", "step": 12, "file": "12-nueva-contrasena.png", "title": "Definir nueva contraseña", "text": "Después de validar la respuesta, cree y confirme la nueva contraseña.", "alt": "Formulario para actualizar la contraseña."}, {"id": "paso-13", "step": 13, "file": "13-login-movil.png", "title": "Inicio de sesión en móvil", "text": "El acceso desde teléfono conserva las mismas opciones principales.", "alt": "Pantalla de inicio de sesión en un dispositivo móvil."}, {"id": "paso-14", "step": 14, "file": "14-crear-cuenta-movil.png", "title": "Crear cuenta en móvil", "text": "Complete el registro desplazándose por el formulario en el teléfono.", "alt": "Formulario de creación de cuenta en móvil."}, {"id": "paso-15", "step": 15, "file": "15-recuperar-movil-usuario.png", "title": "Recuperar acceso en móvil", "text": "Ingrese el usuario desde la opción de recuperación.", "alt": "Paso de ingreso de usuario en recuperación móvil."}, {"id": "paso-16", "step": 16, "file": "16-recuperar-movil-pregunta.png", "title": "Validar pregunta en móvil", "text": "Responda la pregunta de seguridad para continuar.", "alt": "Pregunta de seguridad durante recuperación en móvil."}, {"id": "paso-17", "step": 17, "file": "17-recuperar-movil-nueva-clave.png", "title": "Cambiar contraseña en móvil", "text": "Cree una nueva contraseña y confírmela.", "alt": "Formulario móvil para nueva contraseña."}, {"id": "paso-18", "step": 18, "file": "18-recuperacion-movil-completa.png", "title": "Recuperación completada", "text": "El mensaje final confirma que ya puede volver a iniciar sesión.", "alt": "Confirmación de recuperación de contraseña en móvil."}]}, {"section_id": 2, "section_key": "sec-2", "section_title": "Traductor clínico", "icon": "translate", "description": "Uso del traductor bidireccional K'iche' ↔ Español, micrófono en tiempo real, modelo anatómico interactivo y generación del resumen clínico de consulta.", "callouts": [{"type": "info", "text": "**Nota de uso:** La primera consulta de una sesión puede tardar hasta 10 segundos mientras inicia el servicio. Es un comportamiento esperado de esta versión."}, {"type": "privacy", "text": "**Confidencialidad:** Las traducciones se agrupan únicamente durante la sesión actual para generar el resumen clínico. Al generar el resumen no se conservan traducciones ni datos de la sesión."}], "steps": [{"id": "paso-19", "step": 19, "file": "19-traductor-inicial.png", "title": "Traductor K'iche' a español", "text": "Al iniciar sesión se abre el traductor en modo K'iche' a español. Presione el micrófono para hablar; en computadora también puede usar `Ctrl` o `Option` en Mac.", "alt": "Interfaz inicial del traductor K'iche' a español."}, {"id": "paso-20", "step": 20, "file": "20-microfono-escuchando.png", "title": "Micrófono escuchando", "text": "El micrófono se muestra en rojo mientras el sistema recibe la voz.", "alt": "Micrófono en rojo indicando escucha activa."}, {"id": "paso-21", "step": 21, "file": "21-traduccion-y-modelo-anatomico.png", "title": "Consultar la traducción", "text": "Revise el texto en español y use el control de reproducción para escuchar el audio traducido. El modelo anatómico sirve de apoyo para señalar una zona de dolor no identificada con claridad.", "alt": "Traducción mostrada junto con modelo anatómico y botón de audio."}, {"id": "paso-22", "step": 22, "file": "22-contador-y-resumen.png", "title": "Ver traducciones de la sesión", "text": "El botón de la esquina inferior cuenta las traducciones realizadas en la sesión actual y abre el resumen clínico.", "alt": "Botón de resumen con contador de traducciones."}, {"id": "paso-23", "step": 23, "file": "23-resumen-clinico-inicial.png", "title": "Abrir resumen clínico", "text": "Seleccione el botón de resumen para revisar el cuadro de resumen de la sesión.", "alt": "Cuadro inicial de resumen clínico."}, {"id": "paso-24", "step": 24, "file": "24-resumen-clinico-generado.png", "title": "Generar resumen", "text": "Pulse **Generar resumen** para crear el resumen clínico a partir de las traducciones de la sesión.", "alt": "Resumen clínico generado desde la sesión."}, {"id": "paso-25", "step": 25, "file": "25-copiar-resumen-clinico.png", "title": "Copiar al portapapeles", "text": "Use el botón de copiar para llevar el resumen a otro sistema de registro clínico.", "alt": "Opción para copiar el resumen clínico al portapapeles."}, {"id": "paso-26", "step": 26, "file": "26-cambio-espanol-kiche.png", "title": "Cambiar dirección de traducción", "text": "Seleccione el control de idioma para cambiar al modo español a K'iche'. El cambio se identifica con color naranja.", "alt": "Selector para traducir de español a K'iche'."}, {"id": "paso-27", "step": 27, "file": "27-espanol-kiche-escucha.png", "title": "Escuchar español y traducir a K'iche'", "text": "En este modo, hable en español y reciba texto y audio en K'iche'.", "alt": "Traductor activo en dirección español a K'iche'."}, {"id": "paso-28", "step": 28, "file": "28-selector-idioma.png", "title": "Confirmar idioma activo", "text": "Verifique la dirección seleccionada antes de comenzar una consulta.", "alt": "Control de selección de idioma del traductor."}, {"id": "paso-29", "step": 29, "file": "29-ayuda-tour-virtual.png", "title": "Iniciar tour virtual", "text": "Seleccione el icono de ayuda para abrir la guía interactiva del traductor.", "alt": "Acceso al tour virtual de ayuda."}]}, {"section_id": 3, "section_key": "sec-3", "section_title": "Preferencias y cuenta", "icon": "tune", "description": "Configuración de rendimiento de la interfaz (Modo Lite para equipos de bajos recursos) y actualización del perfil personal de usuario.", "callouts": [], "steps": [{"id": "paso-30", "step": 30, "file": "30-acceso-modo-lite.png", "title": "Elegir modo Lite", "text": "Si el equipo tiene recursos limitados, active **Modo Lite** para reducir animaciones y mejorar la rapidez de uso.", "alt": "Opción para activar el modo Lite."}, {"id": "paso-31", "step": 31, "file": "31-confirmacion-modo-lite.png", "title": "Confirmación de modo", "text": "El sistema muestra una notificación al cambiar entre modo Lite y modo Pro.", "alt": "Notificación de cambio de modo de rendimiento."}, {"id": "paso-32", "step": 32, "file": "32-acceso-mi-cuenta.png", "title": "Abrir Mi cuenta", "text": "Seleccione **Mi cuenta** desde el menú superior.", "alt": "Opción Mi cuenta en el menú del usuario."}, {"id": "paso-33", "step": 33, "file": "33-mi-cuenta.png", "title": "Actualizar datos personales", "text": "Desde Mi cuenta puede actualizar el nombre y la contraseña.", "alt": "Formulario de actualización de datos de cuenta."}, {"id": "paso-34", "step": 34, "file": "34-icono-mi-cuenta.png", "title": "Identificar acceso a la cuenta", "text": "El icono de usuario abre las opciones personales y de sesión.", "alt": "Icono de usuario que abre el menú de cuenta."}]}, {"section_id": 4, "section_key": "sec-4", "section_title": "Entrenamiento de voz", "icon": "school", "description": "Módulo para aportar grabaciones y transcripciones al modelo de IA, tanto mediante frases guiadas preparadas por lingüistas como en modo experto con recorte fino de audio.", "callouts": [{"type": "warning", "text": "**Importante:** Las frases y audios que se guardan en este módulo se envían al servidor para ampliar los datos de entrenamiento del modelo. Esta acción es distinta a las consultas del traductor clínico, que no se conservan."}], "steps": [{"id": "paso-35", "step": 35, "file": "35-modo-entrenamiento.png", "title": "Abrir modo entrenamiento", "text": "Entre al módulo de entrenamiento desde el menú principal.", "alt": "Pantalla principal del modo entrenamiento."}, {"id": "paso-36", "step": 36, "file": "36-frases-guiadas.png", "title": "Practicar una frase guiada", "text": "El modo guiado presenta frases preparadas por personas expertas en K'iche' para ser pronunciadas y grabadas.", "alt": "Frase guiada lista para ser grabada."}, {"id": "paso-37", "step": 37, "file": "37-categorias-frases.png", "title": "Explorar categorías", "text": "Las frases se organizan en secciones para variar la práctica.", "alt": "Categorías disponibles de frases guiadas."}, {"id": "paso-38", "step": 38, "file": "38-navegacion-frases.png", "title": "Cambiar de frase", "text": "Use los botones para ir a la frase siguiente o recibir una frase aleatoria.", "alt": "Botones de siguiente frase y frase aleatoria."}, {"id": "paso-39", "step": 39, "file": "39-grabar-frase-guiada.png", "title": "Grabar frase", "text": "Presione el botón de grabación y diga la frase que aparece en pantalla.", "alt": "Control para grabar una frase guiada."}, {"id": "paso-40", "step": 40, "file": "40-validar-transcripcion-guiada.png", "title": "Validar reconocimiento", "text": "Revise lo que el modelo entendió y la transcripción en K'iche'. Si es adecuada, guarde la grabación para aportar al entrenamiento.", "alt": "Resultado de reconocimiento y transcripción de una grabación guiada."}, {"id": "paso-41", "step": 41, "file": "41-selector-modo-guiado-experto.png", "title": "Elegir modo de aporte", "text": "Cambie entre modo guiado y modo experto según la forma en que desea contribuir.", "alt": "Selector entre modo guiado y modo experto."}, {"id": "paso-42", "step": 42, "file": "42-formulario-modo-experto.png", "title": "Registrar frase en modo experto", "text": "Ingrese primero la frase en español, luego en K'iche' y finalmente incorpore el audio en K'iche'.", "alt": "Formulario de aporte en modo experto."}, {"id": "paso-43", "step": 43, "file": "43-captura-audio-experto.png", "title": "Capturar o subir audio", "text": "Puede grabar una frase o subir un archivo de audio en formato WAV, AIFF, MP3 u OGG.", "alt": "Controles para grabar o cargar un audio."}, {"id": "paso-44", "step": 44, "file": "44-editor-recorte-audio.png", "title": "Revisar y recortar audio", "text": "Ajuste el inicio y final para dejar únicamente la frase útil y reducir ruidos externos.", "alt": "Editor para recortar una grabación de audio."}, {"id": "paso-45", "step": 45, "file": "45-recortar-y-enviar-mms.png", "title": "Procesar audio recortado", "text": "Escuche el segmento seleccionado y use **Recortar y enviar a MMS** para que el modelo procese el audio.", "alt": "Botones para escuchar el recorte y enviarlo al procesamiento."}, {"id": "paso-46", "step": 46, "file": "46-audio-recortado.png", "title": "Revisar reconocimiento crudo", "text": "Verifique la forma cruda reconocida por el modelo antes de guardar el aporte.", "alt": "Resultado de reconocimiento del audio procesado."}, {"id": "paso-47", "step": 47, "file": "47-guardar-frase-y-audio.png", "title": "Guardar aporte", "text": "Guarde la frase, su traducción y el audio validado.", "alt": "Acción para guardar una frase y su audio."}, {"id": "paso-48", "step": 48, "file": "48-confirmacion-dataset.png", "title": "Aporte almacenado", "text": "La confirmación indica que el registro fue incorporado a los datos de entrenamiento.", "alt": "Mensaje de confirmación de guardado para entrenamiento."}]}, {"section_id": 5, "section_key": "sec-5", "section_title": "Práctica de escritura y revisión", "icon": "edit_note", "description": "Herramienta para practicar ortografía y gramática en K'iche', generar frases con asistencia de IA y panel de validación para incorporar nuevas frases al entrenamiento.", "callouts": [], "steps": [{"id": "paso-49", "step": 49, "file": "49-practica-escritura.png", "title": "Abrir práctica de escritura", "text": "Acceda al módulo de práctica de escritura desde el menú.", "alt": "Pantalla de práctica de escritura."}, {"id": "paso-50", "step": 50, "file": "50-generar-frase-o-personalizada.png", "title": "Crear frase para práctica", "text": "Use la IA para generar una frase aleatoria a partir de una solicitud o proponga una frase personalizada. Las frases personalizadas quedan pendientes de revisión.", "alt": "Opciones para generar frase con IA o crear una frase personalizada."}, {"id": "paso-51", "step": 51, "file": "51-acceso-panel-revision.png", "title": "Abrir revisión", "text": "Desde la esquina superior derecha, abra el panel de revisión de frases.", "alt": "Acceso al panel de revisión de frases."}, {"id": "paso-52", "step": 52, "file": "52-panel-revision.png", "title": "Aprobar frase para entrenamiento", "text": "Asigne la categoría correcta y apruebe la frase. Una vez aprobada podrá aparecer en el modo de entrenamiento para ser grabada.", "alt": "Panel de revisión para clasificar y aprobar una frase."}]}, {"section_id": 6, "section_key": "sec-6", "section_title": "Administración", "icon": "admin_panel_settings", "description": "Supervisión de usuarios, aprobación de registros pendientes, asignación de roles (Básico, Entrenador, Administrador) y cambio de tema claro/oscuro.", "callouts": [{"type": "privacy", "text": "**Privacidad:** Las imágenes administrativas incluidas aquí ya ocultan los nombres de cuentas activas. No sustituirlas por capturas sin anonimizar."}], "steps": [{"id": "paso-53", "step": 53, "file": "53-panel-administrador-pendientes-anonimo.png", "title": "Revisar solicitudes pendientes", "text": "El panel muestra solicitudes de cuentas nuevas. Las filas en amarillo están pendientes de aprobación.", "alt": "Panel administrativo con solicitudes pendientes anonimizadas."}, {"id": "paso-54", "step": 54, "file": "54-gestion-usuario.png", "title": "Consultar datos de la solicitud", "text": "Seleccione una solicitud para ver su información y realizar la gestión correspondiente.", "alt": "Detalle de una solicitud de cuenta."}, {"id": "paso-55", "step": 55, "file": "55-asignacion-rol.png", "title": "Asignar área y rol", "text": "Defina el acceso de la persona: uso del traductor, entrenamiento o administración.", "alt": "Controles para asignar rol y área a un usuario."}, {"id": "paso-56", "step": 56, "file": "56-panel-administrador-aprobado-anonimo.png", "title": "Confirmar cuentas aprobadas", "text": "El panel actualizado permite reconocer las solicitudes que ya fueron atendidas sin exponer identidades activas.", "alt": "Panel administrativo con cuentas anonimizadas."}, {"id": "paso-57", "step": 57, "file": "57-crear-nuevo-usuario.png", "title": "Crear cuenta desde administración", "text": "El botón **Crear cuenta** permite registrar y habilitar directamente una cuenta nueva.", "alt": "Formulario administrativo para crear una cuenta."}, {"id": "paso-58", "step": 58, "file": "58-modo-claro.png", "title": "Cambiar a modo claro", "text": "El control de apariencia, ubicado en la esquina superior derecha, activa la interfaz clara.", "alt": "Interfaz de Ch'aweb'al en modo claro."}]}];
+        const ALL_STEPS = [{"id": "paso-1", "step": 1, "file": "01-login-escritorio.png", "title": "Iniciar sesión", "text": "Escriba su usuario y contraseña para ingresar al sistema. Desde esta pantalla también se puede crear una cuenta o recuperar el acceso.", "alt": "Pantalla de inicio de sesión de Ch'aweb'al en escritorio.", "section_id": 1, "section_title": "Acceso y recuperación de cuenta", "section_icon": "login"}, {"id": "paso-2", "step": 2, "file": "02-menu-cuentas.png", "title": "Abrir opciones de cuenta", "text": "Ubique el icono de cuenta en la esquina superior derecha.", "alt": "Icono de cuenta ubicado en la esquina superior derecha.", "section_id": 1, "section_title": "Acceso y recuperación de cuenta", "section_icon": "login"}, {"id": "paso-3", "step": 3, "file": "03-opcion-crear-cuenta.png", "title": "Crear una cuenta", "text": "Al colocar el cursor sobre el icono de cuenta, seleccione **Crear cuenta**.", "alt": "Menú de cuenta con la opción Crear cuenta.", "section_id": 1, "section_title": "Acceso y recuperación de cuenta", "section_icon": "login"}, {"id": "paso-4", "step": 4, "file": "04-formulario-crear-cuenta.png", "title": "Completar registro", "text": "Ingrese la información solicitada en el formulario para solicitar una cuenta nueva.", "alt": "Formulario para crear una cuenta de usuario.", "section_id": 1, "section_title": "Acceso y recuperación de cuenta", "section_icon": "login"}, {"id": "paso-5", "step": 5, "file": "05-preguntas-seguridad.png", "title": "Elegir pregunta de seguridad", "text": "Seleccione y responda una pregunta de recuperación; será necesaria si olvida su contraseña.", "alt": "Lista de preguntas de seguridad durante el registro.", "section_id": 1, "section_title": "Acceso y recuperación de cuenta", "section_icon": "login"}, {"id": "paso-6", "step": 6, "file": "06-registro-pendiente-aprobacion.png", "title": "Esperar aprobación", "text": "Al guardar, la solicitud queda pendiente de revisión por una persona administradora. Luego se regresa al inicio de sesión.", "alt": "Mensaje que confirma que la cuenta espera aprobación.", "section_id": 1, "section_title": "Acceso y recuperación de cuenta", "section_icon": "login"}, {"id": "paso-7", "step": 7, "file": "07-validacion-correo.png", "title": "Corregir correo electrónico", "text": "Si se usa una coma en lugar de un punto en el correo, el sistema muestra una indicación para corregirlo.", "alt": "Mensaje de validación para un correo electrónico inválido.", "section_id": 1, "section_title": "Acceso y recuperación de cuenta", "section_icon": "login"}, {"id": "paso-8", "step": 8, "file": "08-olvido-contrasena.png", "title": "Recuperar contraseña", "text": "Seleccione **¿Olvidaste tu contraseña?** desde el inicio de sesión.", "alt": "Enlace para recuperar contraseña.", "section_id": 1, "section_title": "Acceso y recuperación de cuenta", "section_icon": "login"}, {"id": "paso-9", "step": 9, "file": "09-recuperacion-usuario.png", "title": "Identificar usuario", "text": "Escriba el nombre de usuario para iniciar la recuperación.", "alt": "Campo para ingresar el usuario en recuperación de contraseña.", "section_id": 1, "section_title": "Acceso y recuperación de cuenta", "section_icon": "login"}, {"id": "paso-10", "step": 10, "file": "10-usuario-no-encontrado.png", "title": "Usuario no encontrado", "text": "Si el usuario no existe, revise que el nombre se haya escrito correctamente.", "alt": "Aviso de usuario no encontrado.", "section_id": 1, "section_title": "Acceso y recuperación de cuenta", "section_icon": "login"}, {"id": "paso-11", "step": 11, "file": "11-pregunta-seguridad.png", "title": "Responder pregunta de seguridad", "text": "Si el usuario existe, responda la pregunta de seguridad asociada a la cuenta.", "alt": "Pregunta de seguridad para validar la recuperación.", "section_id": 1, "section_title": "Acceso y recuperación de cuenta", "section_icon": "login"}, {"id": "paso-12", "step": 12, "file": "12-nueva-contrasena.png", "title": "Definir nueva contraseña", "text": "Después de validar la respuesta, cree y confirme la nueva contraseña.", "alt": "Formulario para actualizar la contraseña.", "section_id": 1, "section_title": "Acceso y recuperación de cuenta", "section_icon": "login"}, {"id": "paso-13", "step": 13, "file": "13-login-movil.png", "title": "Inicio de sesión en móvil", "text": "El acceso desde teléfono conserva las mismas opciones principales.", "alt": "Pantalla de inicio de sesión en un dispositivo móvil.", "section_id": 1, "section_title": "Acceso y recuperación de cuenta", "section_icon": "login"}, {"id": "paso-14", "step": 14, "file": "14-crear-cuenta-movil.png", "title": "Crear cuenta en móvil", "text": "Complete el registro desplazándose por el formulario en el teléfono.", "alt": "Formulario de creación de cuenta en móvil.", "section_id": 1, "section_title": "Acceso y recuperación de cuenta", "section_icon": "login"}, {"id": "paso-15", "step": 15, "file": "15-recuperar-movil-usuario.png", "title": "Recuperar acceso en móvil", "text": "Ingrese el usuario desde la opción de recuperación.", "alt": "Paso de ingreso de usuario en recuperación móvil.", "section_id": 1, "section_title": "Acceso y recuperación de cuenta", "section_icon": "login"}, {"id": "paso-16", "step": 16, "file": "16-recuperar-movil-pregunta.png", "title": "Validar pregunta en móvil", "text": "Responda la pregunta de seguridad para continuar.", "alt": "Pregunta de seguridad durante recuperación en móvil.", "section_id": 1, "section_title": "Acceso y recuperación de cuenta", "section_icon": "login"}, {"id": "paso-17", "step": 17, "file": "17-recuperar-movil-nueva-clave.png", "title": "Cambiar contraseña en móvil", "text": "Cree una nueva contraseña y confírmela.", "alt": "Formulario móvil para nueva contraseña.", "section_id": 1, "section_title": "Acceso y recuperación de cuenta", "section_icon": "login"}, {"id": "paso-18", "step": 18, "file": "18-recuperacion-movil-completa.png", "title": "Recuperación completada", "text": "El mensaje final confirma que ya puede volver a iniciar sesión.", "alt": "Confirmación de recuperación de contraseña en móvil.", "section_id": 1, "section_title": "Acceso y recuperación de cuenta", "section_icon": "login"}, {"id": "paso-19", "step": 19, "file": "19-traductor-inicial.png", "title": "Traductor K'iche' a español", "text": "Al iniciar sesión se abre el traductor en modo K'iche' a español. Presione el micrófono para hablar; en computadora también puede usar `Ctrl` o `Option` en Mac.", "alt": "Interfaz inicial del traductor K'iche' a español.", "section_id": 2, "section_title": "Traductor clínico", "section_icon": "translate"}, {"id": "paso-20", "step": 20, "file": "20-microfono-escuchando.png", "title": "Micrófono escuchando", "text": "El micrófono se muestra en rojo mientras el sistema recibe la voz.", "alt": "Micrófono en rojo indicando escucha activa.", "section_id": 2, "section_title": "Traductor clínico", "section_icon": "translate"}, {"id": "paso-21", "step": 21, "file": "21-traduccion-y-modelo-anatomico.png", "title": "Consultar la traducción", "text": "Revise el texto en español y use el control de reproducción para escuchar el audio traducido. El modelo anatómico sirve de apoyo para señalar una zona de dolor no identificada con claridad.", "alt": "Traducción mostrada junto con modelo anatómico y botón de audio.", "section_id": 2, "section_title": "Traductor clínico", "section_icon": "translate"}, {"id": "paso-22", "step": 22, "file": "22-contador-y-resumen.png", "title": "Ver traducciones de la sesión", "text": "El botón de la esquina inferior cuenta las traducciones realizadas en la sesión actual y abre el resumen clínico.", "alt": "Botón de resumen con contador de traducciones.", "section_id": 2, "section_title": "Traductor clínico", "section_icon": "translate"}, {"id": "paso-23", "step": 23, "file": "23-resumen-clinico-inicial.png", "title": "Abrir resumen clínico", "text": "Seleccione el botón de resumen para revisar el cuadro de resumen de la sesión.", "alt": "Cuadro inicial de resumen clínico.", "section_id": 2, "section_title": "Traductor clínico", "section_icon": "translate"}, {"id": "paso-24", "step": 24, "file": "24-resumen-clinico-generado.png", "title": "Generar resumen", "text": "Pulse **Generar resumen** para crear el resumen clínico a partir de las traducciones de la sesión.", "alt": "Resumen clínico generado desde la sesión.", "section_id": 2, "section_title": "Traductor clínico", "section_icon": "translate"}, {"id": "paso-25", "step": 25, "file": "25-copiar-resumen-clinico.png", "title": "Copiar al portapapeles", "text": "Use el botón de copiar para llevar el resumen a otro sistema de registro clínico.", "alt": "Opción para copiar el resumen clínico al portapapeles.", "section_id": 2, "section_title": "Traductor clínico", "section_icon": "translate"}, {"id": "paso-26", "step": 26, "file": "26-cambio-espanol-kiche.png", "title": "Cambiar dirección de traducción", "text": "Seleccione el control de idioma para cambiar al modo español a K'iche'. El cambio se identifica con color naranja.", "alt": "Selector para traducir de español a K'iche'.", "section_id": 2, "section_title": "Traductor clínico", "section_icon": "translate"}, {"id": "paso-27", "step": 27, "file": "27-espanol-kiche-escucha.png", "title": "Escuchar español y traducir a K'iche'", "text": "En este modo, hable en español y reciba texto y audio en K'iche'.", "alt": "Traductor activo en dirección español a K'iche'.", "section_id": 2, "section_title": "Traductor clínico", "section_icon": "translate"}, {"id": "paso-28", "step": 28, "file": "28-selector-idioma.png", "title": "Confirmar idioma activo", "text": "Verifique la dirección seleccionada antes de comenzar una consulta.", "alt": "Control de selección de idioma del traductor.", "section_id": 2, "section_title": "Traductor clínico", "section_icon": "translate"}, {"id": "paso-29", "step": 29, "file": "29-ayuda-tour-virtual.png", "title": "Iniciar tour virtual", "text": "Seleccione el icono de ayuda para abrir la guía interactiva del traductor.", "alt": "Acceso al tour virtual de ayuda.", "section_id": 2, "section_title": "Traductor clínico", "section_icon": "translate"}, {"id": "paso-30", "step": 30, "file": "30-acceso-modo-lite.png", "title": "Elegir modo Lite", "text": "Si el equipo tiene recursos limitados, active **Modo Lite** para reducir animaciones y mejorar la rapidez de uso.", "alt": "Opción para activar el modo Lite.", "section_id": 3, "section_title": "Preferencias y cuenta", "section_icon": "tune"}, {"id": "paso-31", "step": 31, "file": "31-confirmacion-modo-lite.png", "title": "Confirmación de modo", "text": "El sistema muestra una notificación al cambiar entre modo Lite y modo Pro.", "alt": "Notificación de cambio de modo de rendimiento.", "section_id": 3, "section_title": "Preferencias y cuenta", "section_icon": "tune"}, {"id": "paso-32", "step": 32, "file": "32-acceso-mi-cuenta.png", "title": "Abrir Mi cuenta", "text": "Seleccione **Mi cuenta** desde el menú superior.", "alt": "Opción Mi cuenta en el menú del usuario.", "section_id": 3, "section_title": "Preferencias y cuenta", "section_icon": "tune"}, {"id": "paso-33", "step": 33, "file": "33-mi-cuenta.png", "title": "Actualizar datos personales", "text": "Desde Mi cuenta puede actualizar el nombre y la contraseña.", "alt": "Formulario de actualización de datos de cuenta.", "section_id": 3, "section_title": "Preferencias y cuenta", "section_icon": "tune"}, {"id": "paso-34", "step": 34, "file": "34-icono-mi-cuenta.png", "title": "Identificar acceso a la cuenta", "text": "El icono de usuario abre las opciones personales y de sesión.", "alt": "Icono de usuario que abre el menú de cuenta.", "section_id": 3, "section_title": "Preferencias y cuenta", "section_icon": "tune"}, {"id": "paso-35", "step": 35, "file": "35-modo-entrenamiento.png", "title": "Abrir modo entrenamiento", "text": "Entre al módulo de entrenamiento desde el menú principal.", "alt": "Pantalla principal del modo entrenamiento.", "section_id": 4, "section_title": "Entrenamiento de voz", "section_icon": "school"}, {"id": "paso-36", "step": 36, "file": "36-frases-guiadas.png", "title": "Practicar una frase guiada", "text": "El modo guiado presenta frases preparadas por personas expertas en K'iche' para ser pronunciadas y grabadas.", "alt": "Frase guiada lista para ser grabada.", "section_id": 4, "section_title": "Entrenamiento de voz", "section_icon": "school"}, {"id": "paso-37", "step": 37, "file": "37-categorias-frases.png", "title": "Explorar categorías", "text": "Las frases se organizan en secciones para variar la práctica.", "alt": "Categorías disponibles de frases guiadas.", "section_id": 4, "section_title": "Entrenamiento de voz", "section_icon": "school"}, {"id": "paso-38", "step": 38, "file": "38-navegacion-frases.png", "title": "Cambiar de frase", "text": "Use los botones para ir a la frase siguiente o recibir una frase aleatoria.", "alt": "Botones de siguiente frase y frase aleatoria.", "section_id": 4, "section_title": "Entrenamiento de voz", "section_icon": "school"}, {"id": "paso-39", "step": 39, "file": "39-grabar-frase-guiada.png", "title": "Grabar frase", "text": "Presione el botón de grabación y diga la frase que aparece en pantalla.", "alt": "Control para grabar una frase guiada.", "section_id": 4, "section_title": "Entrenamiento de voz", "section_icon": "school"}, {"id": "paso-40", "step": 40, "file": "40-validar-transcripcion-guiada.png", "title": "Validar reconocimiento", "text": "Revise lo que el modelo entendió y la transcripción en K'iche'. Si es adecuada, guarde la grabación para aportar al entrenamiento.", "alt": "Resultado de reconocimiento y transcripción de una grabación guiada.", "section_id": 4, "section_title": "Entrenamiento de voz", "section_icon": "school"}, {"id": "paso-41", "step": 41, "file": "41-selector-modo-guiado-experto.png", "title": "Elegir modo de aporte", "text": "Cambie entre modo guiado y modo experto según la forma en que desea contribuir.", "alt": "Selector entre modo guiado y modo experto.", "section_id": 4, "section_title": "Entrenamiento de voz", "section_icon": "school"}, {"id": "paso-42", "step": 42, "file": "42-formulario-modo-experto.png", "title": "Registrar frase en modo experto", "text": "Ingrese primero la frase en español, luego en K'iche' y finalmente incorpore el audio en K'iche'.", "alt": "Formulario de aporte en modo experto.", "section_id": 4, "section_title": "Entrenamiento de voz", "section_icon": "school"}, {"id": "paso-43", "step": 43, "file": "43-captura-audio-experto.png", "title": "Capturar o subir audio", "text": "Puede grabar una frase o subir un archivo de audio en formato WAV, AIFF, MP3 u OGG.", "alt": "Controles para grabar o cargar un audio.", "section_id": 4, "section_title": "Entrenamiento de voz", "section_icon": "school"}, {"id": "paso-44", "step": 44, "file": "44-editor-recorte-audio.png", "title": "Revisar y recortar audio", "text": "Ajuste el inicio y final para dejar únicamente la frase útil y reducir ruidos externos.", "alt": "Editor para recortar una grabación de audio.", "section_id": 4, "section_title": "Entrenamiento de voz", "section_icon": "school"}, {"id": "paso-45", "step": 45, "file": "45-recortar-y-enviar-mms.png", "title": "Procesar audio recortado", "text": "Escuche el segmento seleccionado y use **Recortar y enviar a MMS** para que el modelo procese el audio.", "alt": "Botones para escuchar el recorte y enviarlo al procesamiento.", "section_id": 4, "section_title": "Entrenamiento de voz", "section_icon": "school"}, {"id": "paso-46", "step": 46, "file": "46-audio-recortado.png", "title": "Revisar reconocimiento crudo", "text": "Verifique la forma cruda reconocida por el modelo antes de guardar el aporte.", "alt": "Resultado de reconocimiento del audio procesado.", "section_id": 4, "section_title": "Entrenamiento de voz", "section_icon": "school"}, {"id": "paso-47", "step": 47, "file": "47-guardar-frase-y-audio.png", "title": "Guardar aporte", "text": "Guarde la frase, su traducción y el audio validado.", "alt": "Acción para guardar una frase y su audio.", "section_id": 4, "section_title": "Entrenamiento de voz", "section_icon": "school"}, {"id": "paso-48", "step": 48, "file": "48-confirmacion-dataset.png", "title": "Aporte almacenado", "text": "La confirmación indica que el registro fue incorporado a los datos de entrenamiento.", "alt": "Mensaje de confirmación de guardado para entrenamiento.", "section_id": 4, "section_title": "Entrenamiento de voz", "section_icon": "school"}, {"id": "paso-49", "step": 49, "file": "49-practica-escritura.png", "title": "Abrir práctica de escritura", "text": "Acceda al módulo de práctica de escritura desde el menú.", "alt": "Pantalla de práctica de escritura.", "section_id": 5, "section_title": "Práctica de escritura y revisión", "section_icon": "edit_note"}, {"id": "paso-50", "step": 50, "file": "50-generar-frase-o-personalizada.png", "title": "Crear frase para práctica", "text": "Use la IA para generar una frase aleatoria a partir de una solicitud o proponga una frase personalizada. Las frases personalizadas quedan pendientes de revisión.", "alt": "Opciones para generar frase con IA o crear una frase personalizada.", "section_id": 5, "section_title": "Práctica de escritura y revisión", "section_icon": "edit_note"}, {"id": "paso-51", "step": 51, "file": "51-acceso-panel-revision.png", "title": "Abrir revisión", "text": "Desde la esquina superior derecha, abra el panel de revisión de frases.", "alt": "Acceso al panel de revisión de frases.", "section_id": 5, "section_title": "Práctica de escritura y revisión", "section_icon": "edit_note"}, {"id": "paso-52", "step": 52, "file": "52-panel-revision.png", "title": "Aprobar frase para entrenamiento", "text": "Asigne la categoría correcta y apruebe la frase. Una vez aprobada podrá aparecer en el modo de entrenamiento para ser grabada.", "alt": "Panel de revisión para clasificar y aprobar una frase.", "section_id": 5, "section_title": "Práctica de escritura y revisión", "section_icon": "edit_note"}, {"id": "paso-53", "step": 53, "file": "53-panel-administrador-pendientes-anonimo.png", "title": "Revisar solicitudes pendientes", "text": "El panel muestra solicitudes de cuentas nuevas. Las filas en amarillo están pendientes de aprobación.", "alt": "Panel administrativo con solicitudes pendientes anonimizadas.", "section_id": 6, "section_title": "Administración", "section_icon": "admin_panel_settings"}, {"id": "paso-54", "step": 54, "file": "54-gestion-usuario.png", "title": "Consultar datos de la solicitud", "text": "Seleccione una solicitud para ver su información y realizar la gestión correspondiente.", "alt": "Detalle de una solicitud de cuenta.", "section_id": 6, "section_title": "Administración", "section_icon": "admin_panel_settings"}, {"id": "paso-55", "step": 55, "file": "55-asignacion-rol.png", "title": "Asignar área y rol", "text": "Defina el acceso de la persona: uso del traductor, entrenamiento o administración.", "alt": "Controles para asignar rol y área a un usuario.", "section_id": 6, "section_title": "Administración", "section_icon": "admin_panel_settings"}, {"id": "paso-56", "step": 56, "file": "56-panel-administrador-aprobado-anonimo.png", "title": "Confirmar cuentas aprobadas", "text": "El panel actualizado permite reconocer las solicitudes que ya fueron atendidas sin exponer identidades activas.", "alt": "Panel administrativo con cuentas anonimizadas.", "section_id": 6, "section_title": "Administración", "section_icon": "admin_panel_settings"}, {"id": "paso-57", "step": 57, "file": "57-crear-nuevo-usuario.png", "title": "Crear cuenta desde administración", "text": "El botón **Crear cuenta** permite registrar y habilitar directamente una cuenta nueva.", "alt": "Formulario administrativo para crear una cuenta.", "section_id": 6, "section_title": "Administración", "section_icon": "admin_panel_settings"}, {"id": "paso-58", "step": 58, "file": "58-modo-claro.png", "title": "Cambiar a modo claro", "text": "El control de apariencia, ubicado en la esquina superior derecha, activa la interfaz clara.", "alt": "Interfaz de Ch'aweb'al en modo claro.", "section_id": 6, "section_title": "Administración", "section_icon": "admin_panel_settings"}];
+
+        let currentModuleId = 1;
+        let isSearchActive = false;
+
+        function normalizeText(str) {
+            if (!str) return '';
+            return str
+                .toLowerCase()
+                .normalize('NFD')
+                .replace(/[̀-ͯ]/g, '')
+                .replace(/['’ʻ`´]/g, '');
+        }
+
+        // Seleccionar y mostrar módulo completo con continuidad
+        function selectModule(modId) {
+            isSearchActive = false;
+            currentModuleId = modId;
+            document.getElementById('manualSearchInput').value = '';
+            document.getElementById('clearSearchBtn').classList.add('hidden');
+            document.getElementById('searchStatusText').classList.add('hidden');
+            document.getElementById('moduleHeaderCard').classList.remove('hidden');
+            document.getElementById('moduleNavFooter').classList.remove('hidden');
+
+            // Actualizar botones de la barra lateral
+            for (let i = 1; i <= 6; i++) {
+                const btn = document.getElementById(`sideModBtn-${i}`);
+                if (btn) {
+                    if (i === modId) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                }
+            }
+
+            const mod = MODULES.find(m => m.section_id === modId);
+            if (!mod) return;
+
+            // Encabezado
+            document.getElementById('moduleIcon').textContent = mod.icon;
+            document.getElementById('moduleTag').textContent = `Módulo ${mod.section_id}`;
+            document.getElementById('moduleTitle').textContent = mod.section_title;
+            document.getElementById('moduleDescription').textContent = mod.description;
+
+            // Callouts del módulo
+            const calloutsDiv = document.getElementById('moduleCallouts');
+            calloutsDiv.innerHTML = '';
+            if (mod.callouts && mod.callouts.length > 0) {
+                mod.callouts.forEach(c => {
+                    const alert = document.createElement('div');
+                    alert.className = 'p-3.5 rounded-xl text-xs flex items-start gap-2.5 border bg-black/15 border-white/10';
+                    let iconName = 'info';
+                    let iconColor = 'text-teal-400';
+                    if (c.type === 'privacy') {
+                        iconName = 'verified_user';
+                        iconColor = 'text-emerald-400';
+                    } else if (c.type === 'warning') {
+                        iconName = 'warning';
+                        iconColor = 'text-amber-400';
+                    }
+                    alert.innerHTML = `<span class="material-symbols-outlined text-[1.2rem] ${iconColor} flex-shrink-0 mt-0.5">${iconName}</span><div class="leading-relaxed font-medium">${c.text}</div>`;
+                    calloutsDiv.appendChild(alert);
+                });
+            }
+
+            // Sub-steps en el sidebar para salto rápido
+            const substepsList = document.getElementById('substepsList');
+            substepsList.innerHTML = '';
+            mod.steps.forEach(s => {
+                const a = document.createElement('a');
+                a.href = `#paso-${s.step}`;
+                a.className = 'substep-link py-1 px-1.5 rounded truncate';
+                a.innerHTML = `<span class="font-bold text-[color:var(--primary-jade)]">${s.step}.</span> ${s.title}`;
+                substepsList.appendChild(a);
+            });
+
+            // RENDERIZAR TODOS LOS PASOS DEL MÓDULO CON CONTINUIDAD
+            const feed = document.getElementById('stepsFeed');
+            feed.innerHTML = '';
+
+            mod.steps.forEach((s, idx) => {
+                const card = document.createElement('article');
+                card.id = `paso-${s.step}`;
+                card.className = 'glass-card p-6 sm:p-7 space-y-4 scroll-mt-24';
+                
+                card.innerHTML = `
+                    <div class="flex items-center justify-between pb-3 border-b" style="border-color: var(--card-border);">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                                Paso ${s.step} de 58
+                            </span>
+                            <span class="text-xs font-medium text-[color:var(--text-muted)]">
+                                (Paso ${idx + 1} de ${mod.steps.length} en este módulo)
+                            </span>
+                        </div>
+                        <a href="#paso-${s.step}" class="text-xs text-[color:var(--text-muted)] hover:text-[color:var(--text-main)] font-mono opacity-60 hover:opacity-100 transition-opacity">
+                            #paso-${s.step}
+                        </a>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg sm:text-xl font-bold text-[color:var(--text-main)] mb-1.5">${s.title}</h3>
+                        <p class="text-sm text-[color:var(--text-muted)] leading-relaxed">${formatText(s.text)}</p>
+                    </div>
+
+                    <!-- Captura de pantalla -->
+                    <div class="preview-box group" onclick="openLightbox(${s.step}, '${s.file}', '${escapeHtml(s.title)}', '${escapeHtml(s.alt)}')" title="Clic para ampliar en pantalla completa">
+                        <div class="min-h-[200px] flex items-center justify-center p-2 sm:p-3">
+                            <img src="/static/help_assets/screenshots/${s.file}" 
+                                 alt="${escapeHtml(s.alt)}" 
+                                 loading="lazy" 
+                                 class="max-h-[460px] w-auto max-w-full object-contain rounded-xl shadow-md transition-transform" />
+                        </div>
+                        <div class="absolute bottom-2.5 right-2.5 bg-black/75 hover:bg-black/90 text-white text-[11px] font-semibold px-2.5 py-1 rounded-full flex items-center gap-1 backdrop-blur-md border border-white/20 transition-all opacity-75 group-hover:opacity-100">
+                            <span class="material-symbols-outlined text-[0.9rem]">zoom_in</span> Ampliar
+                        </div>
+                    </div>
+
+                    <p class="text-xs text-center italic text-[color:var(--text-muted)] flex items-center justify-center gap-1">
+                        <span class="material-symbols-outlined text-[0.9rem]">photo_camera</span>
+                        <span>${s.alt}</span>
+                    </p>
+                `;
+                feed.appendChild(card);
+            });
+
+            // Footer botones anterior/siguiente módulo
+            const btnPrev = document.getElementById('btnPrevModule');
+            const btnNext = document.getElementById('btnNextModule');
+            
+            if (modId > 1) {
+                btnPrev.classList.remove('invisible');
+                document.getElementById('prevModuleText').textContent = `Módulo ${modId - 1}`;
+            } else {
+                btnPrev.classList.add('invisible');
+            }
+
+            if (modId < 6) {
+                btnNext.classList.remove('invisible');
+                document.getElementById('nextModuleText').textContent = `Módulo ${modId + 1}`;
+            } else {
+                btnNext.classList.add('invisible');
+            }
+        }
+
+        function navigateModule(delta) {
+            const target = currentModuleId + delta;
+            if (target >= 1 && target <= 6) {
+                selectModule(target);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+
+        // BUSCADOR EN TIEMPO REAL DIRECTO EN EL FEED
+        function handleSearch(val) {
+            const q = normalizeText(val.trim());
+            const clearBtn = document.getElementById('clearSearchBtn');
+            const statusDiv = document.getElementById('searchStatusText');
+            const countSpan = document.getElementById('searchResultCount');
+            const headerCard = document.getElementById('moduleHeaderCard');
+            const navFooter = document.getElementById('moduleNavFooter');
+            const feed = document.getElementById('stepsFeed');
+
+            if (!q) {
+                clearSearch();
+                return;
+            }
+
+            isSearchActive = true;
+            clearBtn.classList.remove('hidden');
+            statusDiv.classList.remove('hidden');
+            headerCard.classList.add('hidden');
+            navFooter.classList.add('hidden');
+
+            // Quitar active de sidebar
+            document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active'));
+
+            // Buscar en todos los 58 pasos
+            const matches = ALL_STEPS.filter(s => {
+                return normalizeText(s.title).includes(q) || 
+                       normalizeText(s.text).includes(q) || 
+                       normalizeText(s.alt).includes(q);
+            });
+
+            countSpan.textContent = `${matches.length} paso(s) encontrado(s) para "${val}"`;
+
+            feed.innerHTML = '';
+            if (matches.length === 0) {
+                feed.innerHTML = `
+                    <div class="glass-card p-8 text-center text-sm text-[color:var(--text-muted)] space-y-3">
+                        <span class="material-symbols-outlined text-[2.5rem] opacity-40">search_off</span>
+                        <p class="text-base font-semibold text-[color:var(--text-main)]">No se encontraron resultados para "${val}"</p>
+                        <p class="text-xs">Prueba con palabras clave como <code class="text-[color:var(--primary-jade)]">micrófono</code>, <code class="text-[color:var(--primary-jade)]">resumen</code>, <code class="text-[color:var(--primary-jade)]">cuenta</code> o <code class="text-[color:var(--primary-jade)]">K'iche'</code>.</p>
+                        <button onclick="clearSearch()" class="btn-primary px-4 py-2 rounded-xl text-xs font-bold cursor-pointer mt-2 inline-flex items-center gap-1">
+                            <span class="material-symbols-outlined text-[1rem]">arrow_back</span> Volver a los módulos
+                        </button>
+                    </div>
+                `;
+            } else {
+                matches.forEach(s => {
+                    const card = document.createElement('article');
+                    card.className = 'glass-card p-6 sm:p-7 space-y-4';
+                    
+                    // Highlight search query
+                    const highlightedTitle = highlightMatch(s.title, q);
+                    const highlightedText = highlightMatch(s.text, q);
+
+                    card.innerHTML = `
+                        <div class="flex items-center justify-between pb-3 border-b" style="border-color: var(--card-border);">
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                                    Paso ${s.step} de 58
+                                </span>
+                                <span class="text-xs font-semibold px-2 py-0.5 rounded bg-black/20 text-[color:var(--text-main)]">
+                                    Módulo ${s.section_id}: ${s.section_title}
+                                </span>
+                            </div>
+                            <button onclick="selectModuleAndJump(${s.section_id}, ${s.step})" class="text-xs text-[color:var(--primary-jade)] hover:underline font-bold flex items-center gap-1 cursor-pointer">
+                                Ver en módulo <span class="material-symbols-outlined text-[0.9rem]">arrow_forward</span>
+                            </button>
+                        </div>
+
+                        <div>
+                            <h3 class="text-lg sm:text-xl font-bold text-[color:var(--text-main)] mb-1.5">${highlightedTitle}</h3>
+                            <p class="text-sm text-[color:var(--text-muted)] leading-relaxed">${highlightedText}</p>
+                        </div>
+
+                        <!-- Captura -->
+                        <div class="preview-box group" onclick="openLightbox(${s.step}, '${s.file}', '${escapeHtml(s.title)}', '${escapeHtml(s.alt)}')" title="Clic para ampliar en pantalla completa">
+                            <div class="min-h-[200px] flex items-center justify-center p-2 sm:p-3">
+                                <img src="/static/help_assets/screenshots/${s.file}" 
+                                     alt="${escapeHtml(s.alt)}" 
+                                     loading="lazy" 
+                                     class="max-h-[460px] w-auto max-w-full object-contain rounded-xl shadow-md transition-transform" />
+                            </div>
+                        </div>
+
+                        <p class="text-xs text-center italic text-[color:var(--text-muted)] flex items-center justify-center gap-1">
+                            <span class="material-symbols-outlined text-[0.9rem]">photo_camera</span>
+                            <span>${s.alt}</span>
+                        </p>
+                    `;
+                    feed.appendChild(card);
+                });
+            }
+        }
+
+        function clearSearch() {
+            document.getElementById('manualSearchInput').value = '';
+            document.getElementById('clearSearchBtn').classList.add('hidden');
+            selectModule(currentModuleId);
+        }
+
+        function selectModuleAndJump(modId, stepNum) {
+            selectModule(modId);
+            setTimeout(() => {
+                const el = document.getElementById(`paso-${stepNum}`);
+                if (el) {
+                    el.scrollIntoView({ behavior: 'smooth' });
+                }
+            }, 100);
+        }
+
+        function highlightMatch(text, query) {
+            if (!text || !query) return text;
+            const normText = normalizeText(text);
+            const normQuery = normalizeText(query);
+            const idx = normText.indexOf(normQuery);
+            if (idx === -1) return formatText(text);
+            
+            const originalMatch = text.substr(idx, query.length);
+            const before = text.substr(0, idx);
+            const after = text.substr(idx + query.length);
+            return `${formatText(before)}<mark class="search-match">${originalMatch}</mark>${formatText(after)}`;
+        }
+
+        function formatText(txt) {
+            if (!txt) return '';
+            return txt
+                .replace(/\*\*([^\*]+)\*\*/g, '<strong class="font-bold text-[color:var(--text-main)]">$1</strong>')
+                .replace(/`([^`]+)`/g, '<code class="px-1.5 py-0.5 rounded bg-black/20 text-emerald-400 font-mono text-xs border border-white/10">$1</code>');
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/'/g, "\\'");
+        }
+
+        // Lightbox modal
+        function openLightbox(stepNum, file, title, alt) {
+            document.getElementById('lightboxBadge').textContent = `Paso ${stepNum} de 58 — ${title}`;
+            document.getElementById('lightboxImg').src = `/static/help_assets/screenshots/${file}`;
+            document.getElementById('lightboxImg').alt = alt;
+            document.getElementById('lightboxCaption').textContent = alt;
+
+            const modal = document.getElementById('lightboxModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeLightbox() {
+            const modal = document.getElementById('lightboxModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeLightbox();
+        });
+
+        // Alternar tema claro / oscuro
+        function toggleTheme() {
+            const isLight = document.documentElement.classList.toggle('light-mode');
+            localStorage.setItem('theme', isLight ? 'light' : 'dark');
+            const icon = document.querySelector('#themeToggleBtn span');
+            if (icon) icon.textContent = isLight ? 'light_mode' : 'dark_mode';
+        }
+
+        const themeIcon = document.querySelector('#themeToggleBtn span');
+        if (themeIcon) {
+            themeIcon.textContent = document.documentElement.classList.contains('light-mode') ? 'light_mode' : 'dark_mode';
+        }
+
+        // Transición suave entre páginas
+        document.querySelectorAll('.transition-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                if (this.href && !this.href.includes('#') && this.getAttribute('target') !== '_blank') {
+                    e.preventDefault();
+                    const target = this.href;
+                    const wrapper = document.querySelector('.main-wrapper');
+                    if (wrapper) {
+                        wrapper.classList.add('smoke-out');
+                        setTimeout(() => { window.location.href = target; }, 350);
+                    } else {
+                        window.location.href = target;
+                    }
+                }
+            });
+        });
+
+        // Inicializar
+        window.addEventListener('DOMContentLoaded', () => {
+            const hash = window.location.hash;
+            if (hash && hash.startsWith('#sec-')) {
+                const secId = parseInt(hash.replace('#sec-', ''), 10);
+                if (!isNaN(secId) && secId >= 1 && secId <= 6) {
+                    selectModule(secId);
+                    return;
+                }
+            } else if (hash && hash.startsWith('#paso-')) {
+                const stepNum = parseInt(hash.replace('#paso-', ''), 10);
+                const step = ALL_STEPS.find(s => s.step === stepNum);
+                if (step) {
+                    selectModuleAndJump(step.section_id, step.step);
+                    return;
+                }
+            }
+            selectModule(1);
+        });
+    </script>
+</body>
+</html>

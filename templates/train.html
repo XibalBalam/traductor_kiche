@@ -307,15 +307,26 @@
     <link rel="shortcut icon" href="/static/favicon/favicon.ico" />
     <link rel="apple-touch-icon" sizes="180x180" href="/static/favicon/apple-touch-icon.png" />
     <link rel="manifest" href="/static/favicon/site.webmanifest" />
+    <script>
+        // Aplicar el tema inmediatamente antes de renderizar el body (evita FOUC)
+        if (localStorage.getItem('theme') === 'light' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: light)').matches)) {
+            document.documentElement.classList.add('light-mode');
+        }
+    </script>
 </head>
 
 <body class="p-4 sm:p-8 flex flex-col items-center">
     <div class="bg-image"></div>
     <div class="overlay"></div>
     <div class="main-wrapper w-full max-w-3xl">
-        <a href="/" class="transition-link inline-flex items-center gap-1.5 text-[color:var(--text-muted)] hover:text-[color:var(--text-main)] transition-colors text-sm mb-6 font-medium">
-            <span class="material-symbols-outlined text-[1.1rem]">arrow_back</span> Volver al Traductor
-        </a>
+        <div class="flex justify-between items-center mb-6">
+            <a href="/" class="transition-link inline-flex items-center gap-1.5 text-[color:var(--text-muted)] hover:text-[color:var(--text-main)] transition-colors text-sm font-medium">
+                <span class="material-symbols-outlined text-[1.1rem]">arrow_back</span> Volver al Traductor
+            </a>
+            <a href="/ayuda#sec-4" class="transition-link inline-flex items-center gap-1 text-[color:var(--text-muted)] hover:text-[color:var(--text-main)] transition-colors text-sm font-medium" title="Ayuda sobre Modo Entrenamiento">
+                <span class="material-symbols-outlined text-[1.1rem]">help_outline</span> Ayuda
+            </a>
+        </div>
 
         <div class="text-center mb-8">
             <h1 class="text-2xl sm:text-3xl font-bold tracking-tight flex items-center justify-center gap-2">
@@ -659,9 +670,7 @@
                 const target = this.href;
                 const wrapper = document.querySelector('.main-wrapper');
                 wrapper.classList.add('smoke-out');
-                setTimeout(() => {
-                    window.location.href = target;
-                }, 400); // Wait for smoke animation
+                window.location.href = target; // Wait for smoke animation
             });
         });
 
@@ -793,7 +802,7 @@
             mediaRecorder.ondataavailable = e => {
                 if (e.data.size > 0) audioChunks.push(e.data);
             };
-            mediaRecorder.start();
+            mediaRecorder.start(250);
             isRecording = true;
             micBtn.classList.add('recording');
             micStatus.textContent = '🔴 Grabando... (suelta para procesar)';
@@ -826,10 +835,15 @@
             // Keep screen awake while processing
             await requestWakeLock();
 
-            currentAudioBlob = new Blob(audioChunks);
+            const mimeType = mediaRecorder ? (mediaRecorder.mimeType || 'audio/webm') : 'audio/webm';
+            currentAudioBlob = new Blob(audioChunks, { type: mimeType });
+
+            let ext = 'webm';
+            if (mimeType.includes('mp4')) ext = 'm4a';
+            else if (mimeType.includes('ogg')) ext = 'ogg';
 
             const fd = new FormData();
-            fd.append('audio', currentAudioBlob, 'sample_capture');
+            fd.append('audio', currentAudioBlob, `sample_capture.${ext}`);
 
             try {
                 const res = await fetch('/translate', { 
@@ -1391,7 +1405,7 @@
                 expertMediaRecorder.ondataavailable = e => {
                     if (e.data.size > 0) expertAudioChunks.push(e.data);
                 };
-                expertMediaRecorder.start();
+                expertMediaRecorder.start(250);
                 isExpertRecording = true;
                 expertMicBtn.classList.add('recording');
                 if (expertMicIcon) expertMicIcon.textContent = 'stop';
@@ -1415,7 +1429,8 @@
             if (expertMediaRecorder && expertMediaRecorder.state !== 'inactive') {
                 expertMediaRecorder.onstop = async () => {
                     if (expertMediaStream) expertMediaStream.getTracks().forEach(t => t.stop());
-                    const rawBlob = new Blob(expertAudioChunks, { type: 'audio/webm' });
+                    const mimeType = expertMediaRecorder.mimeType || 'audio/webm';
+                    const rawBlob = new Blob(expertAudioChunks, { type: mimeType });
                     expertMicStatus.textContent = '✅ Grabación lista. Puedes recortarla abajo antes de guardar.';
                     await loadAudioIntoWaveSurfer(rawBlob);
                 };
@@ -1836,8 +1851,8 @@
     </script>
 
     <!-- Theme Toggle -->
-    <button id="themeToggleBtn" onclick="toggleTheme()" class="fixed top-4 right-4 bg-white/20 hover:bg-white/30 backdrop-blur-md p-3 rounded-full shadow-lg border border-white/20 transition-all z-50 flex items-center justify-center group" title="Cambiar Tema">
-        <span class="material-symbols-outlined text-[var(--text-main)] group-hover:scale-110 transition-transform">light_mode</span>
+    <button id="themeToggleBtn" onclick="toggleTheme()" class="fixed top-4 right-4 bg-white/20 hover:bg-white/30 backdrop-blur-md p-2 rounded-full shadow-lg border border-white/20 transition-all z-50 flex items-center justify-center group" title="Cambiar Tema">
+        <span class="material-symbols-outlined text-[1.2rem] text-[var(--text-main)] group-hover:scale-110 transition-transform">light_mode</span>
     </button>
     <script>
         function applyTheme(isLight) {

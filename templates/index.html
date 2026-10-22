@@ -61,6 +61,7 @@
         :root.light-mode .transition-link[href="/train"] { color: #7E22CE !important; border-color: #A855F7 !important; }
         :root.light-mode .transition-link[href="/escritura"] { color: #15803D !important; border-color: #22C55E !important; }
         :root.light-mode .transition-link[href="/admin"] { color: #1D4ED8 !important; border-color: #3B82F6 !important; }
+        :root.light-mode .transition-link[href="/ayuda"] { color: #0D9488 !important; border-color: #14B8A6 !important; }
         :root.light-mode .transition-link[href="/logout"] { color: #B91C1C !important; border-color: #EF4444 !important; }
 
         :root.light-mode #themeToggleBtn {
@@ -291,6 +292,43 @@
             100% { box-shadow: 0 0 0 0 rgba(186, 21, 17, 0); }
         }
 
+        /* BOTÓN DE INDICACIONES EN K'ICHE' */
+        .guide-btn {
+            background: rgba(5, 150, 105, 0.22);
+            border: 1.5px solid var(--primary-jade);
+            color: var(--primary-jade);
+            box-shadow: 0 4px 12px rgba(5, 150, 105, 0.25);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+        :root.light-mode .guide-btn {
+            background: rgba(16, 185, 129, 0.18);
+            border: 1.5px solid #059669;
+            color: #059669;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        .guide-btn.playing {
+            background: var(--primary-jade) !important;
+            color: #FFFFFF !important;
+            animation: pulseGuide 1.4s infinite;
+            box-shadow: 0 0 16px rgba(16, 185, 129, 0.7);
+        }
+        @keyframes pulseGuide {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { transform: scale(1.08); box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+        .guide-gear-btn {
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: var(--text-muted);
+        }
+        :root.light-mode .guide-gear-btn {
+            background: rgba(255, 255, 255, 0.85);
+            border: 1px solid rgba(0, 0, 0, 0.15);
+            color: #475569;
+        }
+
         /* STATUS */
         .status-text {
             text-align: center;
@@ -447,6 +485,12 @@
     <link rel="shortcut icon" href="/static/favicon/favicon.ico" />
     <link rel="apple-touch-icon" sizes="180x180" href="/static/favicon/apple-touch-icon.png" />
     <link rel="manifest" href="/static/favicon/site.webmanifest" />
+    <script>
+        // Aplicar el tema inmediatamente antes de renderizar el body (evita FOUC)
+        if (localStorage.getItem('theme') === 'light' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: light)').matches)) {
+            document.documentElement.classList.add('light-mode');
+        }
+    </script>
 </head>
 
 <body>
@@ -475,6 +519,7 @@
                 {% if session.get('role') == 'admin' %}
                 <a href="/admin" title="Administrar Usuarios y Aprobaciones" class="transition-link w-9 h-9 flex items-center justify-center rounded-full bg-blue-500/15 border border-blue-500/35 text-blue-400 hover:bg-blue-500/30 transition-colors"><span class="material-symbols-outlined" style="font-size: 1.1rem;">manage_accounts</span></a>
                 {% endif %}
+                <a href="/ayuda" title="Centro de Ayuda y Manual de Usuario" class="transition-link w-9 h-9 flex items-center justify-center rounded-full bg-teal-500/15 border border-teal-500/35 text-teal-400 hover:bg-teal-500/30 transition-colors"><span class="material-symbols-outlined" style="font-size: 1.1rem;">help_outline</span></a>
                 <a href="/logout" title="Salir" class="transition-link w-9 h-9 flex items-center justify-center rounded-full bg-red-500/15 border border-red-500/35 text-red-400 hover:bg-red-500/30 transition-colors"><span class="material-symbols-outlined" style="font-size: 1.1rem;">logout</span></a>
             </div>
         </div>
@@ -483,7 +528,27 @@
 
         <!-- MAIN CARD -->
         <div class="container relative flex flex-col items-center pt-8 pb-8 px-6 sm:px-10" style="padding: 2.5rem 2rem; max-width: 800px; width: 100%;">
-            <button id="micBtn" class="btn-mic relative z-10 cursor-pointer" title="Mantén presionado para dictar síntoma (o usa la tecla Ctrl)" style="margin-bottom: 1rem;"><span class="material-symbols-outlined" style="font-size: 44px;">mic</span></button>
+            <!-- MICROWAPPER: Centra el micrófono y ubica el botón de indicaciones a la par -->
+            <div class="relative flex items-center justify-center w-full" style="margin-bottom: 1rem;">
+                <button id="micBtn" class="btn-mic relative z-10 cursor-pointer" title="Mantén presionado para dictar síntoma (o usa la tecla Ctrl)" style="margin-bottom: 0;"><span class="material-symbols-outlined" style="font-size: 44px;">mic</span></button>
+                
+                <!-- Botón chiquito a la par: Indicaciones al Paciente en K'iche' -->
+                <div id="kicheGuideGroup" class="absolute left-[calc(50%+54px)] sm:left-[calc(50%+58px)] flex items-center gap-1.5 z-20 transition-all duration-300">
+                    <button id="guidePlayBtn" type="button" onclick="toggleGuideAudio()"
+                        class="guide-btn w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center transition-all duration-300 shadow-md cursor-pointer hover:scale-110 active:scale-95"
+                        title="Reproducir indicaciones en K'iche' para el paciente"
+                        aria-label="Reproducir indicaciones en K'iche'">
+                        <span id="guidePlayIcon" class="material-symbols-outlined transition-transform duration-300" style="font-size: 22px;">record_voice_over</span>
+                    </button>
+                    
+                    <button id="guideSettingsBtn" type="button" onclick="openGuideModal()"
+                        class="guide-gear-btn w-6 h-6 rounded-full flex items-center justify-center text-xs opacity-60 hover:opacity-100 transition-all cursor-pointer"
+                        title="Grabar o cambiar audio de indicaciones"
+                        aria-label="Grabar o cambiar audio de indicaciones">
+                        <span class="material-symbols-outlined" style="font-size: 14px;">mic</span>
+                    </button>
+                </div>
+            </div>
             <div class="status-text text-sm mb-2 font-medium transition-colors flex items-center justify-center gap-2" id="statusContainer" style="height: 1.5em; color: var(--text-muted);">
                 <span id="statusIndicator" class="w-2 h-2 rounded-full transition-colors duration-300" style="background-color: transparent;"></span>
                 <span id="status">Mantén presionado para hablar en K'iche'</span>
@@ -547,11 +612,91 @@
         <div class="container relative w-full max-w-md transform scale-95 transition-all duration-300" id="summaryModalContent" style="padding: 2.5rem; background: var(--card-bg);">
             <button onclick="toggleSummaryModal()" class="absolute top-5 right-5" style="color: var(--text-muted);"><span class="material-symbols-outlined hover:text-white transition-colors">close</span></button>
             <h2 class="text-xl font-bold mb-2 flex items-center gap-2" style="color: var(--text-main);"><span class="material-symbols-outlined text-[1.5rem]" style="color: var(--primary-jade);">clinical_notes</span> Resumen Clínico</h2>
-            <p class="text-xs mb-5 opacity-75" style="color: var(--text-muted);">Consolida el historial del paciente actual.</p>
-            <textarea id="summaryTextarea" class="w-full border rounded-xl p-4 text-sm focus:outline-none min-h-[160px] resize-none mb-5 transition-colors" placeholder="El resumen generado con IA aparecerá aquí..." readonly style="background: var(--input-bg); border-color: var(--input-border); color: var(--text-main);"></textarea>
+            <p class="text-xs mb-5 opacity-75" style="color: var(--text-muted);">Resumen ordenado de las traducciones de la consulta (K'iche' y Español).</p>
+            <textarea id="summaryTextarea" class="w-full border rounded-xl p-4 text-sm focus:outline-none min-h-[220px] resize-none mb-5 transition-colors" placeholder="El resumen ordenado aparecerá aquí..." readonly style="background: var(--input-bg); border-color: var(--input-border); color: var(--text-main);"></textarea>
             <div class="flex gap-3">
                 <button onclick="generateSummary()" id="btnGenerateSummary" class="flex-1 py-2.5 rounded-full font-bold text-sm transition-transform hover:scale-105 cursor-pointer" style="background: var(--primary-jade); color: #0F172A; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);">Generar Ahora</button>
                 <button onclick="copySummary()" class="py-2.5 px-4 rounded-full transition-colors flex items-center justify-center hover:bg-black/10 cursor-pointer" title="Copiar resumen al portapapeles" style="background: var(--input-bg); border: 1px solid var(--card-border); color: var(--text-main);"><span class="material-symbols-outlined text-[1.2rem]">content_paste</span></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- GUIDE AUDIO MODAL (Indicaciones en K'iche') -->
+    <div id="guideModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 transition-all duration-300 opacity-0 pointer-events-none" style="background: rgba(0,0,0,0.5); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);">
+        <div class="container relative w-full max-w-lg transform scale-95 transition-all duration-300" id="guideModalContent" style="padding: 2rem; background: var(--card-bg); max-height: 90vh; overflow-y: auto;">
+            <button onclick="closeGuideModal()" class="absolute top-5 right-5 cursor-pointer" style="color: var(--text-muted);"><span class="material-symbols-outlined hover:text-white transition-colors">close</span></button>
+            
+            <h2 class="text-lg font-bold mb-1 flex items-center gap-2" style="color: var(--text-main);">
+                <span class="material-symbols-outlined text-[1.4rem]" style="color: var(--primary-jade);">record_voice_over</span> 
+                Indicaciones en K'iche' para el Paciente
+            </h2>
+            <p class="text-xs mb-4" style="color: var(--text-muted);">
+                Este audio se reproduce con el botón pequeño a la par del micrófono para instruir al paciente antes de que hable.
+            </p>
+
+            <!-- Guía de Frase Sugerida -->
+            <div class="rounded-xl p-3 mb-4 text-xs leading-relaxed border" style="background: var(--input-bg); border-color: var(--card-border);">
+                <div class="font-bold flex items-center gap-1 mb-1" style="color: var(--primary-jade);">
+                    <span class="material-symbols-outlined text-[1rem]">tips_and_updates</span>
+                    Texto sugerido para decir en la grabación:
+                </div>
+                <div class="font-medium italic text-slate-200 mb-1">
+                    "Chawoyob'ej chi kyaqirik le botón rech kat-tzijonik. Chat-tzijon nojim ruk' tzij saq."
+                </div>
+                <div class="text-[0.7rem] opacity-75" style="color: var(--text-muted);">
+                    (Espere a que el micrófono se ponga en rojo antes de hablar. Hable despacio y con palabras claras).
+                </div>
+            </div>
+
+            <!-- Estado actual del audio -->
+            <div id="guideCurrentAudioCard" class="rounded-xl p-3 mb-4 border flex items-center justify-between gap-3 text-xs" style="background: var(--input-bg); border-color: var(--card-border);">
+                <div class="flex items-center gap-2">
+                    <span id="guideStatusDot" class="w-2.5 h-2.5 rounded-full bg-slate-500"></span>
+                    <span id="guideStatusLabel" class="font-medium" style="color: var(--text-main);">Comprobando audio grabado...</span>
+                </div>
+                <div id="guideActionBtns" class="flex items-center gap-2">
+                    <button id="guideTestPlayBtn" onclick="testPlayModalAudio()" type="button" class="px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 border border-emerald-500/40">
+                        <span id="guideTestPlayIcon" class="material-symbols-outlined text-[1rem]">play_arrow</span> Escuchar
+                    </button>
+                    <button id="guideDeleteBtn" onclick="deleteGuideAudio()" type="button" class="p-1 rounded-lg text-xs transition-colors cursor-pointer text-red-400 hover:bg-red-500/20" title="Eliminar audio">
+                        <span class="material-symbols-outlined text-[1rem]">delete</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Grabadora integrada -->
+            <div class="rounded-xl p-4 mb-4 border flex flex-col items-center justify-center text-center" style="background: rgba(0,0,0,0.15); border-color: var(--card-border);">
+                <h3 class="text-xs font-bold mb-2 uppercase tracking-wider" style="color: var(--text-muted);">Grabar con el micrófono</h3>
+                
+                <div class="flex items-center justify-center gap-4 my-2">
+                    <button id="guideRecordBtn" type="button" onclick="toggleGuideRecording()" class="w-14 h-14 rounded-full flex items-center justify-center transition-all shadow-lg cursor-pointer bg-red-600 hover:bg-red-500 text-white active:scale-95">
+                        <span id="guideRecordIcon" class="material-symbols-outlined" style="font-size: 28px;">mic</span>
+                    </button>
+                </div>
+
+                <div id="guideRecordTimer" class="text-xs font-mono font-semibold" style="color: var(--text-muted);">
+                    Presiona el botón rojo para comenzar a grabar
+                </div>
+
+                <audio id="guidePreviewAudio" controls class="mt-3 w-full h-8 hidden"></audio>
+
+                <div id="guideSaveContainer" class="mt-3 flex gap-2 w-full hidden">
+                    <button onclick="saveGuideRecordedAudio()" type="button" class="flex-1 py-2 rounded-full font-bold text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-md" style="background: var(--primary-jade); color: #0F172A;">
+                        <span class="material-symbols-outlined text-[1rem]">save</span> Guardar Esta Grabación
+                    </button>
+                    <button onclick="discardGuideRecording()" type="button" class="px-3 py-2 rounded-full text-xs font-medium cursor-pointer border" style="border-color: var(--card-border); color: var(--text-muted);">
+                        Descartar
+                    </button>
+                </div>
+            </div>
+
+            <!-- O subir archivo de audio -->
+            <div class="pt-2 border-t flex flex-col sm:flex-row items-center justify-between gap-3" style="border-color: var(--card-border);">
+                <span class="text-xs" style="color: var(--text-muted);">¿Ya tienes un archivo de audio?</span>
+                <label class="cursor-pointer px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-colors border bg-slate-700/40 hover:bg-slate-700/70 text-slate-200" style="border-color: var(--card-border);">
+                    <span class="material-symbols-outlined text-[1rem]">upload_file</span> Subir archivo (MP3, WAV, WEBM)
+                    <input type="file" id="guideFileInput" accept="audio/*" onchange="uploadGuideAudioFile(event)" class="hidden">
+                </label>
             </div>
         </div>
     </div>
@@ -588,6 +733,444 @@
         const btnKicheToEs = document.getElementById('btnKicheToEs');
         const btnEsToKiche = document.getElementById('btnEsToKiche');
 
+        // ── AUDIO DE INDICACIONES AL PACIENTE (EN K'ICHE') ──────────────────
+        let guideAudio = null;
+        let isGuidePlaying = false;
+        let currentGuideAudioUrl = null;
+        let guideMediaRecorder = null;
+        let guideAudioStream = null;
+        let guideRecordedChunks = [];
+        let guideRecordedBlob = null;
+        let isGuideRecordingModal = false;
+        let guideTimerInterval = null;
+        let guideSecondsElapsed = 0;
+        let modalTestAudio = null;
+        let isModalTesting = false;
+        let guideMicTimer = null;
+        let isGuideMicSimulating = false;
+
+        function stopGuideMicSimulation() {
+            if (guideMicTimer) {
+                clearTimeout(guideMicTimer);
+                guideMicTimer = null;
+            }
+            if (isGuideMicSimulating) {
+                isGuideMicSimulating = false;
+                if (!isRecording) {
+                    micBtn.classList.remove('recording');
+                    updateStatusIndicator('idle');
+                    if (currentMode === 'kiche-es') {
+                        statusEl.textContent = "Mantén presionado para hablar en K'iche'";
+                    } else {
+                        statusEl.textContent = "Mantén presionado para hablar en Español";
+                    }
+                }
+            } else if (!isRecording && currentMode === 'kiche-es') {
+                if (statusEl.textContent === "Reproduciendo indicaciones al paciente...") {
+                    statusEl.textContent = "Mantén presionado para hablar en K'iche'";
+                }
+            }
+        }
+
+        async function checkGuideAudio() {
+            try {
+                const res = await fetch('/api/indicaciones-audio');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.exists && data.url) {
+                        currentGuideAudioUrl = data.url;
+                        updateGuideModalStatus(true, `Audio listo (${data.filename})`);
+                    } else {
+                        currentGuideAudioUrl = null;
+                        updateGuideModalStatus(false, "Sin audio grabado aún");
+                    }
+                }
+            } catch (e) {
+                console.warn("[GuideAudio] Error comprobando audio:", e);
+            }
+        }
+
+        async function toggleGuideAudio() {
+            if (isRecording) return;
+            const playBtn = document.getElementById('guidePlayBtn');
+            const playIcon = document.getElementById('guidePlayIcon');
+            
+            // Si ya está reproduciendo, detener
+            if (isGuidePlaying && guideAudio) {
+                guideAudio.pause();
+                guideAudio.currentTime = 0;
+                isGuidePlaying = false;
+                if (playBtn) playBtn.classList.remove('playing');
+                if (playIcon) playIcon.textContent = 'record_voice_over';
+                stopGuideMicSimulation();
+                return;
+            }
+
+            if (!currentGuideAudioUrl) {
+                await checkGuideAudio();
+            }
+
+            // Si aún no hay audio grabado, abrir el modal para que pueda grabarlo
+            if (!currentGuideAudioUrl) {
+                openGuideModal();
+                return;
+            }
+
+            try {
+                if (!guideAudio) {
+                    guideAudio = new Audio();
+                    guideAudio.onended = () => {
+                        isGuidePlaying = false;
+                        if (playBtn) playBtn.classList.remove('playing');
+                        if (playIcon) playIcon.textContent = 'record_voice_over';
+                        stopGuideMicSimulation();
+                    };
+                    guideAudio.onerror = () => {
+                        isGuidePlaying = false;
+                        if (playBtn) playBtn.classList.remove('playing');
+                        if (playIcon) playIcon.textContent = 'record_voice_over';
+                        stopGuideMicSimulation();
+                        openGuideModal();
+                    };
+                }
+
+                guideAudio.src = currentGuideAudioUrl;
+                guideAudio.currentTime = 0;
+                stopGuideMicSimulation();
+                await guideAudio.play();
+                isGuidePlaying = true;
+                if (playBtn) playBtn.classList.add('playing');
+                if (playIcon) playIcon.textContent = 'stop';
+
+                // Estado de reproducción mientras inicia
+                if (currentMode === 'kiche-es' && !isRecording) {
+                    statusEl.textContent = "Reproduciendo indicaciones al paciente...";
+                }
+
+                // A los 2 segundos de presionar las instrucciones, activar el micrófono en color rojo como escuchando
+                guideMicTimer = setTimeout(() => {
+                    if (isGuidePlaying && !isRecording && currentMode === 'kiche-es') {
+                        isGuideMicSimulating = true;
+                        micBtn.classList.add('recording');
+                        updateStatusIndicator('recording');
+                        statusEl.textContent = "Escuchando al paciente en K'iche'...";
+                    }
+                }, 2000);
+            } catch (err) {
+                console.warn("Fallo al reproducir audio de guía:", err);
+                isGuidePlaying = false;
+                if (playBtn) playBtn.classList.remove('playing');
+                if (playIcon) playIcon.textContent = 'record_voice_over';
+                stopGuideMicSimulation();
+            }
+        }
+
+        function openGuideModal() {
+            if (isGuidePlaying && guideAudio) {
+                guideAudio.pause();
+                guideAudio.currentTime = 0;
+                isGuidePlaying = false;
+                const playBtn = document.getElementById('guidePlayBtn');
+                const playIcon = document.getElementById('guidePlayIcon');
+                if (playBtn) playBtn.classList.remove('playing');
+                if (playIcon) playIcon.textContent = 'record_voice_over';
+            }
+            stopGuideMicSimulation();
+            const modal = document.getElementById('guideModal');
+            const content = document.getElementById('guideModalContent');
+            if (!modal || !content) return;
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            content.classList.remove('scale-95');
+            content.classList.add('scale-100');
+            checkGuideAudio();
+        }
+
+        function closeGuideModal() {
+            const modal = document.getElementById('guideModal');
+            const content = document.getElementById('guideModalContent');
+            if (!modal || !content) return;
+            modal.classList.add('opacity-0', 'pointer-events-none');
+            content.classList.remove('scale-100');
+            content.classList.add('scale-95');
+            
+            if (isGuideRecordingModal && guideMediaRecorder && guideMediaRecorder.state !== 'inactive') {
+                guideMediaRecorder.stop();
+            }
+            if (isModalTesting && modalTestAudio) {
+                modalTestAudio.pause();
+                isModalTesting = false;
+                const icon = document.getElementById('guideTestPlayIcon');
+                if (icon) icon.textContent = 'play_arrow';
+            }
+        }
+
+        async function toggleGuideRecording() {
+            const recBtn = document.getElementById('guideRecordBtn');
+            const recIcon = document.getElementById('guideRecordIcon');
+            const timerEl = document.getElementById('guideRecordTimer');
+            const preview = document.getElementById('guidePreviewAudio');
+            const saveContainer = document.getElementById('guideSaveContainer');
+
+            if (!isGuideRecordingModal) {
+                try {
+                    guideAudioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    guideRecordedChunks = [];
+                    guideMediaRecorder = new MediaRecorder(guideAudioStream);
+                    
+                    guideMediaRecorder.ondataavailable = (e) => {
+                        if (e.data.size > 0) guideRecordedChunks.push(e.data);
+                    };
+
+                    guideMediaRecorder.onstop = () => {
+                        if (guideAudioStream) {
+                            guideAudioStream.getTracks().forEach(t => t.stop());
+                        }
+                        clearInterval(guideTimerInterval);
+                        guideRecordedBlob = new Blob(guideRecordedChunks, { type: 'audio/webm' });
+                        const blobUrl = URL.createObjectURL(guideRecordedBlob);
+                        preview.src = blobUrl;
+                        preview.classList.remove('hidden');
+                        saveContainer.classList.remove('hidden');
+                        timerEl.textContent = `Grabación lista (${guideSecondsElapsed}s). Puedes escucharla antes de guardar.`;
+                        recBtn.classList.remove('animate-pulse', 'bg-red-800');
+                        recBtn.classList.add('bg-red-600');
+                        recIcon.textContent = 'mic';
+                    };
+
+                    guideMediaRecorder.start();
+                    isGuideRecordingModal = true;
+                    guideSecondsElapsed = 0;
+                    timerEl.textContent = "Grabando indicaciones... 00:00";
+                    recBtn.classList.add('animate-pulse', 'bg-red-800');
+                    recIcon.textContent = 'stop';
+                    preview.classList.add('hidden');
+                    saveContainer.classList.add('hidden');
+
+                    guideTimerInterval = setInterval(() => {
+                        guideSecondsElapsed++;
+                        const mins = String(Math.floor(guideSecondsElapsed / 60)).padStart(2, '0');
+                        const secs = String(guideSecondsElapsed % 60).padStart(2, '0');
+                        timerEl.textContent = `Grabando indicaciones... ${mins}:${secs}`;
+                    }, 1000);
+
+                } catch (err) {
+                    console.error("Error al acceder al micrófono:", err);
+                    alert("No se pudo acceder al micrófono para grabar: " + err.message);
+                }
+            } else {
+                if (guideMediaRecorder && guideMediaRecorder.state !== 'inactive') {
+                    guideMediaRecorder.stop();
+                }
+                isGuideRecordingModal = false;
+            }
+        }
+
+        async function saveGuideRecordedAudio() {
+            if (!guideRecordedBlob) return;
+            const saveBtn = document.querySelector('#guideSaveContainer button');
+            const oldText = saveBtn.innerHTML;
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<span class="material-symbols-outlined text-[1rem] animate-spin">refresh</span> Guardando...';
+
+            try {
+                const formData = new FormData();
+                formData.append('audio', guideRecordedBlob, 'indicaciones_kiche.webm');
+
+                const res = await fetch('/api/indicaciones-audio', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!res.ok) throw new Error("Error en el servidor");
+                const data = await res.json();
+                
+                currentGuideAudioUrl = data.url;
+                updateGuideModalStatus(true, "Audio grabado listo");
+                discardGuideRecording();
+                
+                const timerEl = document.getElementById('guideRecordTimer');
+                timerEl.textContent = "✅ ¡Audio de indicaciones guardado exitosamente!";
+                setTimeout(() => {
+                    closeGuideModal();
+                }, 1200);
+
+            } catch (err) {
+                console.error("Error al guardar audio de indicaciones:", err);
+                alert("Error al guardar el audio: " + err.message);
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = oldText;
+            }
+        }
+
+        function discardGuideRecording() {
+            guideRecordedBlob = null;
+            const preview = document.getElementById('guidePreviewAudio');
+            preview.pause();
+            preview.removeAttribute('src');
+            preview.classList.add('hidden');
+            document.getElementById('guideSaveContainer').classList.add('hidden');
+            document.getElementById('guideRecordTimer').textContent = "Presiona el botón rojo para comenzar a grabar";
+        }
+
+        async function uploadGuideAudioFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            try {
+                const formData = new FormData();
+                formData.append('audio', file, file.name);
+
+                const res = await fetch('/api/indicaciones-audio', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!res.ok) throw new Error("Error al subir el archivo");
+                const data = await res.json();
+
+                currentGuideAudioUrl = data.url;
+                updateGuideModalStatus(true, `Archivo listo (${file.name})`);
+                const timerEl = document.getElementById('guideRecordTimer');
+                timerEl.textContent = `✅ ¡Archivo ${file.name} guardado correctamente!`;
+
+            } catch (err) {
+                console.error("Error al subir archivo de audio:", err);
+                alert("Error al subir archivo: " + err.message);
+            } finally {
+                event.target.value = '';
+            }
+        }
+
+        function testPlayModalAudio() {
+            if (!currentGuideAudioUrl) {
+                alert("Aún no hay ningún audio guardado.");
+                return;
+            }
+            const icon = document.getElementById('guideTestPlayIcon');
+            if (isModalTesting && modalTestAudio) {
+                modalTestAudio.pause();
+                modalTestAudio.currentTime = 0;
+                isModalTesting = false;
+                if (icon) icon.textContent = 'play_arrow';
+                return;
+            }
+            
+            modalTestAudio = new Audio(currentGuideAudioUrl);
+            modalTestAudio.onended = () => {
+                isModalTesting = false;
+                if (icon) icon.textContent = 'play_arrow';
+            };
+            modalTestAudio.play();
+            isModalTesting = true;
+            if (icon) icon.textContent = 'stop';
+        }
+
+        async function deleteGuideAudio() {
+            if (!confirm("¿Deseas eliminar el audio de indicaciones actual?")) return;
+            try {
+                const res = await fetch('/api/indicaciones-audio', { method: 'DELETE' });
+                if (res.ok) {
+                    currentGuideAudioUrl = null;
+                    if (guideAudio) {
+                        guideAudio.pause();
+                        guideAudio = null;
+                    }
+                    stopGuideMicSimulation();
+                    updateGuideModalStatus(false, "Sin audio grabado aún");
+                }
+            } catch (err) {
+                console.error("Error al eliminar audio:", err);
+            }
+        }
+
+        function updateGuideModalStatus(exists, labelText) {
+            const dot = document.getElementById('guideStatusDot');
+            const label = document.getElementById('guideStatusLabel');
+            const testBtn = document.getElementById('guideTestPlayBtn');
+            const delBtn = document.getElementById('guideDeleteBtn');
+
+            if (exists) {
+                if (dot) {
+                    dot.classList.remove('bg-slate-500', 'bg-red-500');
+                    dot.classList.add('bg-emerald-500');
+                }
+                if (label) label.textContent = labelText || "Audio de indicaciones activo y listo";
+                if (testBtn) testBtn.classList.remove('opacity-50', 'pointer-events-none');
+                if (delBtn) delBtn.classList.remove('hidden');
+            } else {
+                if (dot) {
+                    dot.classList.remove('bg-emerald-500');
+                    dot.classList.add('bg-slate-500');
+                }
+                if (label) label.textContent = labelText || "Sin audio grabado aún";
+                if (testBtn) testBtn.classList.add('opacity-50', 'pointer-events-none');
+                if (delBtn) delBtn.classList.add('hidden');
+            }
+        }
+
+        // ── PRECALENTAMIENTO SILENCIOSO DE MMS AL INICIAR LA PÁGINA ──────────
+        function createWarmupWavBlob() {
+            const sampleRate = 16000;
+            const numSamples = 16000; // 1 segundo de audio
+            const buffer = new ArrayBuffer(44 + numSamples * 2);
+            const view = new DataView(buffer);
+
+            function writeString(offset, str) {
+                for (let i = 0; i < str.length; i++) {
+                    view.setUint8(offset + i, str.charCodeAt(i));
+                }
+            }
+
+            writeString(0, 'RIFF');
+            view.setUint32(4, 36 + numSamples * 2, true);
+            writeString(8, 'WAVE');
+            writeString(12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, 1, true); // PCM format
+            view.setUint16(22, 1, true); // Mono
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * 2, true); // Byte rate
+            view.setUint16(32, 2, true); // Block align
+            view.setUint16(34, 16, true); // 16 bits
+            writeString(36, 'data');
+            view.setUint32(40, numSamples * 2, true);
+
+            // Señal sutil de prueba (100Hz) para evitar truncamiento por silencio puro
+            for (let i = 0; i < numSamples; i++) {
+                const sample = Math.floor(500 * Math.sin(2 * Math.PI * 100 * i / sampleRate));
+                view.setInt16(44 + i * 2, sample, true);
+            }
+
+            return new Blob([buffer], { type: 'audio/wav' });
+        }
+
+        async function warmupMmsInBackground() {
+            try {
+                console.log("[MMS Warmup] Enviando traducción técnica inicial en segundo plano...");
+                const dummyBlob = createWarmupWavBlob();
+                const formData = new FormData();
+                formData.append("audio", dummyBlob, "warmup_init.wav");
+                formData.append("is_warmup", "true");
+
+                const res = await fetch('/translate', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    // NO la mostramos en la interfaz ("no la ponga"), solo se confirma en consola
+                    console.log("[MMS Warmup] Primera traducción técnica completada con éxito. MMS listo:", data);
+                } else {
+                    console.warn("[MMS Warmup] Respuesta del servidor:", res.status);
+                }
+            } catch (err) {
+                // Silencioso para no alertar al usuario ni alterar nada de la interfaz
+                console.warn("[MMS Warmup] Precalentamiento diferido:", err);
+            }
+        }
+
         // Request microphone permission on page load
         document.addEventListener('DOMContentLoaded', async () => {
             try {
@@ -606,6 +1189,12 @@
             if (savedLite === 'true' || (savedLite === null && isLowEnd)) {
                 document.documentElement.classList.add('lite-mode');
             }
+
+            // Iniciar precalentamiento silencioso de MMS en segundo plano
+            warmupMmsInBackground();
+
+            // Comprobar disponibilidad del audio de indicaciones
+            checkGuideAudio();
         });
 
         function toggleLiteMode() {
@@ -672,6 +1261,7 @@
 
         function setMode(mode) {
             currentMode = mode;
+            const guideGroup = document.getElementById('kicheGuideGroup');
             if (mode === 'kiche-es') {
                 modeSlider.classList.remove('right');
                 btnKicheToEs.classList.add('active');
@@ -679,6 +1269,7 @@
                 statusEl.textContent = "Mantén presionado para hablar en K'iche'";
                 audioSection.style.display = 'flex';
                 document.body.classList.remove('mode-es');
+                if (guideGroup) guideGroup.style.display = 'flex';
             } else {
                 modeSlider.classList.add('right');
                 btnEsToKiche.classList.add('active');
@@ -686,6 +1277,19 @@
                 statusEl.textContent = "Mantén presionado para hablar en Español";
                 audioSection.style.display = 'none';
                 document.body.classList.add('mode-es');
+                if (guideGroup) {
+                    guideGroup.style.display = 'none';
+                    if (isGuidePlaying && guideAudio) {
+                        guideAudio.pause();
+                        guideAudio.currentTime = 0;
+                        isGuidePlaying = false;
+                        const playBtn = document.getElementById('guidePlayBtn');
+                        const playIcon = document.getElementById('guidePlayIcon');
+                        if (playBtn) playBtn.classList.remove('playing');
+                        if (playIcon) playIcon.textContent = 'record_voice_over';
+                    }
+                }
+                stopGuideMicSimulation();
             }
             resetUI();
         }
@@ -738,7 +1342,7 @@
                 badge.classList.remove('scale-100');
                 badge.classList.add('scale-0');
             }
-        }
+        };
         
         function updateStatusIndicator(state) {
             const ind = document.getElementById('statusIndicator');
@@ -787,6 +1391,16 @@
         const startAction = async (e) => {
             if (e.cancelable) e.preventDefault();
             unlockAudio(); // Unlock audio context on first user interaction
+            if (isGuidePlaying && guideAudio) {
+                guideAudio.pause();
+                guideAudio.currentTime = 0;
+                isGuidePlaying = false;
+                const playBtn = document.getElementById('guidePlayBtn');
+                const playIcon = document.getElementById('guidePlayIcon');
+                if (playBtn) playBtn.classList.remove('playing');
+                if (playIcon) playIcon.textContent = 'record_voice_over';
+            }
+            stopGuideMicSimulation();
             if (!isRecording) {
                 resetUI();
                 requestWakeLock(); // Prevent screen sleep (fire and forget to preserve user gesture context)
@@ -812,8 +1426,12 @@
         // ── EVENT LISTENERS ──────────────────────────────────
         micBtn.addEventListener('mousedown', startAction);
         micBtn.addEventListener('touchstart', startAction, {passive: false});
+        // Prevenir menú contextual o selección que interrumpe touch
+        micBtn.addEventListener('contextmenu', (e) => { e.preventDefault(); });
+        
         window.addEventListener('mouseup', stopAction);
         window.addEventListener('touchend', stopAction);
+        window.addEventListener('touchcancel', stopAction);
 
         // Atajo de teclado (Ctrl para grabar)
         window.addEventListener('keydown', async (e) => {
@@ -933,7 +1551,11 @@
                 btn.classList.remove('opacity-50', 'pointer-events-none');
                 
                 if (data.translation && !data.translation.startsWith("No se encontró traducción")) {
-                    sessionTranslations.push(data.translation);
+                    sessionTranslations.push({
+                        direction: 'kiche_a_espanol',
+                        kiche: data.transcription || '',
+                        espanol: data.translation || ''
+                    });
                 }
                 
                 if (sessionTranslations.length > 0) {
@@ -1009,7 +1631,11 @@
                     statusEl.textContent = "¡Retradución completada!";
                     
                     if (data.translation && !data.translation.startsWith("No se encontró traducción")) {
-                        sessionTranslations.push(data.translation);
+                        sessionTranslations.push({
+                            direction: 'kiche_a_espanol',
+                            kiche: text || '',
+                            espanol: data.translation || ''
+                        });
                     }
                     
                     if (sessionTranslations.length > 0) {
@@ -1208,8 +1834,14 @@
                     }
                 }
 
-                // Guardar en el historial (español) y analizar
-                sessionTranslations.push(text);
+                // Guardar en el historial bilingüe y analizar
+                if (text && text.trim()) {
+                    sessionTranslations.push({
+                        direction: 'espanol_a_kiche',
+                        espanol: text.trim(),
+                        kiche: (data.translation && !data.translation.startsWith("No se encontró traducción")) ? data.translation : ''
+                    });
+                }
                 
                 if (sessionTranslations.length > 0) {
                     const fab = document.getElementById('summaryFabContainer');
@@ -1284,19 +1916,22 @@
             const textarea = document.getElementById('summaryTextarea');
             
             if (sessionTranslations.length === 0) {
-                textarea.value = "No hay síntomas registrados en esta sesión para resumir.";
+                textarea.value = "No hay traducciones registradas en esta sesión para resumir.";
                 return;
             }
 
             btn.disabled = true;
             btn.textContent = "Generando...";
-            textarea.value = "Conectando con IA...";
+            textarea.value = "Generando resumen ordenado...";
 
             try {
                 const res = await fetch('/generate-summary', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ symptoms: sessionTranslations })
+                    body: JSON.stringify({ 
+                        translations: sessionTranslations,
+                        symptoms: sessionTranslations 
+                    })
                 });
                 
                 const data = await res.json();
@@ -1338,16 +1973,14 @@
                 if (wrapper) {
                     wrapper.classList.add('smoke-out');
                 }
-                setTimeout(() => {
-                    window.location.href = target;
-                }, 400); // Esperar animación de humo antes de navegar
+                window.location.href = target; // Esperar animación de humo antes de navegar
             });
         });
     </script>
 
     <!-- Theme Toggle -->
-    <button id="themeToggleBtn" onclick="toggleTheme()" class="fixed top-4 right-4 bg-white/20 hover:bg-white/30 backdrop-blur-md p-3 rounded-full shadow-lg border border-white/20 transition-all z-50 flex items-center justify-center group" title="Cambiar Tema">
-        <span class="material-symbols-outlined text-[var(--text-main)] group-hover:scale-110 transition-transform">light_mode</span>
+    <button id="themeToggleBtn" onclick="toggleTheme()" class="fixed top-4 right-4 bg-white/20 hover:bg-white/30 backdrop-blur-md p-2 rounded-full shadow-lg border border-white/20 transition-all z-50 flex items-center justify-center group" title="Cambiar Tema">
+        <span class="material-symbols-outlined text-[1.2rem] text-[var(--text-main)] group-hover:scale-110 transition-transform">light_mode</span>
     </button>
     <script>
         function applyTheme(isLight) {

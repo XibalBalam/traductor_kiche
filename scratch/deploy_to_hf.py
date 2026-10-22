@@ -48,7 +48,7 @@ try:
         repo_id=REPO_ID,
         repo_type="space",
         ignore_patterns=ignore_patterns,
-        commit_message="deploy: new trained mms model, fix summary bugs, fix ios audio display"
+        commit_message="v1.3.0: sincronizar microfono rojo en escucha con audio de indicaciones (delay 2s), mejoras admin y navegacion"
     )
     print("Code uploaded successfully!")
 except Exception as e:
