@@ -1462,6 +1462,14 @@ def load_model():
         else:
             print("❌ No se encontró modelo TTS en models/custom_kiche_tts. Asegúrate de colocar best_model.pth y config.json allí.")
             tts_model = None
+
+        # Pre-cargar Whisper para Español en segundo plano
+        try:
+            print("[Whisper] Pre-cargando modelo Whisper para español en segundo plano...")
+            get_whisper_es()
+            print("✅ Modelo Whisper para español listo.")
+        except Exception as we_es:
+            print(f"Aviso pre-cargando Whisper: {we_es}")
     finally:
         with model_lock:
             is_loading = False
@@ -1770,7 +1778,14 @@ def translate_es_audio():
         return jsonify({'error': 'No audio file provided'}), 400
     
     audio_file = request.files['audio']
-    filename = f"es_{uuid.uuid4()}.webm"
+    orig_ext = os.path.splitext(audio_file.filename or '')[1].lower()
+    if orig_ext not in ['.webm', '.wav', '.ogg', '.mp4', '.m4a']:
+        if audio_file.content_type and ('mp4' in audio_file.content_type or 'm4a' in audio_file.content_type):
+            orig_ext = '.mp4'
+        else:
+            orig_ext = '.webm'
+            
+    filename = f"es_{uuid.uuid4()}{orig_ext}"
     filepath = os.path.join(UPLOAD_FOLDER, filename)
     audio_file.save(filepath)
     
@@ -1778,7 +1793,16 @@ def translate_es_audio():
         pipe = get_whisper_es()
         audio_input = load_audio_file(filepath, target_sr=16000)
         
-        # Eliminar silencios
+        import numpy as np
+        # 1. Eliminar DC Offset (muy común en teléfonos móviles y gama baja)
+        audio_input = audio_input - np.mean(audio_input)
+        
+        # 2. Peak Normalization
+        max_val = np.max(np.abs(audio_input))
+        if max_val > 0:
+            audio_input = audio_input / max_val
+        
+        # 3. Eliminar silencios
         audio_input, _ = librosa.effects.trim(audio_input, top_db=30)
         
         if len(audio_input) < 1600:
@@ -1813,6 +1837,12 @@ def translate_es_audio():
     except Exception as e:
         print(f"[/translate-es-audio] Error: {e}")
         return jsonify({'error': str(e)}), 500
+    finally:
+        try:
+            if os.path.exists(filepath):
+                os.remove(filepath)
+        except Exception:
+            pass
 
 @app.route('/translate-to-kiche', methods=['POST'])
 def translate_to_kiche():

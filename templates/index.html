@@ -715,7 +715,6 @@
         let currentMode = 'kiche-es'; // 'kiche-es' or 'es-kiche'
         let isRecording = false;
         let mediaRecorder = null, mediaStream = null, audioChunks = [];
-        let recognition = null;
         let lastSpanishText = '';
         let sessionTranslations = []; // Almacena el historial de síntomas traducidos
 
@@ -1407,7 +1406,7 @@
                 if (currentMode === 'kiche-es') {
                     await startKicheRecording();
                 } else {
-                    startSpanishRecognition();
+                    await startSpanishRecording();
                 }
             }
         };
@@ -1418,7 +1417,7 @@
                 if (currentMode === 'kiche-es') {
                     stopKicheRecording();
                 } else {
-                    stopSpanishRecognition();
+                    stopSpanishRecording();
                 }
             }
         };
@@ -1688,94 +1687,178 @@
             }
         }
 
-        // ── MODE: ES → K'ICHE' (Web Speech API) ───────────────────────────
-        function startSpanishRecognition() {
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (!SpeechRecognition) {
-                statusEl.textContent = "Tu navegador no soporta reconocimiento de voz. Usa Chrome o Edge.";
-                return;
-            }
+        // ── MODE: ES → K'ICHE' (Whisper Server-side) ───────────────────────────
+        async function startSpanishRecording() {
+            try {
+                audioChunks = [];
+                // Activar filtros del navegador para optimizar la captura
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    audio: {
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        autoGainControl: true
+                    } 
+                });
+                mediaStream = stream;
 
-            recognition = new SpeechRecognition();
-            recognition.lang = 'es-GT';
-            recognition.interimResults = true;
-            recognition.maxAlternatives = 1;
-            recognition.continuous = false; // iOS Safari throws 'service-not-allowed' si es true
-            
-            lastSpanishText = "";
-            transcriptionInput.value = "";
+                // Determinar el formato compatible (iOS Safari prefiere audio/mp4)
+                let options = {};
+                if (typeof MediaRecorder !== 'undefined') {
+                    if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+                        options = { mimeType: 'audio/webm;codecs=opus' };
+                    } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+                        options = { mimeType: 'audio/mp4' };
+                    } else if (MediaRecorder.isTypeSupported('audio/webm')) {
+                        options = { mimeType: 'audio/webm' };
+                    }
+                }
 
-            recognition.onstart = () => {
+                mediaRecorder = options.mimeType ? new MediaRecorder(stream, options) : new MediaRecorder(stream);
+                mediaRecorder.ondataavailable = e => {
+                    if (e.data && e.data.size > 0) audioChunks.push(e.data);
+                };
+                mediaRecorder.start();
+
                 isRecording = true;
                 micBtn.classList.add('recording');
-                statusEl.textContent = "Escuchando en Español... (Suelta para traducir)";
+                statusEl.textContent = "Grabando Español... (Suelta para traducir)";
                 updateStatusIndicator('recording');
-            };
+            } catch (err) {
+                console.error("Error al acceder al micrófono:", err);
+                statusEl.textContent = "Error: No se pudo acceder al micrófono.";
+                showErrorAlert("Permiso de micrófono denegado o no disponible.");
+                updateStatusIndicator('error');
+            }
+        }
 
-            recognition.onresult = (event) => {
-                let interimTranscript = '';
-                let finalTranscript = '';
+        function stopSpanishRecording() {
+            if (!isRecording) return;
+            isRecording = false;
+            micBtn.classList.remove('recording');
+            statusEl.textContent = "Transcribiendo con Whisper...";
 
-                for (let i = event.resultIndex; i < event.results.length; ++i) {
-                    if (event.results[i].isFinal) {
-                        finalTranscript += event.results[i][0].transcript;
-                    } else {
-                        interimTranscript += event.results[i][0].transcript;
-                    }
-                }
-                
-                // Actualizar UI con lo que va escuchando
-                const currentText = finalTranscript || interimTranscript || event.results[0][0].transcript;
-                if (currentText.trim()) {
-                    lastSpanishText = currentText;
-                    transcriptionInput.value = lastSpanishText;
-                }
-            };
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.onstop = () => {
+                    if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
+                    sendSpanishAudio();
+                };
+                mediaRecorder.stop();
+            } else {
+                if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
+            }
+        }
 
-            recognition.onerror = (e) => {
-                statusEl.textContent = "Error de reconocimiento: " + e.error;
-                micBtn.classList.remove('recording');
-                isRecording = false;
-                releaseWakeLock();
-            };
+        async function sendSpanishAudio() {
+            const mimeType = (mediaRecorder && mediaRecorder.mimeType) || (audioChunks[0] && audioChunks[0].type) || 'audio/webm';
+            const audioBlob = new Blob(audioChunks, { type: mimeType });
+            const ext = mimeType.includes('mp4') ? 'mp4' : (mimeType.includes('wav') ? 'wav' : 'webm');
 
-            recognition.onend = () => {
-                // Si el API corta por sí solo antes de que el usuario suelte el botón, 
-                // reintentamos iniciar si seguimos en modo isRecording.
-                if (isRecording) {
-                    try { recognition.start(); } catch(e) {}
-                }
-            };
+            const formData = new FormData();
+            formData.append("audio", audioBlob, `audio_capture.${ext}`);
+
+            progressContainer.style.display = 'block';
+            simulateProgress();
 
             try {
-                recognition.start();
+                const res = await fetch('/translate-es-audio', { method: 'POST', body: formData });
+                if (!res.ok) { 
+                    const e = await res.json().catch(() => ({ error: 'Error del servidor' })); 
+                    throw new Error(e.error || 'Error procesando audio'); 
+                }
+
+                const data = await res.json();
+
+                progressBar.style.width = '100%';
+                setTimeout(() => { progressContainer.style.display = 'none'; progressBar.style.width = '0%'; }, 500);
+
+                if (!data.transcription || data.transcription.startsWith("(No se detectó voz")) {
+                    statusEl.textContent = "No se detectó voz. Por favor, intenta de nuevo.";
+                    updateStatusIndicator('none');
+                    return;
+                }
+
+                statusEl.textContent = "¡Completado!";
+                updateStatusIndicator('done');
+
+                // Mostrar caja de resultado con fade-in
+                const rBox = document.getElementById('resultBox');
+                rBox.style.display = ''; 
+                rBox.classList.remove('hidden');
+                rBox.classList.add('flex');
+                void rBox.offsetWidth; 
+                rBox.classList.remove('opacity-0');
+                rBox.classList.add('opacity-100');
+
+                // Mostrar transcripción en el textarea editable
+                transcriptionInput.value = data.transcription;
+                transcriptionInput.style.height = 'auto';
+                transcriptionInput.style.height = (transcriptionInput.scrollHeight) + 'px';
+
+                // Mostrar traducción con efecto typewriter
+                translationText.textContent = "";
+                await typeWriterEffect(translationText, data.translation, false, 20);
+
+                const btn = document.getElementById('retranslateBtn');
+                btn.classList.remove('opacity-50', 'pointer-events-none');
+
+                // Registrar en historial de consulta médica
+                if (data.translation && !data.translation.startsWith("No se encontró traducción")) {
+                    sessionTranslations.push({
+                        direction: 'espanol_a_kiche',
+                        espanol: data.transcription || '',
+                        kiche: data.translation || ''
+                    });
+                }
+
+                if (sessionTranslations.length > 0) {
+                    const fab = document.getElementById('summaryFabContainer');
+                    fab.classList.remove('translate-y-24', 'opacity-0', 'pointer-events-none');
+                    fab.classList.add('translate-y-0', 'opacity-100', 'pointer-events-auto');
+
+                    const badge = document.getElementById('sessionCountBadge');
+                    badge.textContent = sessionTranslations.length;
+                    badge.classList.remove('scale-0');
+                    badge.classList.add('scale-100');
+                }
+
+                // Reproducción de audio en K'iche'
+                if (data.audio_url) {
+                    audioPlayer.src = data.audio_url + "?t=" + Date.now();
+                    audioPlayer.play();
+                    document.getElementById('audioSection').style.display = 'flex';
+                    document.getElementById('audioSection').classList.remove('opacity-0');
+                    document.getElementById('audioSection').classList.add('opacity-100');
+                } else if (data.translation && !data.translation.startsWith("No se encontró traducción")) {
+                    // Cargar VITS TTS asincrónicamente
+                    try {
+                        const ttsRes = await fetch('/tts/quc', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ text: data.translation })
+                        });
+                        const ttsData = await ttsRes.json();
+                        if (ttsData.audio_url) {
+                            audioPlayer.src = ttsData.audio_url + "?t=" + Date.now();
+                            audioPlayer.play();
+                            document.getElementById('audioSection').style.display = 'flex';
+                            document.getElementById('audioSection').classList.remove('opacity-0');
+                            document.getElementById('audioSection').classList.add('opacity-100');
+                        }
+                    } catch (e) {
+                        console.error("Error cargando TTS K'iche':", e);
+                    }
+                }
+
+                analyzeMedicalContext(data.transcription + " " + data.translation);
+
             } catch (err) {
-                statusEl.textContent = "Error al iniciar micrófono: " + err.message;
-                micBtn.classList.remove('recording');
-                isRecording = false;
+                showErrorAlert(err.message || "Fallo en la red. Verifica tu conexión e intenta de nuevo.");
+                updateStatusIndicator('none');
+            } finally {
+                releaseWakeLock();
             }
         }
 
-        async function stopSpanishRecognition() {
-            if (recognition) {
-                isRecording = false;
-                recognition.stop();
-                micBtn.classList.remove('recording');
-                releaseWakeLock();
-                
-                // Darle un pequeño tiempo por si onresult trae la última palabra
-                setTimeout(async () => {
-                    const textToTranslate = transcriptionInput.value.trim() || lastSpanishText.trim();
-                    if (textToTranslate) {
-                        statusEl.textContent = "Traduciendo al K'iche'...";
-                        await translateToKiche(textToTranslate);
-                    } else {
-                        statusEl.textContent = "No se detectó voz.";
-                        updateStatusIndicator('none');
-                    }
-                }, 300);
-            }
-        }
 
         async function translateToKiche(text) {
             try {
