@@ -786,53 +786,144 @@
         const asrText = document.getElementById('asrText');
         const saveBtn = document.getElementById('saveBtn');
 
-        micBtn.addEventListener('mousedown', async (e) => { e.preventDefault(); if (!isRecording && !isProcessing) await startRecording(); });
-        micBtn.addEventListener('touchstart', async (e) => { e.preventDefault(); if (!isRecording && !isProcessing) await startRecording(); }, {passive: false});
+        let isStartingRecording = false;
+        let stopRequestedDuringStart = false;
+        let recordAutoStopTimer = null;
+
+        const handleMicStart = async (e) => {
+            if (e.cancelable) e.preventDefault();
+            if (isProcessing) return;
+            if (isRecording) {
+                // Si ya está grabando, tocar de nuevo detiene y procesa inmediatamente (anti-bloqueo)
+                stopRecording();
+                return;
+            }
+            if (isStartingRecording) return;
+            isStartingRecording = true;
+            stopRequestedDuringStart = false;
+            await startRecording();
+        };
+
+        const handleMicStop = (e) => {
+            if (isStartingRecording) {
+                stopRequestedDuringStart = true;
+            }
+            if (isRecording) {
+                if (e && e.cancelable) e.preventDefault();
+                stopRecording();
+            }
+        };
+
+        micBtn.addEventListener('mousedown', handleMicStart);
+        micBtn.addEventListener('touchstart', handleMicStart, {passive: false});
         
-        window.addEventListener('mouseup', () => { if (isRecording) stopRecording(); });
-        window.addEventListener('touchend', () => { if (isRecording) stopRecording(); });
+        window.addEventListener('mouseup', handleMicStop);
+        window.addEventListener('touchend', handleMicStop);
+
+        // Escape de emergencia al hacer doble clic en el estado del micrófono
+        micStatus.addEventListener('dblclick', () => {
+            resetRecording();
+            showToast("Micrófono reiniciado.");
+        });
 
         async function startRecording() {
-            if (isProcessing) return;
+            if (isProcessing) {
+                isStartingRecording = false;
+                return;
+            }
             audioChunks = [];
             currentAudioBlob = null;
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            mediaStream = stream;
-            mediaRecorder = new MediaRecorder(stream);
-            mediaRecorder.ondataavailable = e => {
-                if (e.data.size > 0) audioChunks.push(e.data);
-            };
-            mediaRecorder.start(250);
-            isRecording = true;
-            micBtn.classList.add('recording');
-            micStatus.textContent = '🔴 Grabando... (suelta para procesar)';
-            asrBox.style.display = 'none';
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaStream = stream;
+                mediaRecorder = new MediaRecorder(stream);
+                mediaRecorder.ondataavailable = e => {
+                    if (e.data && e.data.size > 0) audioChunks.push(e.data);
+                };
+                mediaRecorder.start(250);
+                isRecording = true;
+                micBtn.classList.add('recording');
+                micStatus.textContent = '🔴 Grabando... (suelta o toca para procesar)';
+                asrBox.style.display = 'none';
+
+                // Límite de seguridad: máximo 45 segundos para evitar que quede grabando si la app se minimiza
+                clearTimeout(recordAutoStopTimer);
+                recordAutoStopTimer = setTimeout(() => {
+                    if (isRecording) stopRecording();
+                }, 45000);
+
+                // Si el usuario soltó el botón antes de que el navegador otorgara el micrófono
+                if (stopRequestedDuringStart) {
+                    stopRecording();
+                }
+            } catch (err) {
+                console.error("Error al acceder al micrófono:", err);
+                micStatus.textContent = '❌ Error de micrófono: ' + (err.message || 'No disponible');
+                isRecording = false;
+                micBtn.classList.remove('recording');
+                if (mediaStream) {
+                    try { mediaStream.getTracks().forEach(t => t.stop()); } catch(e) {}
+                    mediaStream = null;
+                }
+            } finally {
+                isStartingRecording = false;
+            }
         }
 
         function stopRecording() {
-            if (!isRecording) return;
+            clearTimeout(recordAutoStopTimer);
+            if (!isRecording && !mediaRecorder) return;
             isRecording = false;
+            isStartingRecording = false;
+            stopRequestedDuringStart = false;
             micBtn.classList.remove('recording');
             micStatus.textContent = 'Procesando con el modelo...';
             
             if (mediaRecorder && mediaRecorder.state !== 'inactive') {
                 mediaRecorder.onstop = () => {
-                    if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
+                    if (mediaStream) {
+                        try { mediaStream.getTracks().forEach(t => t.stop()); } catch(e) {}
+                        mediaStream = null;
+                    }
                     sendForASR();
                 };
-                mediaRecorder.stop();
+                try {
+                    mediaRecorder.stop();
+                } catch (e) {
+                    if (mediaStream) {
+                        try { mediaStream.getTracks().forEach(t => t.stop()); } catch(e) {}
+                        mediaStream = null;
+                    }
+                    sendForASR();
+                }
             } else {
-                if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
+                if (mediaStream) {
+                    try { mediaStream.getTracks().forEach(t => t.stop()); } catch(e) {}
+                    mediaStream = null;
+                }
+                sendForASR();
             }
         }
 
         async function sendForASR() {
+            if (!audioChunks || audioChunks.length === 0) {
+                micStatus.textContent = 'No se detectó audio grabado. Intenta de nuevo.';
+                isProcessing = false;
+                micBtn.style.opacity = '1';
+                return;
+            }
+
             isProcessing = true;
             micBtn.style.opacity = '0.5';
             document.getElementById('cancelProcessingContainer').style.display = 'block';
             currentAbortController = new AbortController();
 
-            // Keep screen awake while processing
+            // Tiempo límite de seguridad de 25s para que jamás se quede congelado si la red falla
+            const timeoutId = setTimeout(() => {
+                if (currentAbortController) currentAbortController.abort();
+            }, 25000);
+
+            // Mantener pantalla encendida mientras procesa
             await requestWakeLock();
 
             const mimeType = mediaRecorder ? (mediaRecorder.mimeType || 'audio/webm') : 'audio/webm';
@@ -855,23 +946,23 @@
                 const data = await res.json();
                 currentAsrRaw = data.transcription || '';
                 asrText.textContent = currentAsrRaw || '(sin transcripción)';
-                document.getElementById('correctInput').value = phrases[phraseIdx][0]; // preset with suggested
+                document.getElementById('correctInput').value = phrases[phraseIdx][0]; // preset con sugerido
                 asrBox.style.display = 'block';
                 saveBtn.disabled = false;
                 micStatus.textContent = '✅ Listo — revisa y guarda';
                 
-                // Auto-center the recognized text
                 setTimeout(() => {
                     asrBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }, 150);
             } catch (e) {
                 if (e.name === 'AbortError') {
-                    micStatus.textContent = 'Procesamiento cancelado.';
+                    micStatus.textContent = 'Procesamiento cancelado o tiempo agotado.';
                     resetRecording();
                 } else {
                     micStatus.textContent = 'Error: ' + e.message;
                 }
             } finally {
+                clearTimeout(timeoutId);
                 isProcessing = false;
                 micBtn.style.opacity = '1';
                 document.getElementById('cancelProcessingContainer').style.display = 'none';
@@ -883,12 +974,19 @@
             if (currentAbortController) {
                 currentAbortController.abort();
             }
+            isProcessing = false;
+            micBtn.style.opacity = '1';
+            document.getElementById('cancelProcessingContainer').style.display = 'none';
+            releaseWakeLock();
         }
 
         // ── SAVE ─────────────────────────────────────────────────────────────
         async function saveSample() {
             const correctText = document.getElementById('correctInput').value.trim();
-            if (!correctText || !currentAudioBlob) return;
+            if (!correctText || !currentAudioBlob) {
+                showToast('⚠️ No hay audio o texto para guardar.');
+                return;
+            }
 
             saveBtn.disabled = true;
             saveBtn.textContent = 'Guardando...';
@@ -903,8 +1001,16 @@
             }
             fd.append('asr_raw', currentAsrRaw || currentSpanish);
 
+            const abortCtrl = new AbortController();
+            const timeoutId = setTimeout(() => abortCtrl.abort(), 20000);
+
             try {
-                const res = await fetch('/save-training-sample', { method: 'POST', body: fd });
+                const res = await fetch('/save-training-sample', { 
+                    method: 'POST', 
+                    body: fd,
+                    signal: abortCtrl.signal 
+                });
+                if (!res.ok) throw new Error("Error en el servidor al guardar");
                 const data = await res.json();
                 if (data.status === 'saved') {
                     showToast(`✅ Grabación #${data.total} guardada`);
@@ -912,23 +1018,23 @@
                     updateProgress(data.total);
                     renderSamples();
                     resetRecording();
-                    // Update local phrase count and badge
                     phraseCounts[correctText] = (phraseCounts[correctText] || 0) + 1;
                     
-                    // Scroll up to the top card
                     const topCard = document.querySelector('.glass-card');
                     if(topCard) topCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     
-                    // auto-advance to next phrase
                     setTimeout(() => nextPhrase(), 800);
+                } else {
+                    showToast('❌ ' + (data.error || 'Error al guardar'));
                 }
             } catch (e) {
                 console.error("Error saving:", e);
-                showToast('❌ Error al guardar');
+                showToast(e.name === 'AbortError' ? '⏱️ Tiempo de espera agotado al guardar' : '❌ Error al guardar');
+            } finally {
+                clearTimeout(timeoutId);
+                saveBtn.disabled = false;
+                saveBtn.textContent = 'Guardar grabación';
             }
-
-            saveBtn.disabled = false;
-            saveBtn.textContent = 'Guardar grabación';
         }
 
         function resetRecording() {
@@ -937,6 +1043,18 @@
             currentAsrRaw = '';
             saveBtn.disabled = true;
             micStatus.textContent = 'Mantén presionado para grabar';
+            isRecording = false;
+            isStartingRecording = false;
+            isProcessing = false;
+            clearTimeout(recordAutoStopTimer);
+            if (micBtn) {
+                micBtn.classList.remove('recording');
+                micBtn.style.opacity = '1';
+            }
+            if (mediaStream) {
+                try { mediaStream.getTracks().forEach(t => t.stop()); } catch(e) {}
+                mediaStream = null;
+            }
         }
 
         // ── MODO EXPERTO BILINGÜE ─────────────────────────────────────────────
@@ -1183,29 +1301,58 @@
             }
         }
 
+        // Singleton AudioContext para no superar el límite de hardware de Chromium/PWA (máximo 6 contexts)
+        let _sharedAudioCtx = null;
+        function getSharedAudioContext() {
+            try {
+                if (!_sharedAudioCtx || _sharedAudioCtx.state === 'closed') {
+                    const AudioCtxClass = window.AudioContext || window.webkitAudioContext;
+                    if (AudioCtxClass) {
+                        _sharedAudioCtx = new AudioCtxClass();
+                    }
+                }
+                if (_sharedAudioCtx && _sharedAudioCtx.state === 'suspended') {
+                    _sharedAudioCtx.resume().catch(() => {});
+                }
+            } catch (e) {
+                console.warn("Shared AudioContext error:", e);
+            }
+            return _sharedAudioCtx;
+        }
+
+        let lastWaveformBlobUrl = null;
+        let lastExpertPreviewUrl = null;
+
         async function loadAudioIntoWaveSurfer(blobOrFile) {
             try {
                 initWaveSurfer();
-                document.getElementById('expertWaveformWrapper').style.display = 'block';
+                const wrap = document.getElementById('expertWaveformWrapper');
+                if (wrap) wrap.style.display = 'block';
 
-                const blobUrl = URL.createObjectURL(blobOrFile);
-                wavesurfer.load(blobUrl);
+                if (lastWaveformBlobUrl) {
+                    try { URL.revokeObjectURL(lastWaveformBlobUrl); } catch(e) {}
+                }
+                lastWaveformBlobUrl = URL.createObjectURL(blobOrFile);
+                wavesurfer.load(lastWaveformBlobUrl);
 
-                // Decodificación de respaldo en background con Web Audio API
+                // Decodificación de respaldo en background con Web Audio API usando singleton
                 try {
-                    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                    const arrayBuffer = await blobOrFile.arrayBuffer();
-                    audioCtx.decodeAudioData(arrayBuffer, (decoded) => {
-                        activeRawAudioBuffer = decoded;
-                    }, (err) => {
-                        console.warn("Web Audio API decode fallback:", err);
-                    });
+                    const audioCtx = getSharedAudioContext();
+                    if (audioCtx) {
+                        const arrayBuffer = await blobOrFile.arrayBuffer();
+                        audioCtx.decodeAudioData(arrayBuffer, (decoded) => {
+                            activeRawAudioBuffer = decoded;
+                        }, (err) => {
+                            console.warn("Web Audio API decode fallback:", err);
+                        });
+                    }
                 } catch (e) {
                     console.warn("AudioContext fallback:", e);
                 }
 
                 setTimeout(() => {
-                    document.getElementById('expertWaveformWrapper').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    const el = document.getElementById('expertWaveformWrapper');
+                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }, 150);
             } catch (err) {
                 console.error("Error cargando audio en WaveSurfer:", err);
@@ -1273,12 +1420,31 @@
             const endOffset = Math.min(audioBuffer.length, Math.floor(endTime * sampleRate));
             const frameCount = Math.max(1, endOffset - startOffset);
 
-            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            const slicedBuffer = audioCtx.createBuffer(
-                audioBuffer.numberOfChannels,
-                frameCount,
-                sampleRate
-            );
+            let slicedBuffer = null;
+            if (typeof AudioBuffer === 'function') {
+                try {
+                    slicedBuffer = new AudioBuffer({
+                        numberOfChannels: audioBuffer.numberOfChannels,
+                        length: frameCount,
+                        sampleRate: sampleRate
+                    });
+                } catch (e) {
+                    slicedBuffer = null;
+                }
+            }
+            if (!slicedBuffer) {
+                const ctx = getSharedAudioContext();
+                if (ctx && typeof ctx.createBuffer === 'function') {
+                    slicedBuffer = ctx.createBuffer(
+                        audioBuffer.numberOfChannels,
+                        frameCount,
+                        sampleRate
+                    );
+                }
+            }
+            if (!slicedBuffer) {
+                throw new Error("No se pudo crear AudioBuffer");
+            }
 
             for (let channel = 0; channel < audioBuffer.numberOfChannels; channel++) {
                 const fromData = audioBuffer.getChannelData(channel);
@@ -1312,6 +1478,9 @@
             btn.disabled = true;
             btn.innerHTML = '<span class="material-symbols-outlined text-[1rem] animate-spin">refresh</span> Procesando con MMS...';
 
+            const abortCtrl = new AbortController();
+            const timeoutId = setTimeout(() => abortCtrl.abort(), 25000);
+
             try {
                 const slicedBuffer = sliceAudioBuffer(
                     activeRawAudioBuffer,
@@ -1321,9 +1490,12 @@
                 expertAudioBlob = audioBufferToWav(slicedBuffer);
 
                 // Actualizar reproductor de preview con el audio recortado
-                const audioUrl = URL.createObjectURL(expertAudioBlob);
+                if (lastExpertPreviewUrl) {
+                    try { URL.revokeObjectURL(lastExpertPreviewUrl); } catch(e) {}
+                }
+                lastExpertPreviewUrl = URL.createObjectURL(expertAudioBlob);
                 const player = document.getElementById('expertAudioPlayer');
-                player.src = audioUrl;
+                player.src = lastExpertPreviewUrl;
                 document.getElementById('expertAudioPreviewContainer').style.display = 'block';
 
                 // Consultar modelo MMS
@@ -1332,7 +1504,11 @@
 
                 const asrFd = new FormData();
                 asrFd.append('audio', expertAudioBlob, 'expert_trimmed.wav');
-                const res = await fetch('/translate', { method: 'POST', body: asrFd });
+                const res = await fetch('/translate', { 
+                    method: 'POST', 
+                    body: asrFd,
+                    signal: abortCtrl.signal 
+                });
                 if (res.ok) {
                     const data = await res.json();
                     expertAsrRaw = data.transcription || '(sin voz detectada)';
@@ -1345,8 +1521,10 @@
                 checkExpertFormValidity();
             } catch (err) {
                 console.error("Error al recortar:", err);
-                showToast("❌ Error al recortar: " + err.message);
+                const msg = err.name === 'AbortError' ? 'Tiempo de espera agotado al conectar con MMS' : err.message;
+                showToast("❌ Error al recortar: " + msg);
             } finally {
+                clearTimeout(timeoutId);
                 btn.disabled = false;
                 btn.innerHTML = '<span class="material-symbols-outlined text-[1.1rem]">content_cut</span> Recortar y Enviar a MMS';
             }
@@ -1354,6 +1532,9 @@
 
         // ── GRABACIÓN DE VOZ EXPERTO ─────────────────────────────────────────
         let isExpertRecording = false;
+        let isExpertStartingRecording = false;
+        let expertStopRequestedDuringStart = false;
+        let expertRecordAutoStopTimer = null;
         let expertMediaRecorder = null;
         let expertMediaStream = null;
         let expertAudioChunks = [];
@@ -1366,61 +1547,144 @@
 
         expertMicBtn.addEventListener('mousedown', async (e) => {
             e.preventDefault();
-            expertIsHolding = true;
-            if (!isExpertRecording) {
-                await startExpertRecording();
+            if (isExpertRecording || isExpertStartingRecording) {
+                // Si ya está grabando o iniciando, un toque actúa como toggle para detener de inmediato
+                stopExpertRecording();
+                return;
             }
+            expertIsHolding = true;
+            await startExpertRecording();
         });
 
         expertMicBtn.addEventListener('touchstart', async (e) => {
             e.preventDefault();
-            expertIsHolding = true;
-            if (!isExpertRecording) {
-                await startExpertRecording();
+            if (isExpertRecording || isExpertStartingRecording) {
+                // Si ya está grabando o iniciando, un toque actúa como toggle para detener de inmediato
+                stopExpertRecording();
+                return;
             }
+            expertIsHolding = true;
+            await startExpertRecording();
         }, { passive: false });
 
         window.addEventListener('mouseup', () => {
-            if (isExpertRecording && expertIsHolding) {
-                stopExpertRecording();
+            if (expertIsHolding) {
                 expertIsHolding = false;
+                if (isExpertStartingRecording) {
+                    expertStopRequestedDuringStart = true;
+                } else if (isExpertRecording) {
+                    stopExpertRecording();
+                }
             }
         });
 
         window.addEventListener('touchend', () => {
-            if (isExpertRecording && expertIsHolding) {
-                stopExpertRecording();
+            if (expertIsHolding) {
                 expertIsHolding = false;
+                if (isExpertStartingRecording) {
+                    expertStopRequestedDuringStart = true;
+                } else if (isExpertRecording) {
+                    stopExpertRecording();
+                }
+            }
+        });
+
+        window.addEventListener('touchcancel', () => {
+            if (expertIsHolding) {
+                expertIsHolding = false;
+                if (isExpertStartingRecording) {
+                    expertStopRequestedDuringStart = true;
+                } else if (isExpertRecording) {
+                    stopExpertRecording();
+                }
             }
         });
 
         async function startExpertRecording() {
+            if (isExpertRecording || isExpertStartingRecording) return;
+            isExpertStartingRecording = true;
+            expertStopRequestedDuringStart = false;
             expertAudioChunks = [];
             expertAudioBlob = null;
             expertAsrRaw = '';
+
+            clearTimeout(expertRecordAutoStopTimer);
+            expertMicStatus.textContent = 'Iniciando micrófono...';
+
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    audio: {
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        autoGainControl: true
+                    }
+                });
                 expertMediaStream = stream;
+
+                // Si el usuario soltó el botón antes de que el micrófono terminara de iniciarse
+                if (expertStopRequestedDuringStart) {
+                    isExpertStartingRecording = false;
+                    expertStopRequestedDuringStart = false;
+                    try { stream.getTracks().forEach(t => t.stop()); } catch(e) {}
+                    expertMediaStream = null;
+                    expertMicStatus.textContent = 'Mantén presionado para hablar';
+                    return;
+                }
+
                 expertMediaRecorder = new MediaRecorder(stream);
                 expertMediaRecorder.ondataavailable = e => {
-                    if (e.data.size > 0) expertAudioChunks.push(e.data);
+                    if (e.data && e.data.size > 0) expertAudioChunks.push(e.data);
                 };
+
                 expertMediaRecorder.start(250);
                 isExpertRecording = true;
+                isExpertStartingRecording = false;
+
                 expertMicBtn.classList.add('recording');
                 if (expertMicIcon) expertMicIcon.textContent = 'stop';
-                expertMicStatus.textContent = '🔴 Grabando tu voz... (suelta para finalizar)';
-                document.getElementById('expertWaveformWrapper').style.display = 'none';
-                document.getElementById('expertAudioPreviewContainer').style.display = 'none';
+                expertMicStatus.textContent = '🔴 Grabando tu voz... (suelta o toca para finalizar)';
+                
+                const wfWrap = document.getElementById('expertWaveformWrapper');
+                if (wfWrap) wfWrap.style.display = 'none';
+                const prevCont = document.getElementById('expertAudioPreviewContainer');
+                if (prevCont) prevCont.style.display = 'none';
+                
                 checkExpertFormValidity();
+
+                // Seguridad PWA: máximo 45s de grabación continua para evitar bloqueos
+                expertRecordAutoStopTimer = setTimeout(() => {
+                    if (isExpertRecording) {
+                        showToast('⏱️ Límite de 45s alcanzado. Deteniendo grabación...');
+                        stopExpertRecording();
+                    }
+                }, 45000);
             } catch (err) {
                 console.error("Error micrófono experto:", err);
+                isExpertRecording = false;
+                isExpertStartingRecording = false;
+                expertStopRequestedDuringStart = false;
                 expertMicStatus.textContent = '❌ Error al acceder al micrófono: ' + err.message;
+                if (expertMediaStream) {
+                    try { expertMediaStream.getTracks().forEach(t => t.stop()); } catch(e) {}
+                    expertMediaStream = null;
+                }
             }
         }
 
         function stopExpertRecording() {
-            if (!isExpertRecording) return;
+            clearTimeout(expertRecordAutoStopTimer);
+            if (isExpertStartingRecording) {
+                expertStopRequestedDuringStart = true;
+                return;
+            }
+            if (!isExpertRecording) {
+                if (expertMediaStream) {
+                    try { expertMediaStream.getTracks().forEach(t => t.stop()); } catch(e) {}
+                    expertMediaStream = null;
+                }
+                return;
+            }
+
             isExpertRecording = false;
             expertMicBtn.classList.remove('recording');
             if (expertMicIcon) expertMicIcon.textContent = 'mic';
@@ -1428,27 +1692,63 @@
 
             if (expertMediaRecorder && expertMediaRecorder.state !== 'inactive') {
                 expertMediaRecorder.onstop = async () => {
-                    if (expertMediaStream) expertMediaStream.getTracks().forEach(t => t.stop());
+                    if (expertMediaStream) {
+                        try { expertMediaStream.getTracks().forEach(t => t.stop()); } catch(e) {}
+                        expertMediaStream = null;
+                    }
                     const mimeType = expertMediaRecorder.mimeType || 'audio/webm';
                     const rawBlob = new Blob(expertAudioChunks, { type: mimeType });
                     expertMicStatus.textContent = '✅ Grabación lista. Puedes recortarla abajo antes de guardar.';
                     await loadAudioIntoWaveSurfer(rawBlob);
                 };
-                expertMediaRecorder.stop();
+                try {
+                    expertMediaRecorder.stop();
+                } catch(e) {
+                    console.warn("Error stopping expertMediaRecorder:", e);
+                    if (expertMediaStream) {
+                        try { expertMediaStream.getTracks().forEach(t => t.stop()); } catch(e2) {}
+                        expertMediaStream = null;
+                    }
+                }
             } else {
-                if (expertMediaStream) expertMediaStream.getTracks().forEach(t => t.stop());
+                if (expertMediaStream) {
+                    try { expertMediaStream.getTracks().forEach(t => t.stop()); } catch(e) {}
+                    expertMediaStream = null;
+                }
             }
         }
 
         function resetExpertAudio() {
+            isExpertRecording = false;
+            isExpertStartingRecording = false;
+            expertStopRequestedDuringStart = false;
+            expertIsHolding = false;
+            clearTimeout(expertRecordAutoStopTimer);
+
+            if (expertMediaStream) {
+                try { expertMediaStream.getTracks().forEach(t => t.stop()); } catch(e) {}
+                expertMediaStream = null;
+            }
+
+            if (lastWaveformBlobUrl) {
+                try { URL.revokeObjectURL(lastWaveformBlobUrl); } catch(e) {}
+                lastWaveformBlobUrl = null;
+            }
+            if (lastExpertPreviewUrl) {
+                try { URL.revokeObjectURL(lastExpertPreviewUrl); } catch(e) {}
+                lastExpertPreviewUrl = null;
+            }
+
             expertAudioBlob = null;
             expertAudioChunks = [];
             expertAsrRaw = '';
             activeRawAudioBuffer = null;
 
             if (wavesurfer) {
-                wavesurfer.stop();
-                if (wsRegions) wsRegions.clearRegions();
+                try { wavesurfer.stop(); } catch(e) {}
+                if (wsRegions) {
+                    try { wsRegions.clearRegions(); } catch(e) {}
+                }
             }
             currentRegion = null;
             updateTimeDisplayDirect(0, 0);
@@ -1464,7 +1764,7 @@
 
             const player = document.getElementById('expertAudioPlayer');
             if (player) {
-                player.pause();
+                try { player.pause(); } catch(e) {}
                 player.src = '';
             }
 
@@ -1477,8 +1777,11 @@
                 nameLabel.style.display = 'none';
             }
 
-            if (expertMicStatus) expertMicStatus.textContent = 'Toca o mantén presionado para grabar';
-            if (expertMicBtn) expertMicBtn.classList.remove('recording');
+            if (expertMicStatus) expertMicStatus.textContent = 'Toca o mantén presionado para hablar';
+            if (expertMicBtn) {
+                expertMicBtn.classList.remove('recording');
+                expertMicBtn.style.opacity = '1';
+            }
             if (expertMicIcon) expertMicIcon.textContent = 'mic';
 
             checkExpertFormValidity();
@@ -1518,11 +1821,17 @@
             fd.append('audio', expertAudioBlob, 'expert_sample.wav');
             fd.append('correct_text', kiche);
             fd.append('spanish_text', spanish);
-            // Mandamos lo que escuchó el modelo MMS a asr_raw, o el fallback si no hubo transcripción
             fd.append('asr_raw', expertAsrRaw || `[Experto] ${spanish}`);
 
+            const abortCtrl = new AbortController();
+            const timeoutId = setTimeout(() => abortCtrl.abort(), 20000);
+
             try {
-                const res = await fetch('/save-training-sample', { method: 'POST', body: fd });
+                const res = await fetch('/save-training-sample', { 
+                    method: 'POST', 
+                    body: fd,
+                    signal: abortCtrl.signal
+                });
                 const data = await res.json();
                 if (data.status === 'saved') {
                     showToast(`✅ Grabación #${data.total} guardada con éxito`);
@@ -1531,7 +1840,6 @@
                     renderSamples();
                     resetExpertForm();
                     
-                    // Desplazarse suavemente a la tarjeta de progreso
                     const progressCard = document.querySelector('.progress-circle');
                     if (progressCard) progressCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 } else {
@@ -1539,8 +1847,9 @@
                 }
             } catch (err) {
                 console.error("Error guardando muestra experta:", err);
-                showToast('❌ Error de conexión al guardar');
+                showToast(err.name === 'AbortError' ? '⏱️ Tiempo de espera agotado al guardar' : '❌ Error de conexión al guardar');
             } finally {
+                clearTimeout(timeoutId);
                 btn.disabled = false;
                 btn.innerHTML = '<span class="material-symbols-outlined text-[1.1rem]">cloud_upload</span> Guardar Frase y Audio en el Dataset';
                 checkExpertFormValidity();
@@ -1580,9 +1889,41 @@
             ).join('');
         }
 
+        // Reproductor reutilizable para evitar fugas de memoria
+        let _trainingAudioElement = null;
         function playAudio(file) {
-            new Audio(`/training-audio/${file}`).play();
+            if (!_trainingAudioElement) {
+                _trainingAudioElement = new Audio();
+            }
+            try {
+                _trainingAudioElement.pause();
+                _trainingAudioElement.src = `/training-audio/${file}`;
+                _trainingAudioElement.play().catch(e => console.warn("Audio playback err:", e));
+            } catch (e) {
+                console.warn("playAudio err:", e);
+            }
         }
+
+        // Recuperación de emergencia: doble clic para restablecer estados
+        if (expertMicStatus) {
+            expertMicStatus.addEventListener('dblclick', () => {
+                resetExpertAudio();
+                showToast('🔄 Micrófono experto restablecido');
+            });
+        }
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                if (isRecording || isStartingRecording) {
+                    resetRecording();
+                    showToast('🛑 Grabación guiada cancelada');
+                }
+                if (isExpertRecording || isExpertStartingRecording) {
+                    resetExpertAudio();
+                    showToast('🛑 Grabación experta cancelada');
+                }
+            }
+        });
+
 
         // ── TOAST ─────────────────────────────────────────────────────────────
         function showToast(msg) {

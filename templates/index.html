@@ -1386,9 +1386,13 @@
             }
         }
 
+        let isStartingRecording = false;
+        let stopRequestedDuringStart = false;
+        let mainRecordAutoStopTimer = null;
+
         // ── MIC BUTTON ─────────────────────────────────────────────────────
         const startAction = async (e) => {
-            if (e.cancelable) e.preventDefault();
+            if (e && e.cancelable) e.preventDefault();
             unlockAudio(); // Unlock audio context on first user interaction
             if (isGuidePlaying && guideAudio) {
                 guideAudio.pause();
@@ -1400,20 +1404,30 @@
                 if (playIcon) playIcon.textContent = 'record_voice_over';
             }
             stopGuideMicSimulation();
-            if (!isRecording) {
-                resetUI();
-                requestWakeLock(); // Prevent screen sleep (fire and forget to preserve user gesture context)
-                if (currentMode === 'kiche-es') {
-                    await startKicheRecording();
-                } else {
-                    await startSpanishRecording();
-                }
+
+            // Si ya está grabando o iniciando, tocar actúa como toggle para detener inmediatamente
+            if (isRecording || isStartingRecording) {
+                stopAction(e);
+                return;
+            }
+
+            resetUI();
+            requestWakeLock(); // Prevent screen sleep
+            if (currentMode === 'kiche-es') {
+                await startKicheRecording();
+            } else {
+                await startSpanishRecording();
             }
         };
 
         const stopAction = (e) => {
+            clearTimeout(mainRecordAutoStopTimer);
+            if (isStartingRecording) {
+                stopRequestedDuringStart = true;
+                return;
+            }
             if (isRecording) {
-                e.preventDefault();
+                if (e && e.preventDefault) e.preventDefault();
                 if (currentMode === 'kiche-es') {
                     stopKicheRecording();
                 } else {
@@ -1432,14 +1446,18 @@
         window.addEventListener('touchend', stopAction);
         window.addEventListener('touchcancel', stopAction);
 
-        // Atajo de teclado (Ctrl para grabar)
+        // Atajo de teclado (Ctrl para grabar, Escape para cancelar)
         window.addEventListener('keydown', async (e) => {
-            if (e.key === 'Control' && !e.repeat && !isRecording && document.activeElement.tagName !== 'TEXTAREA') {
+            if (e.key === 'Control' && !e.repeat && !isRecording && !isStartingRecording && document.activeElement.tagName !== 'TEXTAREA') {
                 await startAction(e);
             }
-            // ESC para cerrar modal
-            if (e.key === 'Escape' && !document.getElementById('summaryModal').classList.contains('opacity-0')) {
-                toggleSummaryModal();
+            if (e.key === 'Escape') {
+                if (isRecording || isStartingRecording) {
+                    stopAction(e);
+                }
+                if (!document.getElementById('summaryModal').classList.contains('opacity-0')) {
+                    toggleSummaryModal();
+                }
             }
         });
         window.addEventListener('keyup', (e) => {
@@ -1447,6 +1465,24 @@
                 stopAction(e);
             }
         });
+
+        // Doble clic en statusEl para reiniciar estado en caso de emergencia
+        if (statusEl) {
+            statusEl.addEventListener('dblclick', () => {
+                isRecording = false;
+                isStartingRecording = false;
+                clearTimeout(mainRecordAutoStopTimer);
+                if (mediaStream) {
+                    try { mediaStream.getTracks().forEach(t => t.stop()); } catch(e) {}
+                    mediaStream = null;
+                }
+                micBtn.classList.remove('recording');
+                statusEl.textContent = 'Toca o mantén presionado para hablar';
+                updateStatusIndicator('none');
+                progressContainer.style.display = 'none';
+                progressBar.style.width = '0%';
+            });
+        }
 
         // Clic fuera del modal para cerrarlo
         document.getElementById('summaryModal').addEventListener('click', function(e) {
@@ -1465,6 +1501,12 @@
 
         // ── MODE: K'ICHE' → ES (WAV via MMS server) ───────────────────────
         async function startKicheRecording() {
+            if (isRecording || isStartingRecording) return;
+            isStartingRecording = true;
+            stopRequestedDuringStart = false;
+            clearTimeout(mainRecordAutoStopTimer);
+            statusEl.textContent = "Iniciando micrófono...";
+
             try {
                 audioChunks = [];
                 // Activar filtros del navegador para mejorar el audio de micrófonos de baja calidad
@@ -1476,6 +1518,18 @@
                     } 
                 });
                 mediaStream = stream;
+
+                // Si el usuario soltó el botón antes de que el micrófono terminara de iniciarse
+                if (stopRequestedDuringStart) {
+                    isStartingRecording = false;
+                    stopRequestedDuringStart = false;
+                    try { stream.getTracks().forEach(t => t.stop()); } catch(e) {}
+                    mediaStream = null;
+                    statusEl.textContent = "Toca o mantén presionado para hablar";
+                    updateStatusIndicator('none');
+                    return;
+                }
+
                 mediaRecorder = new MediaRecorder(stream);
                 mediaRecorder.ondataavailable = e => {
                     if (e.data.size > 0) audioChunks.push(e.data);
@@ -1483,29 +1537,69 @@
                 mediaRecorder.start();
 
                 isRecording = true;
+                isStartingRecording = false;
                 micBtn.classList.add('recording');
-                statusEl.textContent = "Grabando K'iche'... (Suelta para traducir)";
+                statusEl.textContent = "Grabando K'iche'... (Suelta o toca para traducir)";
                 updateStatusIndicator('recording');
+
+                // Límite de seguridad: máximo 45 segundos
+                mainRecordAutoStopTimer = setTimeout(() => {
+                    if (isRecording) {
+                        stopKicheRecording();
+                    }
+                }, 45000);
             } catch (err) {
+                isRecording = false;
+                isStartingRecording = false;
+                stopRequestedDuringStart = false;
                 statusEl.textContent = "Error: No se pudo acceder al micrófono.";
                 updateStatusIndicator('error');
+                if (mediaStream) {
+                    try { mediaStream.getTracks().forEach(t => t.stop()); } catch(e) {}
+                    mediaStream = null;
+                }
             }
         }
 
         function stopKicheRecording() {
-            if (!isRecording) return;
+            clearTimeout(mainRecordAutoStopTimer);
+            if (isStartingRecording) {
+                stopRequestedDuringStart = true;
+                return;
+            }
+            if (!isRecording) {
+                if (mediaStream) {
+                    try { mediaStream.getTracks().forEach(t => t.stop()); } catch(e) {}
+                    mediaStream = null;
+                }
+                return;
+            }
+
             isRecording = false;
             micBtn.classList.remove('recording');
             statusEl.textContent = "Procesando con modelo MMS...";
             
             if (mediaRecorder && mediaRecorder.state !== 'inactive') {
                 mediaRecorder.onstop = () => {
-                    if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
+                    if (mediaStream) {
+                        try { mediaStream.getTracks().forEach(t => t.stop()); } catch(e) {}
+                        mediaStream = null;
+                    }
                     sendKicheAudio();
                 };
-                mediaRecorder.stop();
+                try {
+                    mediaRecorder.stop();
+                } catch(e) {
+                    if (mediaStream) {
+                        try { mediaStream.getTracks().forEach(t => t.stop()); } catch(e2) {}
+                        mediaStream = null;
+                    }
+                }
             } else {
-                if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
+                if (mediaStream) {
+                    try { mediaStream.getTracks().forEach(t => t.stop()); } catch(e) {}
+                    mediaStream = null;
+                }
             }
         }
 
@@ -1514,13 +1608,19 @@
             const formData = new FormData();
             formData.append("audio", audioBlob, "audio_capture");
 
-
             progressContainer.style.display = 'block';
             simulateProgress();
 
+            const abortCtrl = new AbortController();
+            const timeoutId = setTimeout(() => abortCtrl.abort(), 25000);
+
             try {
-                const res = await fetch('/translate', { method: 'POST', body: formData });
-                if (!res.ok) { const e = await res.json(); throw new Error(e.error); }
+                const res = await fetch('/translate', { 
+                    method: 'POST', 
+                    body: formData,
+                    signal: abortCtrl.signal
+                });
+                if (!res.ok) { const e = await res.json().catch(() => ({ error: 'Error del servidor' })); throw new Error(e.error || 'Error del servidor'); }
                 
                 const data = await res.json();
                 
@@ -1596,9 +1696,16 @@
 
             } catch (err) {
                 // Mensaje de error claro
-                showErrorAlert(err.message || "Fallo en la red. Verifica tu conexión e intenta de nuevo.");
+                showErrorAlert(err.name === 'AbortError' ? 'Tiempo de espera agotado al conectar con el servidor.' : (err.message || "Fallo en la red. Verifica tu conexión e intenta de nuevo."));
                 updateStatusIndicator('none');
             } finally {
+                clearTimeout(timeoutId);
+                setTimeout(() => {
+                    if (progressContainer.style.display !== 'none') {
+                        progressContainer.style.display = 'none';
+                        progressBar.style.width = '0%';
+                    }
+                }, 550);
                 releaseWakeLock(); // Release screen lock
             }
         }
@@ -1689,6 +1796,12 @@
 
         // ── MODE: ES → K'ICHE' (Whisper Server-side) ───────────────────────────
         async function startSpanishRecording() {
+            if (isRecording || isStartingRecording) return;
+            isStartingRecording = true;
+            stopRequestedDuringStart = false;
+            clearTimeout(mainRecordAutoStopTimer);
+            statusEl.textContent = "Iniciando micrófono...";
+
             try {
                 audioChunks = [];
                 // Activar filtros del navegador para optimizar la captura
@@ -1700,6 +1813,17 @@
                     } 
                 });
                 mediaStream = stream;
+
+                // Si el usuario soltó el botón antes de que el micrófono terminara de iniciarse
+                if (stopRequestedDuringStart) {
+                    isStartingRecording = false;
+                    stopRequestedDuringStart = false;
+                    try { stream.getTracks().forEach(t => t.stop()); } catch(e) {}
+                    mediaStream = null;
+                    statusEl.textContent = "Toca o mantén presionado para hablar";
+                    updateStatusIndicator('none');
+                    return;
+                }
 
                 // Determinar el formato compatible (iOS Safari prefiere audio/mp4)
                 let options = {};
@@ -1720,31 +1844,71 @@
                 mediaRecorder.start();
 
                 isRecording = true;
+                isStartingRecording = false;
                 micBtn.classList.add('recording');
-                statusEl.textContent = "Grabando Español... (Suelta para traducir)";
+                statusEl.textContent = "Grabando Español... (Suelta o toca para traducir)";
                 updateStatusIndicator('recording');
+
+                // Límite de seguridad: máximo 45 segundos
+                mainRecordAutoStopTimer = setTimeout(() => {
+                    if (isRecording) {
+                        stopSpanishRecording();
+                    }
+                }, 45000);
             } catch (err) {
                 console.error("Error al acceder al micrófono:", err);
+                isRecording = false;
+                isStartingRecording = false;
+                stopRequestedDuringStart = false;
                 statusEl.textContent = "Error: No se pudo acceder al micrófono.";
                 showErrorAlert("Permiso de micrófono denegado o no disponible.");
                 updateStatusIndicator('error');
+                if (mediaStream) {
+                    try { mediaStream.getTracks().forEach(t => t.stop()); } catch(e) {}
+                    mediaStream = null;
+                }
             }
         }
 
         function stopSpanishRecording() {
-            if (!isRecording) return;
+            clearTimeout(mainRecordAutoStopTimer);
+            if (isStartingRecording) {
+                stopRequestedDuringStart = true;
+                return;
+            }
+            if (!isRecording) {
+                if (mediaStream) {
+                    try { mediaStream.getTracks().forEach(t => t.stop()); } catch(e) {}
+                    mediaStream = null;
+                }
+                return;
+            }
+
             isRecording = false;
             micBtn.classList.remove('recording');
             statusEl.textContent = "Transcribiendo con Whisper...";
 
             if (mediaRecorder && mediaRecorder.state !== 'inactive') {
                 mediaRecorder.onstop = () => {
-                    if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
+                    if (mediaStream) {
+                        try { mediaStream.getTracks().forEach(t => t.stop()); } catch(e) {}
+                        mediaStream = null;
+                    }
                     sendSpanishAudio();
                 };
-                mediaRecorder.stop();
+                try {
+                    mediaRecorder.stop();
+                } catch(e) {
+                    if (mediaStream) {
+                        try { mediaStream.getTracks().forEach(t => t.stop()); } catch(e2) {}
+                        mediaStream = null;
+                    }
+                }
             } else {
-                if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
+                if (mediaStream) {
+                    try { mediaStream.getTracks().forEach(t => t.stop()); } catch(e) {}
+                    mediaStream = null;
+                }
             }
         }
 
@@ -1759,8 +1923,15 @@
             progressContainer.style.display = 'block';
             simulateProgress();
 
+            const abortCtrl = new AbortController();
+            const timeoutId = setTimeout(() => abortCtrl.abort(), 25000);
+
             try {
-                const res = await fetch('/translate-es-audio', { method: 'POST', body: formData });
+                const res = await fetch('/translate-es-audio', { 
+                    method: 'POST', 
+                    body: formData,
+                    signal: abortCtrl.signal
+                });
                 if (!res.ok) { 
                     const e = await res.json().catch(() => ({ error: 'Error del servidor' })); 
                     throw new Error(e.error || 'Error procesando audio'); 
@@ -1852,9 +2023,16 @@
                 analyzeMedicalContext(data.transcription + " " + data.translation);
 
             } catch (err) {
-                showErrorAlert(err.message || "Fallo en la red. Verifica tu conexión e intenta de nuevo.");
+                showErrorAlert(err.name === 'AbortError' ? 'Tiempo de espera agotado al conectar con el servidor.' : (err.message || "Fallo en la red. Verifica tu conexión e intenta de nuevo."));
                 updateStatusIndicator('none');
             } finally {
+                clearTimeout(timeoutId);
+                setTimeout(() => {
+                    if (progressContainer.style.display !== 'none') {
+                        progressContainer.style.display = 'none';
+                        progressBar.style.width = '0%';
+                    }
+                }, 550);
                 releaseWakeLock();
             }
         }
