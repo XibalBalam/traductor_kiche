@@ -39,8 +39,7 @@ for k, v in secrets.items():
         print(f"Warning: Secret {k} was empty in local .env")
 
 print("Uploading code to Hugging Face...")
-# We ignore the venv directory, scratch, and .git
-ignore_patterns = ["venv/*", "scratch/*", ".git/*", "__pycache__/*", "*.mp3", "*.wav", "outputs/*", "uploads/*", "training_data*", "*.zip", "models/mms_tts_kiche/*", "models/*.zip", "models/custom_kiche_tts/*"]
+ignore_patterns = ["venv/*", "scratch/*", ".git/*", "__pycache__/*", "*.mp3", "outputs/*", "uploads/*", "training_data*", "*.zip", "models/mms_tts_kiche/*", "models/*.zip", "models/custom_kiche_tts/*"]
 
 try:
     api.upload_folder(
@@ -48,7 +47,7 @@ try:
         repo_id=REPO_ID,
         repo_type="space",
         ignore_patterns=ignore_patterns,
-        commit_message="v1.3.0: sincronizar microfono rojo en escucha con audio de indicaciones (delay 2s), mejoras admin y navegacion"
+        commit_message="feat: gestor de modelo LoRA en caliente desde web, gesto pull-to-refresh PWA y sonido de marimba"
     )
     print("Code uploaded successfully!")
 except Exception as e:

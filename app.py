@@ -18,6 +18,8 @@ import rapidfuzz
 import boto3
 import io
 import zipfile
+import shutil
+import numpy as np
 import datetime
 from functools import wraps
 from flask_sqlalchemy import SQLAlchemy
@@ -77,6 +79,16 @@ def role_required(*allowed_roles):
 
 ESCRITURA_CSV = os.path.join(os.path.dirname(__file__), 'escritura_dataset.csv')
 DICT_PATH = os.path.join(os.path.dirname(__file__), 'medical_dictionary.json')
+
+@app.before_request
+def sync_session_user():
+    if 'user_id' in session:
+        try:
+            user = User.query.get(session['user_id'])
+            if user:
+                session['role'] = user.role
+        except Exception:
+            pass
 
 # --- AUTH ROUTES ---
 @app.route('/login', methods=['GET', 'POST'])
@@ -330,6 +342,248 @@ def admin_delete(user_id):
         sync_file_to_s3(DB_PATH, 'app.db')
         flash(f"Usuario {username} eliminado permanentemente.", "danger")
     return redirect(url_for('admin_page'))
+
+# --- ADMIN AI MODEL (LORA) MANAGEMENT API ---
+
+@app.route('/admin/verify-admin-action', methods=['POST'])
+@role_required('admin')
+def verify_admin_action():
+    data = request.get_json() or {}
+    password = data.get('password', '')
+    user = User.query.get(session.get('user_id'))
+    if not user or not check_password_hash(user.password_hash, password):
+        return jsonify({"valid": False, "error": "Contraseña de administrador incorrecta"}), 403
+    return jsonify({"valid": True})
+
+@app.route('/admin/api/model-status', methods=['GET'])
+@role_required('admin')
+def admin_model_status():
+    global model, current_model_mode, device
+    models_dir = os.path.join(os.path.dirname(__file__), 'models')
+    trained_model_dir = os.path.join(models_dir, 'mms_kiche_trained')
+    backups_dir = os.path.join(models_dir, 'backups')
+
+    has_lora = os.path.exists(os.path.join(trained_model_dir, 'adapter_config.json'))
+
+    files_info = []
+    total_size = 0
+    last_mod = None
+
+    if os.path.exists(trained_model_dir):
+        for f in sorted(os.listdir(trained_model_dir)):
+            fp = os.path.join(trained_model_dir, f)
+            if os.path.isfile(fp):
+                st = os.stat(fp)
+                total_size += st.st_size
+                mtime_str = datetime.datetime.fromtimestamp(st.st_mtime).strftime("%d/%m/%Y %H:%M")
+                if not last_mod or st.st_mtime > last_mod:
+                    last_mod = st.st_mtime
+                files_info.append({
+                    "name": f,
+                    "size_mb": round(st.st_size / (1024 * 1024), 2),
+                    "modified": mtime_str
+                })
+
+    backups_list = []
+    if os.path.exists(backups_dir):
+        for b in sorted(os.listdir(backups_dir), reverse=True):
+            bp = os.path.join(backups_dir, b)
+            if os.path.isdir(bp):
+                b_size = sum(os.path.getsize(os.path.join(bp, f)) for f in os.listdir(bp) if os.path.isfile(os.path.join(bp, f)))
+                st = os.stat(bp)
+                mtime_str = datetime.datetime.fromtimestamp(st.st_mtime).strftime("%d/%m/%Y %H:%M")
+                backups_list.append({
+                    "name": b,
+                    "size_mb": round(b_size / (1024 * 1024), 2),
+                    "date": mtime_str
+                })
+
+    return jsonify({
+        "active_mode": current_model_mode if model is not None else "no_cargado",
+        "has_lora_files": has_lora,
+        "device": str(device) if device else "cpu",
+        "total_size_mb": round(total_size / (1024 * 1024), 2),
+        "last_modified": datetime.datetime.fromtimestamp(last_mod).strftime("%d/%m/%Y %H:%M") if last_mod else "N/A",
+        "files": files_info,
+        "backups": backups_list
+    })
+
+@app.route('/admin/api/upload-model', methods=['POST'])
+@role_required('admin')
+def admin_upload_model():
+    if 'model_zip' not in request.files:
+        return jsonify({"error": "No se recibió ningún archivo ZIP"}), 400
+
+    file = request.files['model_zip']
+    if not file.filename.lower().endswith('.zip'):
+        return jsonify({"error": "El archivo debe ser un paquete ZIP comprimido (.zip)"}), 400
+
+    models_dir = os.path.join(os.path.dirname(__file__), 'models')
+    trained_model_dir = os.path.join(models_dir, 'mms_kiche_trained')
+    backups_dir = os.path.join(models_dir, 'backups')
+    os.makedirs(trained_model_dir, exist_ok=True)
+    os.makedirs(backups_dir, exist_ok=True)
+
+    try:
+        zip_bytes = io.BytesIO(file.read())
+        with zipfile.ZipFile(zip_bytes, 'r') as zf:
+            namelist = zf.namelist()
+
+            adapter_conf_path = None
+            for name in namelist:
+                if os.path.basename(name) == 'adapter_config.json':
+                    adapter_conf_path = name
+                    break
+
+            if not adapter_conf_path:
+                return jsonify({
+                    "error": "El archivo ZIP no contiene 'adapter_config.json'. Asegúrate de subir el archivo mms_kiche_trained.zip exportado de Google Colab."
+                }), 400
+
+            prefix = os.path.dirname(adapter_conf_path)
+            if prefix:
+                prefix = prefix + "/"
+
+            # Crear respaldo automático del modelo anterior
+            if os.path.exists(trained_model_dir) and os.listdir(trained_model_dir):
+                ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+                backup_path = os.path.join(backups_dir, f"backup_{ts}")
+                shutil.copytree(trained_model_dir, backup_path)
+                existing_backups = sorted([os.path.join(backups_dir, d) for d in os.listdir(backups_dir) if os.path.isdir(os.path.join(backups_dir, d))])
+                if len(existing_backups) > 5:
+                    for old_b in existing_backups[:-5]:
+                        shutil.rmtree(old_b, ignore_errors=True)
+
+            # Limpiar carpeta para extracción limpia
+            for old_file in os.listdir(trained_model_dir):
+                full_p = os.path.join(trained_model_dir, old_file)
+                if os.path.isfile(full_p):
+                    os.remove(full_p)
+                elif os.path.isdir(full_p):
+                    shutil.rmtree(full_p, ignore_errors=True)
+
+            # Extraer archivos asegurando protección contra Zip Slip
+            for member in zf.infolist():
+                if member.is_dir():
+                    continue
+                rel_path = member.filename
+                if prefix:
+                    if rel_path.startswith(prefix):
+                        rel_path = rel_path[len(prefix):]
+                    else:
+                        continue
+                if not rel_path or rel_path.startswith('__MACOSX'):
+                    continue
+
+                dest_path = os.path.abspath(os.path.join(trained_model_dir, rel_path))
+                if not dest_path.startswith(os.path.abspath(trained_model_dir)):
+                    continue
+
+                os.makedirs(os.path.dirname(dest_path), exist_ok=True)
+                with zf.open(member) as source, open(dest_path, "wb") as target:
+                    shutil.copyfileobj(source, target)
+
+        # Sincronizar con S3 si está disponible
+        for root, _, files in os.walk(trained_model_dir):
+            for f in files:
+                full_path = os.path.join(root, f)
+                rel_s3 = f"models/mms_kiche_trained/{f}"
+                sync_file_to_s3(full_path, rel_s3)
+
+        # Recargar en caliente en memoria
+        reload_asr_model(force_mode='lora')
+
+        audit = Audit(user_id=session['user_id'], action=f"Actualizó dinámicamente el modelo LoRA ASR ({file.filename}) desde la web")
+        db.session.add(audit)
+        db.session.commit()
+
+        return jsonify({
+            "success": True,
+            "message": "¡Nuevo modelo LoRA afinado cargado, respaldado y activado exitosamente en caliente!",
+            "mode": "lora"
+        })
+    except Exception as e:
+        print(f"[Admin Model Upload] Error: {e}")
+        return jsonify({"error": f"Error procesando el modelo: {str(e)}"}), 500
+
+@app.route('/admin/api/switch-model-mode', methods=['POST'])
+@role_required('admin')
+def admin_switch_model_mode():
+    data = request.get_json() or {}
+    target_mode = data.get('mode')
+    if target_mode not in ['lora', 'generic']:
+        return jsonify({"error": "Modo inválido. Debe ser 'lora' o 'generic'"}), 400
+
+    res = reload_asr_model(force_mode=target_mode)
+
+    label = "LoRA afinado (Colab)" if target_mode == 'lora' else "Base genérico MMS (Meta)"
+    audit = Audit(user_id=session['user_id'], action=f"Alternó el modelo ASR en memoria hacia: {label}")
+    db.session.add(audit)
+    db.session.commit()
+
+    return jsonify({
+        "success": True,
+        "message": f"Modelo cambiado exitosamente a: {label}",
+        "mode": target_mode
+    })
+
+@app.route('/admin/api/restore-model-backup', methods=['POST'])
+@role_required('admin')
+def admin_restore_model_backup():
+    data = request.get_json() or {}
+    backup_name = data.get('backup_name')
+    if not backup_name:
+        return jsonify({"error": "No se indicó el nombre del respaldo"}), 400
+
+    models_dir = os.path.join(os.path.dirname(__file__), 'models')
+    backup_dir = os.path.join(models_dir, 'backups', backup_name)
+    trained_model_dir = os.path.join(models_dir, 'mms_kiche_trained')
+
+    if not os.path.isdir(backup_dir):
+        return jsonify({"error": "El respaldo indicado no existe"}), 404
+
+    try:
+        if os.path.exists(trained_model_dir):
+            shutil.rmtree(trained_model_dir, ignore_errors=True)
+        shutil.copytree(backup_dir, trained_model_dir)
+
+        reload_asr_model(force_mode='lora')
+
+        audit = Audit(user_id=session['user_id'], action=f"Restauró el modelo LoRA ASR desde el respaldo: {backup_name}")
+        db.session.add(audit)
+        db.session.commit()
+
+        return jsonify({
+            "success": True,
+            "message": f"Respaldo '{backup_name}' restaurado y activado exitosamente."
+        })
+    except Exception as e:
+        return jsonify({"error": f"Error al restaurar respaldo: {str(e)}"}), 500
+
+@app.route('/admin/api/test-model-inference', methods=['POST'])
+@role_required('admin')
+def admin_test_model_inference():
+    global model, processor, device
+    if model is None:
+        load_model()
+
+    start_t = time.time()
+    try:
+        test_waveform = np.zeros(16000, dtype=np.float32)
+        inputs = processor(test_waveform, sampling_rate=16000, return_tensors="pt").to(device)
+        with torch.no_grad():
+            outputs = model(**inputs)
+        latency = round((time.time() - start_t) * 1000, 2)
+
+        return jsonify({
+            "success": True,
+            "latency_ms": latency,
+            "device": str(device),
+            "mode": current_model_mode,
+            "status": "Inferencia verificada y operativa"
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 # --- ESCRITURA TRAINING PAGE ---
 
@@ -1377,58 +1631,83 @@ import threading
 model_lock = threading.Lock()
 is_loading = False
 
+current_model_mode = 'lora'
+
+def reload_asr_model(force_mode=None):
+    global processor, model, device, is_loading, current_model_mode
+    with model_lock:
+        is_loading = True
+        try:
+            print("[ASR Engine] Cargando / Recargando modelo ASR en caliente...")
+            if force_mode:
+                current_model_mode = force_mode
+
+            model_id = "facebook/mms-1b-all"
+            if processor is None:
+                processor = AutoProcessor.from_pretrained(model_id)
+            processor.tokenizer.set_target_lang("quc-dialect_central")
+
+            base_model = Wav2Vec2ForCTC.from_pretrained(model_id)
+            device = "cuda" if torch.cuda.is_available() else ("mps" if torch.backends.mps.is_available() else "cpu")
+            base_model.load_adapter("quc-dialect_central")
+
+            trained_model_dir = os.path.join(os.path.dirname(__file__), 'models', 'mms_kiche_trained')
+            active_type = "generic"
+
+            if current_model_mode != 'generic' and os.path.exists(os.path.join(trained_model_dir, 'adapter_config.json')):
+                print(f"[ASR Engine] Detectado modelo entrenado local en: {trained_model_dir}")
+                try:
+                    from peft import PeftModel
+                    model = PeftModel.from_pretrained(base_model, trained_model_dir)
+                    active_type = "lora"
+                    print("✅ Pesos LoRA cargados exitosamente sobre el modelo base.")
+                except ImportError:
+                    print("❌ Error: La librería 'peft' no está instalada. Usando modelo genérico.")
+                    model = base_model
+                except Exception as e:
+                    print(f"❌ Error cargando modelo LoRA: {e}. Usando modelo genérico.")
+                    model = base_model
+            else:
+                model = base_model
+                active_type = "generic"
+                print("ℹ️ Usando modelo base genérico MMS (quc-dialect_central).")
+
+            model.to(device)
+            current_model_mode = active_type
+            print(f"[ASR Engine] Modelo cargado en {device} (Modo activo: {current_model_mode}).")
+
+            if device == "cpu":
+                torch.set_num_threads(8)
+
+            try:
+                warmup_tensor = torch.zeros((1, 16000), dtype=torch.float32).to(device)
+                with torch.no_grad():
+                    _ = model(warmup_tensor)
+                print("✅ Inferencia de precalentamiento completada.")
+            except Exception as we:
+                print(f"Aviso en precalentamiento: {we}")
+
+            return {
+                "success": True,
+                "mode": current_model_mode,
+                "device": str(device)
+            }
+        finally:
+            is_loading = False
+
 def load_model():
     global processor, model, tts_model, tts_tokenizer, device, is_loading
     with model_lock:
         if model is not None or is_loading:
             return
+
+    # Cargar ASR de forma unificada
+    reload_asr_model()
+
+    with model_lock:
         is_loading = True
 
     try:
-        print("Loading base MMS model...")
-        model_id = "facebook/mms-1b-all"
-        processor = AutoProcessor.from_pretrained(model_id)
-        base_model = Wav2Vec2ForCTC.from_pretrained(model_id)
-        device = "cuda" if torch.cuda.is_available() else ("mps" if torch.backends.mps.is_available() else "cpu")
-        
-        processor.tokenizer.set_target_lang("quc-dialect_central")
-        base_model.load_adapter("quc-dialect_central")
-        
-        # Intentar cargar pesos LoRA entrenados
-        trained_model_dir = os.path.join(os.path.dirname(__file__), 'models', 'mms_kiche_trained')
-        if os.path.exists(os.path.join(trained_model_dir, 'adapter_config.json')):
-            print(f"Detectado modelo entrenado local en: {trained_model_dir}")
-            try:
-                from peft import PeftModel
-                model = PeftModel.from_pretrained(base_model, trained_model_dir)
-                print("✅ Pesos LoRA cargados exitosamente sobre el modelo base.")
-            except ImportError:
-                print("❌ Error: La librería 'peft' no está instalada. Ejecuta 'pip install peft'. Usando modelo genérico.")
-                model = base_model
-            except Exception as e:
-                print(f"❌ Error cargando modelo LoRA: {e}. Usando modelo genérico.")
-                model = base_model
-        else:
-            print("No se encontró modelo entrenado localmente. Usando adaptador genérico de MMS.")
-            model = base_model
-            
-        model.to(device)
-        print(f"Model loaded on {device}.")
-
-        if device == "cpu":
-            print("Optimizing for CPU: limiting threads...")
-            torch.set_num_threads(8)
-
-        # Precalentamiento del grafo y buffers de PyTorch en MMS
-        try:
-            print("Precalentando modelo MMS en segundo plano...")
-            warmup_tensor = torch.zeros((1, 16000), dtype=torch.float32).to(device)
-            with torch.no_grad():
-                _ = model(warmup_tensor)
-            print("✅ Modelo MMS precalentado en arranque del servidor.")
-        except Exception as we:
-            print(f"Aviso en precalentamiento de arranque de MMS: {we}")
-
         print("Loading custom TTS K'iche' model...")
         tts_dir = os.path.join(os.path.dirname(__file__), 'models', 'custom_kiche_tts')
         os.makedirs(tts_dir, exist_ok=True)
@@ -1601,6 +1880,8 @@ def tts_es():
     text = data.get('text', '').strip()
     if not text:
         return jsonify({'error': 'No text provided'}), 400
+    if text.startswith("No se encontró traducción"):
+        return jsonify({'audio_url': None, 'skipped': True})
     try:
         output_filename = f"{uuid.uuid4()}.mp3"
         output_path = os.path.join(OUTPUT_FOLDER, output_filename)

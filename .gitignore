@@ -35,6 +35,7 @@ instance/
 uploads/
 outputs/
 *.wav
+!static/audio/*.wav
 models/
 *.zip
 

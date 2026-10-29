@@ -283,9 +283,13 @@
                     <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-[color:var(--text-muted)]">search</span>
                     <input type="text" id="searchInput" placeholder="Buscar por nombre, correo o rol..." class="form-input w-full pl-11 pr-4 py-3 rounded-xl text-sm outline-none bg-black/10 backdrop-blur-md border border-[color:var(--card-border)]" oninput="filterUsers()">
                 </div>
-                <button onclick="document.getElementById('createUserModal').classList.remove('hidden')" class="bg-[color:var(--primary-jade)] hover:bg-[color:var(--primary-hover)] text-white px-5 py-3 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition-colors whitespace-nowrap shadow-lg w-full sm:w-auto">
+                <button onclick="document.getElementById('createUserModal').classList.remove('hidden')" class="bg-[color:var(--primary-jade)] hover:bg-[color:var(--primary-hover)] text-white px-5 py-3 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition-colors whitespace-nowrap shadow-lg w-full sm:w-auto cursor-pointer">
                     <span class="material-symbols-outlined text-[1.2rem]">person_add</span>
                     Crear Cuenta
+                </button>
+                <button onclick="openAiModelShield()" class="border border-purple-500/40 bg-purple-500/15 hover:bg-purple-500/30 text-purple-300 hover:text-white px-5 py-3 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition-all whitespace-nowrap shadow-lg w-full sm:w-auto cursor-pointer" title="Gestión avanzada y protegida del modelo de IA ASR (LoRA Colab)">
+                    <span class="material-symbols-outlined text-[1.2rem] text-purple-400">psychology</span>
+                    Motor de IA (LoRA)
                 </button>
             </div>
         </div>
@@ -509,6 +513,209 @@
         </div>
     </div>
 
+    <!-- AI MODEL AUTH / SHIELD MODAL (Zona Protegida) -->
+    <div id="aiModelAuthModal" class="fixed inset-0 z-[110] hidden">
+        <div class="absolute inset-0 bg-black/70 backdrop-blur-md" onclick="closeAiModelShield()"></div>
+        <div class="absolute inset-0 flex items-center justify-center p-4">
+            <div class="glass-card w-full max-w-md p-6 sm:p-8 animate-[smokeIn_0.35s_ease-out_forwards] border-purple-500/30 shadow-[0_15px_40px_rgba(147,51,234,0.2)]">
+                <div class="flex justify-between items-center mb-5">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-10 h-10 rounded-full bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-purple-400">
+                            <span class="material-symbols-outlined text-[1.4rem]">lock</span>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-bold text-[color:var(--text-main)]">Zona Protegida</h3>
+                            <p class="text-xs text-[color:var(--text-muted)]">Gestión de Modelos de Inteligencia Artificial</p>
+                        </div>
+                    </div>
+                    <button onclick="closeAiModelShield()" class="text-[color:var(--text-muted)] hover:text-[color:var(--text-main)] cursor-pointer">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+
+                <p class="text-xs text-[color:var(--text-muted)] leading-relaxed mb-4">
+                    Esta sección permite reemplazar en caliente los pesos neuronales del modelo ASR K'iche' en el servidor. Por política de seguridad, ingresa tu contraseña de administrador para desbloquear el acceso.
+                </p>
+
+                <div class="flex flex-col gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-[color:var(--text-muted)] uppercase mb-1">Contraseña de Administrador</label>
+                        <input type="password" id="adminAuthPass" class="form-input w-full rounded-xl px-4 py-3 text-sm outline-none" placeholder="Ingresa tu contraseña actual..." onkeydown="if(event.key==='Enter') submitAiAuth()">
+                        <div id="adminAuthError" class="hidden text-xs text-red-400 mt-1 font-medium">Contraseña incorrecta. Acceso denegado.</div>
+                    </div>
+
+                    <div class="flex gap-2 mt-2">
+                        <button type="button" onclick="closeAiModelShield()" class="flex-1 bg-black/20 hover:bg-black/30 text-[color:var(--text-main)] font-semibold py-2.5 rounded-xl text-sm transition-colors cursor-pointer">
+                            Cancelar
+                        </button>
+                        <button type="button" id="btnSubmitAiAuth" onclick="submitAiAuth()" class="flex-1 bg-purple-600 hover:bg-purple-500 text-white font-semibold py-2.5 rounded-xl text-sm transition-all shadow-lg flex items-center justify-center gap-1.5 cursor-pointer">
+                            <span class="material-symbols-outlined text-[1.1rem]">lock_open</span>
+                            Desbloquear
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI MODEL STUDIO MODAL (Gestión y Carga en Caliente de LoRA Colab) -->
+    <div id="aiModelStudioModal" class="fixed inset-0 z-[120] hidden">
+        <div class="absolute inset-0 bg-black/75 backdrop-blur-md" onclick="closeAiModelStudio()"></div>
+        <div class="absolute inset-0 flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
+            <div class="glass-card w-full max-w-2xl p-5 sm:p-8 animate-[smokeIn_0.35s_ease-out_forwards] max-h-[92vh] overflow-y-auto border-purple-500/30">
+                <!-- Header -->
+                <div class="flex justify-between items-start mb-5 pb-4 border-b border-[color:var(--card-border)]">
+                    <div>
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="material-symbols-outlined text-purple-400 text-[1.6rem]">psychology</span>
+                            <h2 class="text-lg sm:text-xl font-bold text-[color:var(--text-main)]">Gestor de Modelo ASR K'iche'</h2>
+                        </div>
+                        <p class="text-xs text-[color:var(--text-muted)]">Carga dinámica de pesos entrenados en Google Colab (Meta MMS + LoRA)</p>
+                    </div>
+                    <button onclick="closeAiModelStudio()" class="text-[color:var(--text-muted)] hover:text-[color:var(--text-main)] p-1 rounded-lg hover:bg-white/10 cursor-pointer">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+
+                <!-- Status Card -->
+                <div class="rounded-2xl p-4 sm:p-5 mb-5 border border-purple-500/25 bg-purple-950/20 backdrop-blur-md flex flex-col gap-3">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div class="flex items-center gap-2.5">
+                            <span id="aiStatusDot" class="w-3.5 h-3.5 rounded-full bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.8)] animate-pulse"></span>
+                            <div>
+                                <span class="text-xs uppercase font-bold text-purple-300 tracking-wider">Modelo Activo en Memoria</span>
+                                <h3 id="aiModelTitle" class="text-sm sm:text-base font-bold text-[color:var(--text-main)]">MMS-1B + Adaptador LoRA K'iche'</h3>
+                            </div>
+                        </div>
+                        <button onclick="testAiInference()" id="btnTestInference" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-white/10 hover:bg-white/20 text-[color:var(--text-main)] border border-white/15 flex items-center gap-1.5 transition-all cursor-pointer">
+                            <span class="material-symbols-outlined text-[1rem] text-emerald-400">speed</span>
+                            Probar Inferencia en Vivo
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-2 border-t border-white/10 text-xs">
+                        <div>
+                            <span class="text-[color:var(--text-muted)] block">Hardware</span>
+                            <span id="aiDevice" class="font-bold uppercase text-[color:var(--text-main)]">-</span>
+                        </div>
+                        <div>
+                            <span class="text-[color:var(--text-muted)] block">Tamaño LoRA</span>
+                            <span id="aiModelSize" class="font-bold text-[color:var(--text-main)]">-</span>
+                        </div>
+                        <div>
+                            <span class="text-[color:var(--text-muted)] block">Última Actualización</span>
+                            <span id="aiLastMod" class="font-bold text-[color:var(--text-main)] truncate block">-</span>
+                        </div>
+                        <div>
+                            <span class="text-[color:var(--text-muted)] block">Test Diagnóstico</span>
+                            <span id="aiInferenceStatus" class="font-bold text-emerald-400 block truncate">Listo</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabs: Upload / Switch / Backups -->
+                <div class="flex gap-2 mb-4 border-b border-[color:var(--card-border)] pb-2 overflow-x-auto">
+                    <button type="button" onclick="switchAiTab('upload')" id="tabBtnUpload" class="ai-tab-btn active px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 bg-purple-600 text-white cursor-pointer">
+                        <span class="material-symbols-outlined text-[1rem]">cloud_upload</span>
+                        Subir ZIP de Colab
+                    </button>
+                    <button type="button" onclick="switchAiTab('switch')" id="tabBtnSwitch" class="ai-tab-btn px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 text-[color:var(--text-muted)] hover:text-white hover:bg-white/5 cursor-pointer">
+                        <span class="material-symbols-outlined text-[1rem]">tune</span>
+                        Alternar Modelo Base/LoRA
+                    </button>
+                    <button type="button" onclick="switchAiTab('backups')" id="tabBtnBackups" class="ai-tab-btn px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 text-[color:var(--text-muted)] hover:text-white hover:bg-white/5 cursor-pointer">
+                        <span class="material-symbols-outlined text-[1rem]">history</span>
+                        Respaldos & Rollback
+                    </button>
+                </div>
+
+                <!-- Tab 1: Upload Model from Colab -->
+                <div id="aiTabUpload" class="ai-tab-content flex flex-col gap-4">
+                    <div class="rounded-xl p-3.5 bg-black/10 border border-purple-500/20 text-xs text-[color:var(--text-muted)] leading-relaxed">
+                        <div class="flex items-center gap-1.5 text-purple-300 font-bold mb-1">
+                            <span class="material-symbols-outlined text-[1.1rem]">info</span>
+                            Instrucciones para modelos de Google Colab
+                        </div>
+                        Sube directamente el archivo <strong class="text-white">mms_kiche_trained.zip</strong> generado en Google Colab. El sistema validará <code class="bg-black/30 px-1 py-0.5 rounded text-purple-300">adapter_config.json</code>, creará una copia de seguridad automática del modelo actual y recargará PyTorch en memoria sin reiniciar el servidor.
+                    </div>
+
+                    <!-- Drag & Drop Zone -->
+                    <div id="modelDropZone" class="border-2 border-dashed border-purple-500/40 hover:border-purple-400/80 rounded-2xl p-6 sm:p-8 text-center transition-all bg-purple-950/10 hover:bg-purple-950/20 cursor-pointer" onclick="document.getElementById('modelZipInput').click()">
+                        <input type="file" id="modelZipInput" accept=".zip" class="hidden" onchange="handleModelFileSelected(this.files)">
+                        <span class="material-symbols-outlined text-[2.8rem] text-purple-400 mb-2 block">folder_zip</span>
+                        <h4 id="modelDropTitle" class="text-sm font-bold text-[color:var(--text-main)] mb-1">Arrastra aquí mms_kiche_trained.zip o haz clic para explorar</h4>
+                        <p id="modelDropSubtitle" class="text-xs text-[color:var(--text-muted)]">Paquete comprimido ZIP con pesos LoRA (máx. 150 MB)</p>
+                    </div>
+
+                    <!-- Progress and checklist -->
+                    <div id="modelUploadProgressCard" class="hidden rounded-xl p-4 bg-black/20 border border-purple-500/30 flex flex-col gap-3">
+                        <div class="flex justify-between items-center text-xs font-semibold">
+                            <span id="modelProgressLabel" class="text-purple-300">Procesando modelo...</span>
+                            <span id="modelProgressPercent" class="text-[color:var(--text-main)]">0%</span>
+                        </div>
+                        <div class="w-full bg-black/40 rounded-full h-2.5 overflow-hidden">
+                            <div id="modelProgressBar" class="bg-gradient-to-r from-purple-600 to-emerald-400 h-full w-0 transition-all duration-300 rounded-full"></div>
+                        </div>
+                        <div class="flex flex-col gap-1 text-[11px] text-[color:var(--text-muted)]" id="modelChecklist">
+                            <span id="step-upload" class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[0.95rem]">pending</span> 1. Subida del paquete ZIP</span>
+                            <span id="step-verify" class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[0.95rem]">pending</span> 2. Verificación de adapter_config.json y pesos</span>
+                            <span id="step-backup" class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[0.95rem]">pending</span> 3. Respaldo de seguridad del modelo actual</span>
+                            <span id="step-extract" class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[0.95rem]">pending</span> 4. Descompresión en models/mms_kiche_trained</span>
+                            <span id="step-reload" class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[0.95rem]">pending</span> 5. Recarga y precalentamiento en caliente en PyTorch</span>
+                        </div>
+                    </div>
+
+                    <button type="button" id="btnUploadModel" onclick="startModelUpload()" disabled class="w-full py-3 rounded-xl font-bold text-sm bg-purple-600 hover:bg-purple-500 disabled:opacity-40 disabled:cursor-not-allowed text-white transition-all shadow-lg flex items-center justify-center gap-2 cursor-pointer">
+                        <span class="material-symbols-outlined text-[1.2rem]">publish</span>
+                        Validar, Respaldar y Activar Nuevo Modelo
+                    </button>
+                </div>
+
+                <!-- Tab 2: Switch Model Mode -->
+                <div id="aiTabSwitch" class="ai-tab-content hidden flex flex-col gap-4">
+                    <p class="text-xs text-[color:var(--text-muted)]">
+                        Puedes alternar en cualquier momento entre el modelo afinado con tus datos de Google Colab y el modelo genérico estándar de Meta MMS sin eliminar tus pesos.
+                    </p>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="rounded-xl p-4 border border-[color:var(--card-border)] bg-black/10 flex flex-col justify-between gap-3">
+                            <div>
+                                <span class="text-xs font-bold uppercase text-emerald-400 block mb-1">Recomendado</span>
+                                <h4 class="font-bold text-sm text-[color:var(--text-main)]">Modelo LoRA Afinado</h4>
+                                <p class="text-xs text-[color:var(--text-muted)] mt-1">Utiliza los pesos entrenados con tus audios y frases médicas locales.</p>
+                            </div>
+                            <button type="button" onclick="switchModelMode('lora')" id="btnSwitchLora" class="w-full py-2.5 rounded-xl text-xs font-bold transition-all bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center gap-1.5 cursor-pointer">
+                                <span class="material-symbols-outlined text-[1rem]">check</span> Activar Modo LoRA
+                            </button>
+                        </div>
+
+                        <div class="rounded-xl p-4 border border-[color:var(--card-border)] bg-black/10 flex flex-col justify-between gap-3">
+                            <div>
+                                <span class="text-xs font-bold uppercase text-blue-400 block mb-1">Base Oficial</span>
+                                <h4 class="font-bold text-sm text-[color:var(--text-main)]">Modelo Genérico Meta MMS</h4>
+                                <p class="text-xs text-[color:var(--text-muted)] mt-1">Utiliza el adaptador original de Meta MMS (quc-dialect_central) sin LoRA.</p>
+                            </div>
+                            <button type="button" onclick="switchModelMode('generic')" id="btnSwitchGeneric" class="w-full py-2.5 rounded-xl text-xs font-bold transition-all bg-blue-600 hover:bg-blue-500 text-white flex items-center justify-center gap-1.5 cursor-pointer">
+                                <span class="material-symbols-outlined text-[1rem]">sync</span> Activar Modo Genérico
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 3: Backups & Rollback -->
+                <div id="aiTabBackups" class="ai-tab-content hidden flex flex-col gap-3">
+                    <p class="text-xs text-[color:var(--text-muted)]">
+                        Cada vez que subes un nuevo modelo, el sistema crea un respaldo automático. Si un nuevo modelo no arroja los resultados deseados, puedes restaurar un punto anterior al instante.
+                    </p>
+                    <div id="aiBackupsList" class="flex flex-col gap-2 max-h-[280px] overflow-y-auto">
+                        <div class="text-center py-6 text-xs text-[color:var(--text-muted)]">Cargando respaldos disponibles...</div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
     <script>
         function filterUsers() {
             const query = document.getElementById('searchInput').value.toLowerCase();
@@ -632,6 +839,301 @@
                 }, 5000);
             }
         });
+
+        // --- AI MODEL MANAGEMENT JAVASCRIPT ---
+        let selectedModelZipFile = null;
+        window.__aiStudioUnlocked = false;
+
+        function openAiModelShield() {
+            if (window.__aiStudioUnlocked) {
+                openAiModelStudio();
+            } else {
+                document.getElementById('adminAuthPass').value = '';
+                document.getElementById('adminAuthError').classList.add('hidden');
+                document.getElementById('aiModelAuthModal').classList.remove('hidden');
+                setTimeout(() => document.getElementById('adminAuthPass').focus(), 150);
+            }
+        }
+
+        function closeAiModelShield() {
+            document.getElementById('aiModelAuthModal').classList.add('hidden');
+        }
+
+        async function submitAiAuth() {
+            const pwd = document.getElementById('adminAuthPass').value;
+            const errEl = document.getElementById('adminAuthError');
+            const btn = document.getElementById('btnSubmitAiAuth');
+            if (!pwd) {
+                errEl.textContent = 'Ingresa tu contraseña de administrador.';
+                errEl.classList.remove('hidden');
+                return;
+            }
+            btn.disabled = true;
+            btn.innerHTML = '<span class="material-symbols-outlined text-[1rem] animate-spin">refresh</span> Verificando...';
+            try {
+                const res = await fetch('/admin/verify-admin-action', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password: pwd })
+                });
+                const data = await res.json();
+                if (data.valid) {
+                    window.__aiStudioUnlocked = true;
+                    closeAiModelShield();
+                    openAiModelStudio();
+                } else {
+                    errEl.textContent = data.error || 'Contraseña incorrecta.';
+                    errEl.classList.remove('hidden');
+                }
+            } catch (e) {
+                errEl.textContent = 'Error de conexión con el servidor.';
+                errEl.classList.remove('hidden');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span class="material-symbols-outlined text-[1.1rem]">lock_open</span> Desbloquear';
+            }
+        }
+
+        function openAiModelStudio() {
+            document.getElementById('aiModelStudioModal').classList.remove('hidden');
+            loadAiModelStatus();
+        }
+
+        function closeAiModelStudio() {
+            document.getElementById('aiModelStudioModal').classList.add('hidden');
+        }
+
+        async function loadAiModelStatus() {
+            try {
+                const res = await fetch('/admin/api/model-status');
+                const data = await res.json();
+
+                const titleEl = document.getElementById('aiModelTitle');
+                const dotEl = document.getElementById('aiStatusDot');
+                const deviceEl = document.getElementById('aiDevice');
+                const sizeEl = document.getElementById('aiModelSize');
+                const modEl = document.getElementById('aiLastMod');
+
+                deviceEl.textContent = data.device || 'CPU';
+                sizeEl.textContent = (data.total_size_mb || 0) + ' MB';
+                modEl.textContent = data.last_modified || 'N/A';
+
+                if (data.active_mode === 'lora') {
+                    titleEl.textContent = "MMS-1B + Adaptador LoRA K'iche' (Afinado en Colab)";
+                    dotEl.className = "w-3.5 h-3.5 rounded-full bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.8)] animate-pulse";
+                } else {
+                    titleEl.textContent = "MMS-1B Genérico Base (Meta quc-dialect_central)";
+                    dotEl.className = "w-3.5 h-3.5 rounded-full bg-blue-400 shadow-[0_0_12px_rgba(96,165,250,0.8)]";
+                }
+
+                renderAiBackups(data.backups || []);
+            } catch (e) {
+                console.error("Error al cargar estado del modelo:", e);
+            }
+        }
+
+        function renderAiBackups(backups) {
+            const listEl = document.getElementById('aiBackupsList');
+            if (!backups || backups.length === 0) {
+                listEl.innerHTML = '<div class="text-center py-6 text-xs text-[color:var(--text-muted)]">No hay respaldos anteriores aún. Al subir tu primer modelo se creará uno automáticamente.</div>';
+                return;
+            }
+            listEl.innerHTML = backups.map(b => `
+                <div class="flex items-center justify-between p-3 rounded-xl bg-black/10 border border-[color:var(--card-border)] text-xs">
+                    <div class="flex items-center gap-2.5">
+                        <span class="material-symbols-outlined text-purple-400 text-[1.2rem]">folder_zip</span>
+                        <div>
+                            <span class="font-bold text-[color:var(--text-main)] block">${b.name}</span>
+                            <span class="text-[color:var(--text-muted)] text-[11px]">${b.date} • ${b.size_mb} MB</span>
+                        </div>
+                    </div>
+                    <button type="button" onclick="restoreAiBackup('${b.name}')" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-purple-600/30 hover:bg-purple-600 text-purple-200 hover:text-white border border-purple-500/40 transition-all flex items-center gap-1 cursor-pointer">
+                        <span class="material-symbols-outlined text-[0.95rem]">restore</span> Restaurar
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        async function restoreAiBackup(backupName) {
+            if (!confirm(`¿Deseas restaurar el respaldo "${backupName}" y reactivarlo en el traductor?`)) return;
+            try {
+                const res = await fetch('/admin/api/restore-model-backup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ backup_name: backupName })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert("✅ " + data.message);
+                    loadAiModelStatus();
+                } else {
+                    alert("❌ " + (data.error || "Error al restaurar respaldo"));
+                }
+            } catch (e) {
+                alert("Error de conexión al restaurar respaldo");
+            }
+        }
+
+        function switchAiTab(tabName) {
+            document.querySelectorAll('.ai-tab-btn').forEach(b => {
+                b.classList.remove('bg-purple-600', 'text-white', 'active');
+                b.classList.add('text-[color:var(--text-muted)]');
+            });
+            document.querySelectorAll('.ai-tab-content').forEach(c => c.classList.add('hidden'));
+
+            if (tabName === 'upload') {
+                document.getElementById('tabBtnUpload').classList.add('bg-purple-600', 'text-white', 'active');
+                document.getElementById('tabBtnUpload').classList.remove('text-[color:var(--text-muted)]');
+                document.getElementById('aiTabUpload').classList.remove('hidden');
+            } else if (tabName === 'switch') {
+                document.getElementById('tabBtnSwitch').classList.add('bg-purple-600', 'text-white', 'active');
+                document.getElementById('tabBtnSwitch').classList.remove('text-[color:var(--text-muted)]');
+                document.getElementById('aiTabSwitch').classList.remove('hidden');
+            } else if (tabName === 'backups') {
+                document.getElementById('tabBtnBackups').classList.add('bg-purple-600', 'text-white', 'active');
+                document.getElementById('tabBtnBackups').classList.remove('text-[color:var(--text-muted)]');
+                document.getElementById('aiTabBackups').classList.remove('hidden');
+            }
+        }
+
+        async function switchModelMode(mode) {
+            try {
+                const res = await fetch('/admin/api/switch-model-mode', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ mode })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert("✅ " + data.message);
+                    loadAiModelStatus();
+                } else {
+                    alert("❌ " + (data.error || "Error al alternar modo"));
+                }
+            } catch (e) {
+                alert("Error de conexión al alternar modo");
+            }
+        }
+
+        async function testAiInference() {
+            const btn = document.getElementById('btnTestInference');
+            const statusEl = document.getElementById('aiInferenceStatus');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="material-symbols-outlined text-[1rem] animate-spin">refresh</span> Probando...';
+            statusEl.textContent = 'Calculando...';
+            try {
+                const res = await fetch('/admin/api/test-model-inference', { method: 'POST' });
+                const data = await res.json();
+                if (data.success) {
+                    statusEl.textContent = `OK (${data.latency_ms} ms)`;
+                    alert(`✅ Inferencia verificada con éxito:\n• Latencia: ${data.latency_ms} ms\n• Hardware: ${data.device}\n• Modo: ${data.mode}`);
+                } else {
+                    statusEl.textContent = 'Error';
+                    alert('❌ Error en inferencia: ' + (data.error || 'desconocido'));
+                }
+            } catch (e) {
+                statusEl.textContent = 'Fallo de red';
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span class="material-symbols-outlined text-[1rem] text-emerald-400">speed</span> Probar Inferencia en Vivo';
+            }
+        }
+
+        function handleModelFileSelected(files) {
+            if (!files || files.length === 0) return;
+            const file = files[0];
+            if (!file.name.toLowerCase().endsWith('.zip')) {
+                alert("⚠️ Por favor selecciona un archivo ZIP (.zip)");
+                return;
+            }
+            selectedModelZipFile = file;
+            document.getElementById('modelDropTitle').textContent = file.name;
+            document.getElementById('modelDropSubtitle').textContent = `Tamaño: ${(file.size / (1024 * 1024)).toFixed(2)} MB - Listo para subir`;
+            document.getElementById('btnUploadModel').disabled = false;
+        }
+
+        function startModelUpload() {
+            if (!selectedModelZipFile) return;
+
+            const progressCard = document.getElementById('modelUploadProgressCard');
+            const progressBar = document.getElementById('modelProgressBar');
+            const progressLabel = document.getElementById('modelProgressLabel');
+            const progressPercent = document.getElementById('modelProgressPercent');
+            const btn = document.getElementById('btnUploadModel');
+
+            progressCard.classList.remove('hidden');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="material-symbols-outlined text-[1.1rem] animate-spin">refresh</span> Subiendo y activando...';
+
+            const setStep = (id, state) => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                if (state === 'active') {
+                    el.className = "flex items-center gap-1.5 text-purple-300 font-bold";
+                    el.querySelector('.material-symbols-outlined').className = "material-symbols-outlined text-[0.95rem] animate-spin";
+                    el.querySelector('.material-symbols-outlined').textContent = "refresh";
+                } else if (state === 'done') {
+                    el.className = "flex items-center gap-1.5 text-emerald-400 font-medium";
+                    el.querySelector('.material-symbols-outlined').className = "material-symbols-outlined text-[0.95rem] text-emerald-400";
+                    el.querySelector('.material-symbols-outlined').textContent = "check_circle";
+                }
+            };
+
+            setStep('step-upload', 'active');
+
+            const formData = new FormData();
+            formData.append('model_zip', selectedModelZipFile);
+
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', '/admin/api/upload-model', true);
+
+            xhr.upload.onprogress = function(e) {
+                if (e.lengthComputable) {
+                    const pct = Math.round((e.loaded / e.total) * 60);
+                    progressBar.style.width = pct + '%';
+                    progressPercent.textContent = pct + '%';
+                    progressLabel.textContent = `Subiendo archivo ZIP (${pct}%)...`;
+                    if (pct >= 60) {
+                        setStep('step-upload', 'done');
+                        setStep('step-verify', 'active');
+                        progressLabel.textContent = 'Validando estructura LoRA y adapter_config.json...';
+                    }
+                }
+            };
+
+            xhr.onload = function() {
+                progressBar.style.width = '100%';
+                progressPercent.textContent = '100%';
+                setStep('step-upload', 'done');
+                setStep('step-verify', 'done');
+                setStep('step-backup', 'done');
+                setStep('step-extract', 'done');
+                setStep('step-reload', 'done');
+
+                btn.disabled = false;
+                btn.innerHTML = '<span class="material-symbols-outlined text-[1.2rem]">publish</span> Validar, Respaldar y Activar Nuevo Modelo';
+
+                if (xhr.status === 200) {
+                    const resp = JSON.parse(xhr.responseText || '{}');
+                    progressLabel.textContent = '✅ ¡Nuevo modelo activado exitosamente!';
+                    alert('🎉 ' + resp.message);
+                    loadAiModelStatus();
+                } else {
+                    const resp = JSON.parse(xhr.responseText || '{}');
+                    progressLabel.textContent = '❌ Error al cargar modelo';
+                    alert('❌ ' + (resp.error || 'Ocurrió un error al procesar el modelo.'));
+                }
+            };
+
+            xhr.onerror = function() {
+                btn.disabled = false;
+                btn.innerHTML = '<span class="material-symbols-outlined text-[1.2rem]">publish</span> Validar, Respaldar y Activar Nuevo Modelo';
+                progressLabel.textContent = '❌ Error de conexión';
+                alert('❌ Error de red durante la subida.');
+            };
+
+            xhr.send(formData);
+        }
     </script>
 
     <!-- Theme Toggle -->
@@ -665,5 +1167,6 @@
             applyTheme(false);
         }
     </script>
+    <script src="{{ url_for('static', filename='js/pull-to-refresh.js') }}" defer></script>
 </body>
 </html>
