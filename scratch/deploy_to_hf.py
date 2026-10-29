@@ -47,7 +47,7 @@ try:
         repo_id=REPO_ID,
         repo_type="space",
         ignore_patterns=ignore_patterns,
-        commit_message="feat: gestor de modelo LoRA en caliente desde web, gesto pull-to-refresh PWA y sonido de marimba"
+        commit_message="fix: correccion de decodificacion fonetica glotal en K'iche' (k'ax, q'oxom, jas ab'i) y auto-sync S3"
     )
     print("Code uploaded successfully!")
 except Exception as e:
