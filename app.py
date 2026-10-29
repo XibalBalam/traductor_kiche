@@ -1425,9 +1425,9 @@ def apply_normalization_rules(text):
     sorted_rules = sorted(NORMALIZATION_RULES.items(), key=lambda x: len(x[0]), reverse=True)
     
     for bad_text, good_text in sorted_rules:
-        # Usar lookarounds (?<!\w) y (?!\w) asegura que solo reemplace palabras completas o frases,
-        # sin afectar letras en el interior de otras palabras.
-        pattern = re.compile(r'(?<!\w)' + re.escape(bad_text) + r'(?!\w)', re.IGNORECASE)
+        # Usar lookarounds (?<![\w\']) y (?![\w\']) asegura que solo reemplace palabras completas o frases,
+        # sin afectar letras o apóstrofes en el interior de otras palabras K'iche'.
+        pattern = re.compile(r'(?<![\w\'])' + re.escape(bad_text) + r'(?![\w\'])', re.IGNORECASE)
         text = pattern.sub(good_text, text)
             
     return ' '.join(text.split())
@@ -1444,12 +1444,17 @@ def _normalize(text):
     """
     text = text.lower().strip()
 
+    # Pre-normalización fonética para artefactos de ASR donde apóstrofes o <unk> sustituyeron consonantes
+    text = re.sub(r'(?:^|(?<=\s))(?:\'{1,2})ax(?=\s|$)', 'kax', text)
+    text = re.sub(r'(?:^|(?<=\s))(?:\'{1,2})oxom(?=\s|$)', 'qoxom', text)
+    text = re.sub(r'(?:^|(?<=\s))(?:\'{1,2})as(?=\s|$)', 'jas', text)
+
     # Strip umlaut vowels added by MMS
     text = text.replace('ä', 'a').replace('ë', 'e').replace('ï', 'i')
     text = text.replace('ö', 'o').replace('ü', 'u')
 
     # Strip ALL apostrophe/glottal variants (U+02BC, U+02C0, U+2019, etc.)
-    for apos in ["'", '\u02bc', '\u02c0', '\u0027', '\u2019', '\u02bb', 'ꞌ']:
+    for apos in ["'", '\u02bc', '\u02c0', '\u0027', '\u2019', '\u02bb', 'ꞌ', '´', '`']:
         text = text.replace(apos, '')
 
     # Strip remaining diacritics
@@ -1461,28 +1466,68 @@ def _normalize(text):
 def to_almg_display(text):
     """Convert raw MMS ASR output to ALMG standard K'iche' orthography for display.
     
-    Reversals of what MMS does:
-      cꞌ → k'   (MMS writes k' as cꞌ)
-      kꞌ → q'   (MMS writes q' as kꞌ)
-      ä → a, ë → e, etc.
-    This is ONLY for display — dictionary lookup still uses the raw text.
+    Reconstructs glottalized and aspirated initial consonants where <unk> or apostrophes
+    were emitted due to unmapped tokenizer tokens.
     """
+    if not text:
+        return ""
     import re
 
-    # 1. Unify apostrophe variants to standard '
-    for apos in ['ꞌ', '\u02bc', '\u02c0', '\u2019', '\u02bb']:
+    # 1. Unify all apostrophe / glottal variants first
+    for apos in ['ꞌ', '\u02bc', '\u02c0', '\u2019', '\u02bb', '`', '´']:
         text = text.replace(apos, "'")
 
     # 2. Convert MMS umlaut vowels back to plain vowels
     text = text.replace('ä', 'a').replace('ë', 'e').replace('ï', 'i')
     text = text.replace('ö', 'o').replace('ü', 'u')
 
-    # 3. cꞌ / c' → k'  (glottalized k)
+    # 3. Targeted phonological reconstruction for K'iche':
+    # Cuando consonantes iniciales (K', Q', J) fueron tokenizadas como <unk> en el entrenamiento:
+    # A. <unk><unk>ax o ''ax o 'ax -> k'ax
+    text = re.sub(r'(?:^|(?<=\s))(?:<unk>|\'){1,2}ax(?=\s|$|[.,?!])', "k'ax", text, flags=re.IGNORECASE)
+
+    # B. <unk>oxom o 'oxom o q<unk>oxom -> q'oxom
+    text = re.sub(r'(?:^|(?<=\s))(?:q)?(?:<unk>|\')+oxom(?=\s|$|[.,?!])', "q'oxom", text, flags=re.IGNORECASE)
+
+    # C. <unk>as o 'as -> jas (cuando está al inicio o aislado)
+    text = re.sub(r'(?:^|(?<=\s))(?:<unk>|\')+as(?=\s|$|[.,?!])', "jas", text, flags=re.IGNORECASE)
+
+    # D. <unk>al o 'al -> k'al
+    text = re.sub(r'(?:^|(?<=\s))(?:<unk>|\')+al(?=\s|$|[.,?!])', "k'al", text, flags=re.IGNORECASE)
+
+    # E. <unk> después de consonantes glotalizables (k, q, b, t, ch, tz) -> '
+    text = re.sub(r'([kqbt]|ch|tz)<unk>', r"\1'", text, flags=re.IGNORECASE)
+
+    # F. Cualquier otro <unk> restante
     text = text.replace("<unk>", "'")
+
+    # 4. MMS ALMG conversions: c' -> k'
     text = text.replace("c'", "k'")
 
-    # (La regla que convertía k' a q' ciegamente se ha eliminado porque arruinaba palabras como k'ax)
-    # 5. Capitalize first letter
+    # 5. Normalizar apóstrofes múltiples (e.g. '' -> ')
+    text = re.sub(r"'{2,}", "'", text)
+
+    # 6. Pulido gramatical palabra por palabra
+    words = text.split()
+    clean_words = []
+    for w in words:
+        wl = w.lower()
+        if wl in ["''ax", "'ax", "kax", "cax", "qax"]:
+            w = "k'ax"
+        elif wl in ["'oxom", "koxom", "coxom"]:
+            w = "q'oxom"
+        elif wl in ["'as", "as"] and (len(clean_words) == 0 or clean_words[-1].lower() not in ['ri', 'le']):
+            w = "jas"
+        elif wl in ["abi", "ab'i", "ab'i'", "abi'", "'abi'", "'ab'i'"]:
+            w = "ab'i'"
+        # Si una palabra empieza con apóstrofe y vocal pero no es una de las anteriores, limpiar apóstrofe inicial
+        elif w.startswith("'") and len(w) > 1 and w[1] in "aeiouAEIOU":
+            w = w[1:]
+        clean_words.append(w)
+
+    text = ' '.join(clean_words)
+
+    # 7. Capitalizar la primera letra de la frase
     if text:
         text = text[0].upper() + text[1:]
 
@@ -1653,6 +1698,20 @@ def reload_asr_model(force_mode=None):
 
             trained_model_dir = os.path.join(os.path.dirname(__file__), 'models', 'mms_kiche_trained')
             active_type = "generic"
+
+            # Si el modelo LoRA no está local pero tenemos S3, descargarlo automáticamente
+            if s3_client and S3_BUCKET_NAME and not os.path.exists(os.path.join(trained_model_dir, 'adapter_config.json')):
+                try:
+                    os.makedirs(trained_model_dir, exist_ok=True)
+                    print("[S3] Verificando y descargando modelo LoRA ASR desde S3...")
+                    for s3_f in ['adapter_config.json', 'adapter_model.safetensors', 'processor_config.json', 'tokenizer_config.json', 'vocab.json']:
+                        dest = os.path.join(trained_model_dir, s3_f)
+                        if not os.path.exists(dest):
+                            print(f"[S3] Descargando {s3_f} desde S3...")
+                            s3_client.download_file(S3_BUCKET_NAME, f"models/mms_kiche_trained/{s3_f}", dest)
+                    print("✅ Modelo LoRA ASR sincronizado exitosamente desde S3.")
+                except Exception as s3_err:
+                    print(f"[S3] Aviso: No se pudo descargar modelo LoRA desde S3: {s3_err}")
 
             if current_model_mode != 'generic' and os.path.exists(os.path.join(trained_model_dir, 'adapter_config.json')):
                 print(f"[ASR Engine] Detectado modelo entrenado local en: {trained_model_dir}")
